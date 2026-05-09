@@ -1,38 +1,32 @@
-// Home.jsx
 import { useEffect, useState } from "react";
 
-export default function Home({ goToPricing = () => {} }) {
+export default function Home() {
   const [hearts, setHearts] = useState([]);
 
   useEffect(() => {
     function spawnHeart() {
       const id = Math.random().toString(36).substr(2, 9);
 
-      const newHeart = {
-        id,
-        x: Math.random() * window.innerWidth,
-        y: Math.random() * window.innerHeight,
-        size: 10 + Math.random() * 20,
-        char: Math.random() > 0.5 ? "❤" : "♥",
-      };
-
-      setHearts((prev) => {
-        const updated = [...prev, newHeart];
-        return updated.slice(-120);
-      });
-
-      setTimeout(() => {
-        setHearts((prev) => prev.filter((h) => h.id !== id));
-      }, 5000);
+      setHearts((prev) => [
+        ...prev,
+        {
+          id,
+          x: Math.random() * window.innerWidth,
+          y: Math.random() * window.innerHeight,
+          size: 10 + Math.random() * 20,
+          char: Math.random() > 0.5 ? "❤" : "♥",
+        },
+      ].slice(-110));
     }
 
-    const interval = setInterval(spawnHeart, 70);
-
+    const interval = setInterval(spawnHeart, 120);
     return () => clearInterval(interval);
   }, []);
 
   return (
     <div className="page">
+
+      {/* fundo */}
       <div className="binary-bg" />
 
       {/* corações */}
@@ -52,10 +46,14 @@ export default function Home({ goToPricing = () => {} }) {
         ))}
       </div>
 
+      {/* conteúdo */}
       <main className="container">
-        {/* HERO */}
+
+        {/* HERO CENTRAL */}
         <section className="hero">
+
           <div className="hero-left">
+
             <span className="badge">
               3 ANOS 2026 • Dia dos Namorados
             </span>
@@ -63,71 +61,49 @@ export default function Home({ goToPricing = () => {} }) {
             <h1>Correio Elegante</h1>
 
             <p className="hero-text">
-              Envie mensagens anônimas, divertidas e especiais durante o evento.
-              Uma experiência moderna, organizada e elegante para todos os alunos.
+              !!"A SER ADICIONADO"!!
             </p>
 
-            <div className="hero-buttons">
-              <button className="primary-btn">
-                Enviar mensagem
-              </button>
-
-              <button
-                className="secondary-btn"
-                onClick={goToPricing}
-              >
-                Ver preços
-              </button>
-            </div>
           </div>
 
-          
         </section>
 
-        {/* tópicos */}
+        {/* CARDS */}
         <section className="topics">
-          <div className="topic">
+
+          <div className="topic topic-red">
             <h2>Como funciona</h2>
-            <p>
-              Escolha uma opção, escreva sua mensagem e envie para o destinatário.
-              Todo o processo será feito de forma simples e organizada.
-            </p>
+            <p>!!"A SER ADICIONADO"!!</p>
           </div>
 
-          <div className="topic">
+          <div className="topic topic-dark">
             <h2>Como participar</h2>
-            <p>
-              Os participantes poderão escolher diferentes tipos de envio e personalização
-              para suas mensagens durante o evento.
-            </p>
+            <p>!!"A SER ADICIONADO"!!</p>
           </div>
 
-          <div className="topic">
-            <h2>Privacidade</h2>
-            <p>
-              As mensagens permanecem anônimas e o sistema prioriza respeito,
-              segurança e organização.
-            </p>
+          <div className="topic topic-gold">
+            <h2>Importante</h2>
+            <p>!!"A SER ADICIONADO"!!</p>
           </div>
+
         </section>
 
         {/* destaque */}
         <section className="highlight">
+
           <div className="highlight-content">
             <h2>Pronto para participar?</h2>
-
             <p>
               Confira as opções disponíveis e escolha a melhor forma de enviar sua mensagem.
             </p>
           </div>
 
-          <button
-            className="highlight-btn"
-            onClick={goToPricing}
-          >
+          <button className="highlight-btn">
             Acessar tabela de preços
           </button>
+
         </section>
+
       </main>
     </div>
   );
