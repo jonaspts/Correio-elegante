@@ -150,7 +150,7 @@ body {
 
   padding-bottom: 8px;
 
-  background: linear-gradient(90deg, white, #ff3b3b);
+  background: linear-gradient(90deg, rgb(229, 177, 177), #ff1717);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
