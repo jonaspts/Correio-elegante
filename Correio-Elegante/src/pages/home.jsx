@@ -13,13 +13,13 @@ export default function Home() {
           id,
           x: Math.random() * window.innerWidth,
           y: Math.random() * window.innerHeight,
-          size: 10 + Math.random() * 20,
+          size: 20 + Math.random() * 40,
           char: Math.random() > 0.5 ? "❤" : "♥",
         },
       ].slice(-110));
     }
 
-    const interval = setInterval(spawnHeart, 120);
+    const interval = setInterval(spawnHeart, 10);
     return () => clearInterval(interval);
   }, []);
 
