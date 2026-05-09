@@ -62,6 +62,8 @@ export default function Home() {
 
             <p className="hero-text">
               !!"A SER ADICIONADO"!!
+              "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor dolore magna aliqua.
+              Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris modo consequa"
             </p>
 
           </div>
@@ -73,17 +75,24 @@ export default function Home() {
 
           <div className="topic topic-red">
             <h2>Como funciona</h2>
-            <p>!!"A SER ADICIONADO"!!</p>
+            <p>!!"A SER ADICIONADO"!!
+              "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor dolore magna aliqua.
+              Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris modo consequa"
+            </p>
           </div>
 
           <div className="topic topic-dark">
             <h2>Como participar</h2>
-            <p>!!"A SER ADICIONADO"!!</p>
+            <p>!!"A SER ADICIONADO"!!
+              "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor dolore magna aliqua.
+              Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris modo consequa"</p>
           </div>
 
           <div className="topic topic-gold">
             <h2>Importante</h2>
-            <p>!!"A SER ADICIONADO"!!</p>
+            <p>!!"A SER ADICIONADO"!!
+              "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor dolore magna aliqua.
+              Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris modo consequa"</p>
           </div>
 
         </section>
