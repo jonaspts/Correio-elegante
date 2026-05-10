@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-export default function Home() {
+export default function Home({ goToPricing }) {
   const [hearts, setHearts] = useState([]);
 
   useEffect(() => {
@@ -25,7 +25,7 @@ export default function Home() {
       }, 5000);
     }
 
-    const interval = setInterval(spawnHeart, 50);
+    const interval = setInterval(spawnHeart, 60);
 
     return () => clearInterval(interval);
   }, []);
@@ -152,7 +152,10 @@ export default function Home() {
 
           </div>
 
-          <button className="highlight-btn">
+          <button
+            className="highlight-btn"
+            onClick={goToPricing}
+          >
             Acessar tabela de preços
           </button>
 

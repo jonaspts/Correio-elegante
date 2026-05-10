@@ -438,3 +438,111 @@ body {
     font-size: 16px;
   }
 }
+/*#############################################################################*/
+/*-----------------------------------PRICING-----------------------------------*/
+/*#############################################################################*/
+.pricing-page {
+  position: relative;
+}
+
+/* topo */
+.pricing-header {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.pricing-header h1 {
+  font-size: 60px;
+  margin-bottom: 10px;
+
+  background: linear-gradient(90deg, #fff, #ff3b3b);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.pricing-header p {
+  color: rgba(255,255,255,0.7);
+  max-width: 700px;
+  margin: auto;
+  line-height: 1.6;
+}
+
+/* voltar */
+.back-btn {
+  margin-top: 20px;
+
+  padding: 10px 16px;
+  border-radius: 10px;
+
+  background: rgba(255,255,255,0.05);
+  color: white;
+
+  border: 1px solid rgba(255,255,255,0.1);
+
+  cursor: pointer;
+}
+
+/* grid */
+.pricing-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+}
+
+/* cards */
+.pricing-card {
+  padding: 24px;
+  border-radius: 20px;
+
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+
+  backdrop-filter: blur(10px);
+
+  transition: 0.25s;
+  cursor: pointer;
+}
+
+.pricing-card:hover {
+  transform: translateY(-5px);
+  border-color: rgba(255, 60, 60, 0.3);
+}
+
+.pricing-card h2 {
+  margin-top: 0;
+  color: #ff4a4a;
+}
+
+.pricing-card p {
+  color: rgba(255,255,255,0.7);
+  line-height: 1.5;
+}
+
+.price {
+  display: block;
+  margin: 12px 0;
+
+  font-size: 20px;
+  font-weight: bold;
+
+  color: white;
+}
+
+/* botão */
+.select-btn {
+  padding: 10px 14px;
+
+  border: none;
+  border-radius: 10px;
+
+  background: linear-gradient(135deg, #ff2d2d, #7a0000);
+  color: white;
+
+  cursor: pointer;
+}
+
+/* selecionado */
+.pricing-card.active {
+  border-color: rgba(255, 60, 60, 0.6);
+  box-shadow: 0 0 30px rgba(255, 0, 0, 0.15);
+}
