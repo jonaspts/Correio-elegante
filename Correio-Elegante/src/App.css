@@ -20,17 +20,14 @@ body {
   z-index: 0;
 
   background:
-    radial-gradient(circle at 20% 20%, rgba(255, 60, 60, 0.18), transparent 40%),
-    radial-gradient(circle at 80% 80%, rgba(120, 0, 0, 0.25), transparent 45%),
-    radial-gradient(circle at 50% 50%, rgba(255,255,255,0.03), transparent 60%),
-    linear-gradient(120deg, #050506, #0a0000, #050506);
+    radial-gradient(circle at 15% 20%, rgba(255, 80, 80, 0.45), transparent 40%),
+    radial-gradient(circle at 85% 75%, rgba(255, 0, 0, 0.25), transparent 45%),
+    radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.03), transparent 60%),
+    linear-gradient(120deg, #050506, #120000, #050506);
 
   background-size: 300% 300%;
-  animation: bgMove 18s ease infinite;
-
-  filter: saturate(120%);
+  animation: bgMove 12s ease-in-out infinite alternate;
 }
-
 @keyframes bgMove {
   0% {
     background-position: 0% 50%;

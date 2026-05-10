@@ -25,7 +25,7 @@ export default function Home() {
       }, 5000);
     }
 
-    const interval = setInterval(spawnHeart, 10);
+    const interval = setInterval(spawnHeart, 50);
 
     return () => clearInterval(interval);
   }, []);
