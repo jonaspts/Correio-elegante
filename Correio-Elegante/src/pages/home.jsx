@@ -75,8 +75,9 @@ export default function Home({ goToPricing = () => {} }) {
               <h2>Plataforma do evento</h2>
 
               <p>
-                O sistema centraliza todas as mensagens do Correio Elegante,
-                garantindo organização, privacidade e entrega correta.
+                O Sistema pode apresentar instabilidades (devido a alta taxa de Usuários usando) ou falhas pontuais.
+                Em caso de qualquer erro ou comportamento inesperado,
+                entre em contato imediatamente com os representantes do 3º ano para que o problema seja verificado e resolvido o quanto antes.
               </p>
             </div>
 
@@ -93,8 +94,8 @@ export default function Home({ goToPricing = () => {} }) {
         {/* FEATURES */}
         <section className="section">
           <div className="section-heading">
-            <span>FUNCIONAMENTO</span>
-            <h2>Como o sistema organiza as mensagens</h2>
+            <span>Como funciona</span>
+            <h2>Não fique com dúvidas</h2>
           </div>
 
           <div className="feature-grid">
@@ -120,7 +121,7 @@ export default function Home({ goToPricing = () => {} }) {
         {/* STEPS */}
         <section className="section">
           <div className="section-heading">
-            <span>PASSO A PASSO</span>
+            <span>COMO PARTICIPAR</span>
             <h2>Como enviar sua mensagem</h2>
           </div>
 
