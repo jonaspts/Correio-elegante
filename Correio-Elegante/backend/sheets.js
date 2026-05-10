@@ -1,8 +1,11 @@
 const { google } = require("googleapis");
-const path = require("path");
+
+if (!process.env.GOOGLE_CREDS) {
+  throw new Error("GOOGLE_CREDS não definida");
+}
 
 const auth = new google.auth.GoogleAuth({
-  keyFile: path.join(__dirname, "credentials.json"),
+  credentials: JSON.parse(process.env.GOOGLE_CREDS),
   scopes: ["https://www.googleapis.com/auth/spreadsheets"],
 });
 
@@ -14,17 +17,19 @@ async function addRow(data) {
 
   await googleSheets.spreadsheets.values.append({
     spreadsheetId,
-    range: "A:D",
+    range: "A:F",
     valueInputOption: "USER_ENTERED",
     requestBody: {
       values: [[
+        data.dataHora || new Date().toLocaleString("pt-BR"),
         data.de,
         data.para,
         data.item,
-        data.dataHora
+        data.mensagem,
+        data.pagamento
       ]]
     }
   });
 }
 
-module.exports = addRow;
+module.exports = { addRow };

@@ -35,7 +35,37 @@ export default function Pricing({ goToHome }) {
       desc: "!!A ser decidido!!",
     },
   ];
+  const handleSubmit = async (e) => {
+    e.preventDefault();
 
+    const payload = {
+      senderType,
+      senderName: senderType === "identificado" ? "Nome aqui" : "Anônimo",
+      receiverName: document.querySelector('input[placeholder="Nome da pessoa"]').value,
+      plan: selected.title,
+      message: document.querySelector("textarea").value,
+      paymentMethod,
+    };
+
+    try {
+      fetch("http://localhost:3001/orders", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if (res.ok) {
+        alert("Pedido enviado 💘");
+      } else {
+        alert("Erro ao enviar 😢");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Backend não está rodando");
+    }
+  };
   useEffect(() => {
     function spawnHeart() {
       const id = Math.random().toString(36).substr(2, 9);
@@ -133,16 +163,12 @@ export default function Pricing({ goToHome }) {
               </div>
 
               <form
-                className="elegant-form"
-                onSubmit={(e) => {
-                  e.preventDefault();
-                }}
+                onSubmit={handleSubmit}
               >
                 <div className="radio-group">
                   <label
-                    className={`radio-option ${
-                      senderType === "identificado" ? "active" : ""
-                    }`}
+                    className={`radio-option ${senderType === "identificado" ? "active" : ""
+                      }`}
                   >
                     <input
                       type="radio"
@@ -155,9 +181,8 @@ export default function Pricing({ goToHome }) {
                   </label>
 
                   <label
-                    className={`radio-option ${
-                      senderType === "anonimo" ? "active" : ""
-                    }`}
+                    className={`radio-option ${senderType === "anonimo" ? "active" : ""
+                      }`}
                   >
                     <input
                       type="radio"
@@ -188,7 +213,7 @@ export default function Pricing({ goToHome }) {
                     <input type="text" placeholder="Ex: 2ºB" />
                   </div>
 
-                  
+
                 </div>
 
                 <div className="input-group">
@@ -201,9 +226,8 @@ export default function Pricing({ goToHome }) {
 
                   <div className="payment-options">
                     <label
-                      className={`payment-option ${
-                        paymentMethod === "pix" ? "active" : ""
-                      }`}
+                      className={`payment-option ${paymentMethod === "pix" ? "active" : ""
+                        }`}
                     >
                       <input
                         type="radio"
@@ -216,9 +240,8 @@ export default function Pricing({ goToHome }) {
                     </label>
 
                     <label
-                      className={`payment-option ${
-                        paymentMethod === "especie" ? "active" : ""
-                      }`}
+                      className={`payment-option ${paymentMethod === "especie" ? "active" : ""
+                        }`}
                     >
                       <input
                         type="radio"
