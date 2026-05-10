@@ -182,7 +182,7 @@ body {
   border-radius: 20px;
 
   backdrop-filter: blur(10px);
-  border: 1px solid rgba(255,255,255,0.08);
+  border: 1px solid rgba(241, 10, 10, 0.08);
 }
 
 .topic h2 {
@@ -220,11 +220,11 @@ body {
 
   background: linear-gradient(
     135deg,
-    rgba(180, 20, 20, 0.16),
-    rgba(255,255,255,0.03)
+    rgba(248, 28, 28, 0.438),
+    rgba(250, 69, 69, 0.03)
   );
 
-  border: 1px solid rgba(255,255,255,0.08);
+  border: 1px solid rgba(255, 0, 0, 0.08);
 
   display: flex;
   justify-content: space-between;
