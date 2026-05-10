@@ -17,9 +17,16 @@ export default function Home() {
           char: Math.random() > 0.5 ? "❤" : "♥",
         },
       ].slice(-110));
+
+      setTimeout(() => {
+        setHearts((prev) =>
+          prev.filter((heart) => heart.id !== id)
+        );
+      }, 5000);
     }
 
     const interval = setInterval(spawnHeart, 10);
+
     return () => clearInterval(interval);
   }, []);
 
@@ -49,7 +56,7 @@ export default function Home() {
       {/* conteúdo */}
       <main className="container">
 
-        {/* HERO CENTRAL */}
+        {/* HERO */}
         <section className="hero">
 
           <div className="hero-left">
@@ -62,49 +69,87 @@ export default function Home() {
 
             <p className="hero-text">
               !!"A SER ADICIONADO"!!
-              "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor dolore magna aliqua.
-              Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris modo consequa"
+              Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+              Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
             </p>
 
           </div>
 
         </section>
 
-        {/* CARDS */}
+        {/* TOPICS */}
         <section className="topics">
 
-          <div className="topic topic-red">
+          {/* COMO FUNCIONA */}
+          <div className="topic topic-red steps">
+
             <h2>Como funciona</h2>
-            <p>!!"A SER ADICIONADO"!!
-              "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor dolore magna aliqua.
-              Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris modo consequa"
-            </p>
+
+            <div className="steps-grid">
+
+              <div className="step">
+                <span>1</span>
+                <p>Escolha o tipo de mensagem</p>
+              </div>
+
+              <div className="step">
+                <span>2</span>
+                <p>Escreva sua mensagem anônima</p>
+              </div>
+
+              <div className="step">
+                <span>3</span>
+                <p>Envie pelo sistema do evento</p>
+              </div>
+
+              <div className="step">
+                <span>4</span>
+                <p>A mensagem será entregue no dia</p>
+              </div>
+
+            </div>
+
           </div>
 
+          {/* COMO PARTICIPAR */}
           <div className="topic topic-dark">
+
             <h2>Como participar</h2>
-            <p>!!"A SER ADICIONADO"!!
-              "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor dolore magna aliqua.
-              Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris modo consequa"</p>
+
+            <p>
+              !!"A SER ADICIONADO"!!
+              Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+              Sed do eiusmod tempor incididunt ut labore.
+            </p>
+
           </div>
 
+          {/* IMPORTANTE */}
           <div className="topic topic-gold">
+
             <h2>Importante</h2>
-            <p>!!"A SER ADICIONADO"!!
-              "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor dolore magna aliqua.
-              Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris modo consequa"</p>
+
+            <p>
+              !!"A SER ADICIONADO"!!
+              Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+              Sed do eiusmod tempor incididunt ut labore.
+            </p>
+
           </div>
 
         </section>
 
-        {/* destaque */}
+        {/* HIGHLIGHT */}
         <section className="highlight">
 
           <div className="highlight-content">
+
             <h2>Pronto para participar?</h2>
+
             <p>
               Confira as opções disponíveis e escolha a melhor forma de enviar sua mensagem.
             </p>
+
           </div>
 
           <button className="highlight-btn">
