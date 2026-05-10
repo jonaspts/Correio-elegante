@@ -1,42 +1,35 @@
 import { useEffect, useState } from "react";
 
-export default function Home({ goToPricing }) {
+export default function Home({ goToPricing = () => {} }) {
   const [hearts, setHearts] = useState([]);
 
   useEffect(() => {
     function spawnHeart() {
       const id = Math.random().toString(36).substr(2, 9);
 
-      setHearts((prev) => [
-        ...prev,
-        {
-          id,
-          x: Math.random() * window.innerWidth,
-          y: Math.random() * window.innerHeight,
-          size: 20 + Math.random() * 40,
-          char: Math.random() > 0.5 ? "❤" : "♥",
-        },
-      ].slice(-110));
+      const newHeart = {
+        id,
+        x: Math.random() * window.innerWidth,
+        y: Math.random() * window.innerHeight,
+        size: 16 + Math.random() * 26,
+        char: Math.random() > 0.5 ? "❤" : "♥",
+      };
+
+      setHearts((prev) => [...prev, newHeart].slice(-110));
 
       setTimeout(() => {
-        setHearts((prev) =>
-          prev.filter((heart) => heart.id !== id)
-        );
+        setHearts((prev) => prev.filter((heart) => heart.id !== id));
       }, 5000);
     }
 
-    const interval = setInterval(spawnHeart, 60);
-
+    const interval = setInterval(spawnHeart, 90);
     return () => clearInterval(interval);
   }, []);
 
   return (
     <div className="page">
-
-      {/* fundo */}
       <div className="binary-bg" />
 
-      {/* corações */}
       <div className="heart-bg">
         {hearts.map((h) => (
           <span
@@ -53,112 +46,126 @@ export default function Home({ goToPricing }) {
         ))}
       </div>
 
-      {/* conteúdo */}
       <main className="container">
 
         {/* HERO */}
         <section className="hero">
+          <div className="hero-copy">
 
-          <div className="hero-left">
-
-            <span className="badge">
-              3 ANOS 2026 • Dia dos Namorados
-            </span>
+            <div className="brand">
+              <span className="brand-dot" />
+              <p>3º anos • evento 2026</p>
+            </div>
 
             <h1>Correio Elegante</h1>
 
             <p className="hero-text">
-              !!"A SER ADICIONADO"!!
-              Lorem ipsum dolor sit amet, consectetur adipiscing elit.
-              Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
+              Sistema oficial do Dia dos Namorados da escola.
+              Mensagens podem ser enviadas de forma anônima ou identificada,
+              organizadas e entregues durante o evento.
             </p>
 
           </div>
 
-        </section>
+          <aside className="hero-panel">
 
-        {/* TOPICS */}
-        <section className="topics">
+            <div className="glass-card big-card">
+              <span className="mini-badge">Sistema oficial</span>
 
-          {/* COMO FUNCIONA */}
-          <div className="topic topic-red steps">
+              <h2>Plataforma do evento</h2>
 
-            <h2>Como funciona</h2>
-
-            <div className="steps-grid">
-
-              <div className="step">
-                <span>1</span>
-                <p>Escolha o tipo de mensagem</p>
-              </div>
-
-              <div className="step">
-                <span>2</span>
-                <p>Escreva sua mensagem anônima</p>
-              </div>
-
-              <div className="step">
-                <span>3</span>
-                <p>Envie pelo sistema do evento</p>
-              </div>
-
-              <div className="step">
-                <span>4</span>
-                <p>A mensagem será entregue no dia</p>
-              </div>
-
+              <p>
+                O sistema centraliza todas as mensagens do Correio Elegante,
+                garantindo organização, privacidade e entrega correta.
+              </p>
             </div>
 
-          </div>
+            <div className="glass-card mini-card warning-card">
+              <h2>⚠️ Importante ⚠️</h2>
+              <h3>Todas as mensagens passam por análise antes da entrega.
+                Conteúdos ofensivos ou fora das regras serão bloqueados
+                para manter um ambiente seguro e respeitoso.</h3>
+            </div>
 
-          {/* COMO PARTICIPAR */}
-          <div className="topic topic-dark">
-
-            <h2>Como participar</h2>
-
-            <p>
-              !!"A SER ADICIONADO"!!
-              Lorem ipsum dolor sit amet, consectetur adipiscing elit.
-              Sed do eiusmod tempor incididunt ut labore.
-            </p>
-
-          </div>
-
-          {/* IMPORTANTE */}
-          <div className="topic topic-gold">
-
-            <h2>Importante</h2>
-
-            <p>
-              !!"A SER ADICIONADO"!!
-              Lorem ipsum dolor sit amet, consectetur adipiscing elit.
-              Sed do eiusmod tempor incididunt ut labore.
-            </p>
-
-          </div>
-
+          </aside>
         </section>
 
-        {/* HIGHLIGHT */}
-        <section className="highlight">
-
-          <div className="highlight-content">
-
-            <h2>Pronto para participar?</h2>
-
-            <p>
-              Confira as opções disponíveis e escolha a melhor forma de enviar sua mensagem.
-            </p>
-
+        {/* FEATURES */}
+        <section className="section">
+          <div className="section-heading">
+            <span>FUNCIONAMENTO</span>
+            <h2>Como o sistema organiza as mensagens</h2>
           </div>
 
-          <button
-            className="highlight-btn"
-            onClick={goToPricing}
-          >
-            Acessar tabela de preços
-          </button>
+          <div className="feature-grid">
 
+            <article className="feature feature-red">
+              <h3>Envio anônimo</h3>
+              <p>Você pode enviar mensagens sem revelar sua identidade.</p>
+            </article>
+
+            <article className="feature feature-dark">
+              <h3>Organização</h3>
+              <p>Todas as mensagens são registradas e separadas por destino.</p>
+            </article>
+
+            <article className="feature feature-gold">
+              <h3>Evento escolar</h3>
+              <p>Sistema feito exclusivamente para o evento da escola.</p>
+            </article>
+
+          </div>
+        </section>
+
+        {/* STEPS */}
+        <section className="section">
+          <div className="section-heading">
+            <span>PASSO A PASSO</span>
+            <h2>Como enviar sua mensagem</h2>
+          </div>
+
+          <div className="steps-grid">
+
+            <article className="step-card">
+              <span className="step-number">01</span>
+              <h3>Escolha a opção</h3>
+              <p>Selecione o tipo de envio disponível.</p>
+            </article>
+
+            <article className="step-card">
+              <span className="step-number">02</span>
+              <h3>Preencha os dados</h3>
+              <p>Nome, turma, destinatário e mensagem.</p>
+            </article>
+
+            <article className="step-card">
+              <span className="step-number">03</span>
+              <h3>Envio automático</h3>
+              <p>A mensagem é registrada no sistema do evento.</p>
+            </article>
+
+            <article className="step-card">
+              <span className="step-number">04</span>
+              <h3>Entrega final</h3>
+              <p>As mensagens são entregues no evento.</p>
+            </article>
+
+          </div>
+        </section>
+
+        {/* CTA */}
+        <section className="cta-strip">
+          <div>
+            <span className="cta-label">Preparado para Escolher?</span>
+            <h2>Participe do Correio Elegante</h2>
+            <p>
+              Escolha uma opção e envie sua mensagem para participar do evento.
+            </p>
+          </div>
+
+          <button className="cta-btn" onClick={goToPricing}>
+            Ver opções 💘
+          </button>
         </section>
 
       </main>
