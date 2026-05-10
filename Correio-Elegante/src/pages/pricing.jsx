@@ -5,67 +5,152 @@ export default function Pricing({ goToHome }) {
   const [hearts, setHearts] = useState([]);
   const [selected, setSelected] = useState(null);
 
+  const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
+  const [lastSend, setLastSend] = useState(0);
+
   const [senderType, setSenderType] = useState("anonimo");
   const [paymentMethod, setPaymentMethod] = useState("pix");
   const [fileName, setFileName] = useState("");
 
   const plans = [
     {
+      id: "p1",
       emoji: "💌",
-      title: "opção",
+      title: "Mensagem Simples",
       price: "R$ 2,00",
       desc: "!!A ser decidido!!",
     },
     {
+      id: "p2",
       emoji: "❤️",
-      title: "opção",
+      title: "Mensagem Premium",
       price: "R$ 4,00",
       desc: "!!A ser decidido!!",
     },
     {
+      id: "p3",
       emoji: "🎁",
-      title: "opção",
+      title: "Combo Especial",
       price: "R$ 6,00",
       desc: "!!A ser decidido!!",
     },
     {
+      id: "p4",
       emoji: "🔥",
-      title: "opção",
+      title: "Ultra Destaque",
       price: "R$ 10,00",
       desc: "!!A ser decidido!!",
     },
   ];
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    const now = Date.now();
+
+    if (loading) return;
+
+    if (now - lastSend < 5000) {
+      alert("Espere alguns segundos antes de enviar novamente");
+      return;
+    }
+
+    const receiverName = document.querySelector(
+      'input[placeholder="Nome da pessoa"]'
+    )?.value;
+
+    const message = document.querySelector("textarea")?.value;
+
+    const senderNameInput = document.querySelector(
+      'input[placeholder="Digite seu nome"]'
+    )?.value;
+
+    if (!selected) {
+      alert("Escolha uma opção antes de enviar");
+      return;
+    }
+
+    if (!receiverName || !message) {
+      alert("Preencha todos os campos obrigatórios");
+      return;
+    }
+
+    if (senderType === "identificado" && !senderNameInput) {
+      alert("Digite seu nome");
+      return;
+    }
+
+    if (paymentMethod === "pix" && !fileName) {
+      alert("Envie o comprovante do Pix");
+      return;
+    }
+
     const payload = {
       senderType,
-      senderName: senderType === "identificado" ? "Nome aqui" : "Anônimo",
-      receiverName: document.querySelector('input[placeholder="Nome da pessoa"]').value,
+      senderName: senderType === "identificado" ? senderNameInput : "Anônimo",
+      receiverName,
       plan: selected.title,
-      message: document.querySelector("textarea").value,
+      message,
       paymentMethod,
     };
 
     try {
-      fetch("http://localhost:3001/orders", {
+      setLoading(true);
+
+      const res = await fetch("https://SEU-BACKEND.onrender.com/orders", {
         method: "POST",
         headers: {
-          "Content-Type": "application/json"
+          "Content-Type": "application/json",
         },
-        body: JSON.stringify(payload)
+        body: JSON.stringify(payload),
       });
 
-      if (res.ok) {
-        alert("Pedido enviado 💘");
-      } else {
-        alert("Erro ao enviar 😢");
+      const responseText = await res.text();
+      let responseData = null;
+
+      try {
+        responseData = responseText ? JSON.parse(responseText) : null;
+      } catch {
+        responseData = null;
       }
+
+      if (!res.ok) {
+        throw new Error(responseData?.error || "Erro no backend");
+      }
+
+      setSuccess(true);
+      setLastSend(now);
+
+      setTimeout(() => {
+        setSuccess(false);
+      }, 3000);
+
+      setSelected(null);
+      setFileName("");
+      setSenderType("anonimo");
+      setPaymentMethod("pix");
+
+      const nameInput = document.querySelector(
+        'input[placeholder="Digite seu nome"]'
+      );
+      if (nameInput) nameInput.value = "";
+
+      const receiverInput = document.querySelector(
+        'input[placeholder="Nome da pessoa"]'
+      );
+      if (receiverInput) receiverInput.value = "";
+
+      const textarea = document.querySelector("textarea");
+      if (textarea) textarea.value = "";
     } catch (err) {
       console.error(err);
       alert("Backend não está rodando");
+    } finally {
+      setLoading(false);
     }
   };
+
   useEffect(() => {
     function spawnHeart() {
       const id = Math.random().toString(36).substr(2, 9);
@@ -109,6 +194,25 @@ export default function Pricing({ goToHome }) {
         ))}
       </div>
 
+      {loading && (
+        <div className="loading-overlay">
+          <div className="loading-box">
+            <div className="spinner" />
+            <h2>Enviando pedido...</h2>
+            <p>Aguarde um momento 💘</p>
+          </div>
+        </div>
+      )}
+
+      {success && (
+        <div className="success-overlay">
+          <div className="success-box">
+            <h2>💘 Pedido enviado!</h2>
+            <p>Seu correio elegante foi registrado com sucesso.</p>
+          </div>
+        </div>
+      )}
+
       <main className="pricing-container">
         <button className="back-btn" onClick={goToHome} type="button">
           ← Voltar
@@ -128,8 +232,10 @@ export default function Pricing({ goToHome }) {
         <section className="plans-grid">
           {plans.map((plan) => (
             <article
-              key={plan.title}
-              className={`plan-card ${selected?.title === plan.title ? "selected" : ""}`}
+              key={plan.id}
+              className={`plan-card ${
+                selected?.id === plan.id ? "selected" : ""
+              }`}
             >
               <div className="plan-top">
                 <span className="plan-emoji">{plan.emoji}</span>
@@ -143,6 +249,7 @@ export default function Pricing({ goToHome }) {
                 type="button"
                 className="select-btn"
                 onClick={() => setSelected(plan)}
+                disabled={loading}
               >
                 Escolher opção
               </button>
@@ -162,13 +269,12 @@ export default function Pricing({ goToHome }) {
                 </div>
               </div>
 
-              <form
-                onSubmit={handleSubmit}
-              >
+              <form onSubmit={handleSubmit}>
                 <div className="radio-group">
                   <label
-                    className={`radio-option ${senderType === "identificado" ? "active" : ""
-                      }`}
+                    className={`radio-option ${
+                      senderType === "identificado" ? "active" : ""
+                    }`}
                   >
                     <input
                       type="radio"
@@ -181,8 +287,9 @@ export default function Pricing({ goToHome }) {
                   </label>
 
                   <label
-                    className={`radio-option ${senderType === "anonimo" ? "active" : ""
-                      }`}
+                    className={`radio-option ${
+                      senderType === "anonimo" ? "active" : ""
+                    }`}
                   >
                     <input
                       type="radio"
@@ -212,8 +319,6 @@ export default function Pricing({ goToHome }) {
                     <label>Turma</label>
                     <input type="text" placeholder="Ex: 2ºB" />
                   </div>
-
-
                 </div>
 
                 <div className="input-group">
@@ -226,8 +331,9 @@ export default function Pricing({ goToHome }) {
 
                   <div className="payment-options">
                     <label
-                      className={`payment-option ${paymentMethod === "pix" ? "active" : ""
-                        }`}
+                      className={`payment-option ${
+                        paymentMethod === "pix" ? "active" : ""
+                      }`}
                     >
                       <input
                         type="radio"
@@ -240,8 +346,9 @@ export default function Pricing({ goToHome }) {
                     </label>
 
                     <label
-                      className={`payment-option ${paymentMethod === "especie" ? "active" : ""
-                        }`}
+                      className={`payment-option ${
+                        paymentMethod === "especie" ? "active" : ""
+                      }`}
                     >
                       <input
                         type="radio"
@@ -256,12 +363,12 @@ export default function Pricing({ goToHome }) {
 
                   {paymentMethod === "pix" && (
                     <div className="pix-box">
-                      <div className="pix-top">
-                        <h3>💘 Chave Pix</h3>
-                        <span>Pagamento online</span>
-                      </div>
+                      <h3>💘 Chave Pix</h3>
+                      <span>Pagamento online</span>
 
-                      <div className="pix-key">correioeleganteetemaa@gmail.com</div>
+                      <div className="pix-key">
+                        correioeleganteetemaa@gmail.com
+                      </div>
 
                       <p className="pix-warning">
                         Após realizar o pagamento, envie o comprovante abaixo.
@@ -293,15 +400,15 @@ export default function Pricing({ goToHome }) {
                     <div className="cash-box">
                       <h3>💵 Pagamento em espécie</h3>
                       <p>
-                        O pagamento deverá ser entregue presencialmente
-                        para os representantes dos 3 Anos.
+                        O pagamento deverá ser entregue presencialmente para os
+                        representantes dos 3 anos.
                       </p>
                     </div>
                   )}
                 </div>
 
-                <button type="submit" className="confirm-btn">
-                  Confirmar pedido 💘
+                <button type="submit" className="confirm-btn" disabled={loading}>
+                  {loading ? "Enviando..." : "Confirmar pedido 💘"}
                 </button>
               </form>
             </div>
