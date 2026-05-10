@@ -1,140 +1,63 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
+import "../App.css";
 
-const initialForm = {
-  senderType: "anonimo",
-  senderName: "",
-  recipient: "",
-  className: "",
-  message: "",
-};
-
-export default function Pricing({ goToHome = () => {} }) {
-  const [selectedPlan, setSelectedPlan] = useState(null);
+export default function Pricing({ goToHome }) {
   const [hearts, setHearts] = useState([]);
-  const [form, setForm] = useState(initialForm);
-  const [proofFile, setProofFile] = useState(null);
-  const [proofPreview, setProofPreview] = useState("");
-  const [error, setError] = useState("");
-  const [step, setStep] = useState("form");
+  const [selected, setSelected] = useState(null);
+
+  const [senderType, setSenderType] = useState("anonimo");
+  const [paymentMethod, setPaymentMethod] = useState("pix");
+  const [fileName, setFileName] = useState("");
+
+  const plans = [
+    {
+      emoji: "💌",
+      title: "opção",
+      price: "R$ 2,00",
+      desc: "!!A ser decidido!!",
+    },
+    {
+      emoji: "❤️",
+      title: "opção",
+      price: "R$ 4,00",
+      desc: "!!A ser decidido!!",
+    },
+    {
+      emoji: "🎁",
+      title: "opção",
+      price: "R$ 6,00",
+      desc: "!!A ser decidido!!",
+    },
+    {
+      emoji: "🔥",
+      title: "opção",
+      price: "R$ 10,00",
+      desc: "!!A ser decidido!!",
+    },
+  ];
 
   useEffect(() => {
     function spawnHeart() {
-      const id = Math.random().toString(36).slice(2, 9);
+      const id = Math.random().toString(36).substr(2, 9);
 
       const newHeart = {
         id,
         x: Math.random() * window.innerWidth,
         y: Math.random() * window.innerHeight,
-        size: 14 + Math.random() * 22,
+        size: 16 + Math.random() * 26,
         char: Math.random() > 0.5 ? "❤" : "♥",
       };
 
-      setHearts((prev) => [...prev, newHeart].slice(-90));
+      setHearts((prev) => [...prev, newHeart].slice(-110));
 
       setTimeout(() => {
         setHearts((prev) => prev.filter((heart) => heart.id !== id));
       }, 5000);
     }
 
-    const interval = setInterval(spawnHeart, 120);
+    const interval = setInterval(spawnHeart, 90);
     return () => clearInterval(interval);
   }, []);
-
-  useEffect(() => {
-    if (!proofFile) {
-      setProofPreview("");
-      return;
-    }
-
-    const url = URL.createObjectURL(proofFile);
-    setProofPreview(url);
-
-    return () => URL.revokeObjectURL(url);
-  }, [proofFile]);
-
-  const plans = useMemo(
-    () => [
-      {
-        id: 1,
-        title: "💌 Básico",
-        price: "R$ 2,00",
-        desc: "Envio simples da mensagem durante o evento.",
-        tag: "Mais econômico",
-      },
-      {
-        id: 2,
-        title: "💖 Destaque",
-        price: "R$ 4,00",
-        desc: "Mensagem com mais presença dentro do evento.",
-        tag: "Equilíbrio ideal",
-      },
-      {
-        id: 3,
-        title: "🔥 Premium",
-        price: "R$ 6,00",
-        desc: "Mensagem com destaque especial e prioridade.",
-        tag: "Mais visível",
-      },
-      {
-        id: 4,
-        title: "👑 VIP",
-        price: "R$ 10,00",
-        desc: "O maior destaque da experiência.",
-        tag: "Máximo destaque",
-      },
-    ],
-    []
-  );
-
-  function openPlan(plan) {
-    setSelectedPlan(plan);
-    setForm(initialForm);
-    setProofFile(null);
-    setProofPreview("");
-    setError("");
-    setStep("form");
-  }
-
-  function closeModal() {
-    setSelectedPlan(null);
-    setForm(initialForm);
-    setProofFile(null);
-    setProofPreview("");
-    setError("");
-    setStep("form");
-  }
-
-  function handleSubmit(e) {
-    e.preventDefault();
-
-    if (!proofFile) {
-      setError("Anexe o comprovante de pagamento para continuar.");
-      return;
-    }
-
-    if (form.senderType === "nome" && !form.senderName.trim()) {
-      setError("Informe o nome de quem está enviando.");
-      return;
-    }
-
-    if (!form.recipient.trim()) {
-      setError("Informe o destinatário.");
-      return;
-    }
-
-    if (!form.className.trim()) {
-      setError("Informe a turma.");
-      return;
-    }
-
-    if (!form.message.trim()) {
-      setError("Escreva a mensagem.");
-      return;
-    }
-
-    setError("");
-    setStep("success");
-  }
 
   return (
     <div className="pricing-page">
@@ -157,193 +80,209 @@ export default function Pricing({ goToHome = () => {} }) {
       </div>
 
       <main className="pricing-container">
+        <button className="back-btn" onClick={goToHome} type="button">
+          ← Voltar
+        </button>
+
         <section className="pricing-hero">
-          <span className="badge">💘 Correio Elegante 2026</span>
+          <span className="badge">💘 Correio Elegante • 3 anos 2026</span>
 
           <h1>Tabela de Opções</h1>
 
-          <p className="pricing-text">
-            Escolha a opção ideal para sua mensagem e siga para o formulário
-            com os dados do pedido e o comprovante de pagamento.
+          <p>
+            Escolha uma opção, preencha os dados e participe do Correio Elegante
+            da escola.
           </p>
-
-          <button className="secondary-btn pricing-back-btn" onClick={goToHome}>
-            Voltar para a página inicial
-          </button>
         </section>
 
-        <section className="pricing-grid">
+        <section className="plans-grid">
           {plans.map((plan) => (
             <article
-              key={plan.id}
-              className="pricing-card"
-              onClick={() => openPlan(plan)}
+              key={plan.title}
+              className={`plan-card ${selected?.title === plan.title ? "selected" : ""}`}
             >
-              <div className="pricing-card-top">
-                <span className="pricing-tag">{plan.tag}</span>
-                <span className="pricing-price">{plan.price}</span>
+              <div className="plan-top">
+                <span className="plan-emoji">{plan.emoji}</span>
+                <span className="plan-price">{plan.price}</span>
               </div>
 
               <h2>{plan.title}</h2>
               <p>{plan.desc}</p>
 
-              <button className="primary-btn pricing-select-btn">
-                Escolher esse 💘
+              <button
+                type="button"
+                className="select-btn"
+                onClick={() => setSelected(plan)}
+              >
+                Escolher opção
               </button>
             </article>
           ))}
         </section>
 
-        {selectedPlan && (
-          <div className="modal-overlay" onClick={closeModal}>
-            <div className="modal pricing-modal" onClick={(e) => e.stopPropagation()}>
-              {step === "form" ? (
-                <>
-                  <div className="modal-top">
-                    <span className="mini-badge">Produto escolhido</span>
-                    <h2>{selectedPlan.title}</h2>
-                    <p>{selectedPlan.desc}</p>
+        {selected && (
+          <section className="form-wrapper">
+            <div className="form-card">
+              <div className="form-header">
+                <span className="selected-emoji">{selected.emoji}</span>
+
+                <div>
+                  <p className="form-small">Produto escolhido</p>
+                  <h2>{selected.title}</h2>
+                </div>
+              </div>
+
+              <form
+                className="elegant-form"
+                onSubmit={(e) => {
+                  e.preventDefault();
+                }}
+              >
+                <div className="radio-group">
+                  <label
+                    className={`radio-option ${
+                      senderType === "identificado" ? "active" : ""
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="tipo"
+                      value="identificado"
+                      checked={senderType === "identificado"}
+                      onChange={(e) => setSenderType(e.target.value)}
+                    />
+                    Nome identificado
+                  </label>
+
+                  <label
+                    className={`radio-option ${
+                      senderType === "anonimo" ? "active" : ""
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="tipo"
+                      value="anonimo"
+                      checked={senderType === "anonimo"}
+                      onChange={(e) => setSenderType(e.target.value)}
+                    />
+                    Anônimo
+                  </label>
+                </div>
+
+                {senderType === "identificado" && (
+                  <div className="input-group">
+                    <label>Seu nome</label>
+                    <input type="text" placeholder="Digite seu nome" />
+                  </div>
+                )}
+
+                <div className="input-group">
+                  <label>Para quem será enviado</label>
+                  <input type="text" placeholder="Nome da pessoa" />
+                </div>
+
+                <div className="double-input">
+                  <div className="input-group">
+                    <label>Turma</label>
+                    <input type="text" placeholder="Ex: 2ºB" />
                   </div>
 
-                  <div className="modal-selected-plan">
-                    <span>Plano selecionado</span>
-                    <strong>{selectedPlan.price}</strong>
-                  </div>
+                  
+                </div>
 
-                  <form onSubmit={handleSubmit} className="pricing-form">
-                    <label className="field-label">Quem está enviando?</label>
-                    <div className="modal-row">
-                      <button
-                        type="button"
-                        className={`modal-option-btn ${form.senderType === "nome" ? "active" : ""}`}
-                        onClick={() => setForm((prev) => ({ ...prev, senderType: "nome" }))}
-                      >
-                        Nome
-                      </button>
+                <div className="input-group">
+                  <label>Mensagem</label>
+                  <textarea rows="5" placeholder="Escreva sua mensagem..." />
+                </div>
 
-                      <button
-                        type="button"
-                        className={`modal-option-btn ${form.senderType === "anonimo" ? "active" : ""}`}
-                        onClick={() => setForm((prev) => ({ ...prev, senderType: "anonimo" }))}
-                      >
-                        Anônimo
-                      </button>
-                    </div>
+                <div className="payment-box">
+                  <h3>💳 Forma de pagamento</h3>
 
-                    {form.senderType === "nome" && (
-                      <>
-                        <label className="field-label">Seu nome</label>
-                        <input
-                          className="modal-input"
-                          type="text"
-                          placeholder="Digite seu nome"
-                          value={form.senderName}
-                          onChange={(e) =>
-                            setForm((prev) => ({ ...prev, senderName: e.target.value }))
-                          }
-                        />
-                      </>
-                    )}
-
-                    <label className="field-label">Para quem será enviado?</label>
-                    <input
-                      className="modal-input"
-                      type="text"
-                      placeholder="Nome do destinatário"
-                      value={form.recipient}
-                      onChange={(e) =>
-                        setForm((prev) => ({ ...prev, recipient: e.target.value }))
-                      }
-                    />
-
-                    <label className="field-label">Turma</label>
-                    <input
-                      className="modal-input"
-                      type="text"
-                      placeholder="Ex: 3A"
-                      value={form.className}
-                      onChange={(e) =>
-                        setForm((prev) => ({ ...prev, className: e.target.value }))
-                      }
-                    />
-
-                    <label className="field-label">Mensagem</label>
-                    <textarea
-                      className="modal-textarea"
-                      placeholder="Escreva sua mensagem..."
-                      value={form.message}
-                      onChange={(e) =>
-                        setForm((prev) => ({ ...prev, message: e.target.value }))
-                      }
-                    />
-
-                    <label className="field-label">Comprovante de pagamento</label>
-                    <div className="proof-box">
+                  <div className="payment-options">
+                    <label
+                      className={`payment-option ${
+                        paymentMethod === "pix" ? "active" : ""
+                      }`}
+                    >
                       <input
-                        className="proof-input"
-                        type="file"
-                        accept="image/*,application/pdf"
-                        onChange={(e) => setProofFile(e.target.files?.[0] || null)}
+                        type="radio"
+                        name="payment"
+                        value="pix"
+                        checked={paymentMethod === "pix"}
+                        onChange={(e) => setPaymentMethod(e.target.value)}
                       />
+                      Pix
+                    </label>
 
-                      <p className="proof-hint">
-                        Anexe uma imagem ou PDF do comprovante para liberar o pedido.
+                    <label
+                      className={`payment-option ${
+                        paymentMethod === "especie" ? "active" : ""
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name="payment"
+                        value="especie"
+                        checked={paymentMethod === "especie"}
+                        onChange={(e) => setPaymentMethod(e.target.value)}
+                      />
+                      Em espécie
+                    </label>
+                  </div>
+
+                  {paymentMethod === "pix" && (
+                    <div className="pix-box">
+                      <div className="pix-top">
+                        <h3>💘 Chave Pix</h3>
+                        <span>Pagamento online</span>
+                      </div>
+
+                      <div className="pix-key">correioeleganteetemaa@gmail.com</div>
+
+                      <p className="pix-warning">
+                        Após realizar o pagamento, envie o comprovante abaixo.
                       </p>
 
-                      {proofFile && (
-                        <div className="proof-file">
-                          <span>📎 {proofFile.name}</span>
+                      <label className="upload-area">
+                        <input
+                          type="file"
+                          onChange={(e) =>
+                            setFileName(
+                              e.target.files[0] ? e.target.files[0].name : ""
+                            )
+                          }
+                        />
 
-                          {proofPreview && proofFile.type.startsWith("image/") && (
-                            <img src={proofPreview} alt="Prévia do comprovante" />
-                          )}
+                        <div>
+                          <strong>
+                            {fileName
+                              ? "📎 " + fileName
+                              : "Clique para enviar o comprovante"}
+                          </strong>
+                          <p>PNG, JPG ou PDF</p>
                         </div>
-                      )}
+                      </label>
                     </div>
+                  )}
 
-                    {error && <p className="form-error">⚠️ {error}</p>}
-
-                    <div className="modal-actions">
-                      <button
-                        type="button"
-                        className="modal-cancel-btn"
-                        onClick={closeModal}
-                      >
-                        Cancelar
-                      </button>
-
-                      <button type="submit" className="modal-confirm-btn">
-                        Confirmar pedido 💌
-                      </button>
+                  {paymentMethod === "especie" && (
+                    <div className="cash-box">
+                      <h3>💵 Pagamento em espécie</h3>
+                      <p>
+                        O pagamento deverá ser entregue presencialmente
+                        para os representantes dos 3 Anos.
+                      </p>
                     </div>
-                  </form>
-                </>
-              ) : (
-                <div className="success-state">
-                  <span className="success-badge">Pedido enviado</span>
-                  <h2>Pagamento anexado com sucesso</h2>
-                  <p>
-                    O pedido foi registrado com o comprovante anexado. Agora ele pode ser conferido
-                    manualmente ou conectado depois ao sistema da planilha.
-                  </p>
-
-                  <div className="success-summary">
-                    <strong>{selectedPlan.title}</strong>
-                    <span>{selectedPlan.price}</span>
-                  </div>
-
-                  <div className="modal-actions">
-                    <button className="modal-cancel-btn" onClick={closeModal}>
-                      Fechar
-                    </button>
-                    <button className="modal-confirm-btn" onClick={closeModal}>
-                      Novo pedido
-                    </button>
-                  </div>
+                  )}
                 </div>
-              )}
+
+                <button type="submit" className="confirm-btn">
+                  Confirmar pedido 💘
+                </button>
+              </form>
             </div>
-          </div>
+          </section>
         )}
       </main>
     </div>

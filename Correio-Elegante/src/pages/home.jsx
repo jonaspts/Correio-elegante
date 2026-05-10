@@ -54,7 +54,7 @@ export default function Home({ goToPricing = () => {} }) {
 
             <div className="brand">
               <span className="brand-dot" />
-              <p>3º anos • evento 2026</p>
+              <p>3º anos • Dia dos Namorados 2026</p>
             </div>
 
             <h1>Correio Elegante</h1>
