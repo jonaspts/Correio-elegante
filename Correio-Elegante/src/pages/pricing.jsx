@@ -98,7 +98,7 @@ export default function Pricing({ goToHome }) {
     try {
       setLoading(true);
 
-      const res = await fetch("https://SEU-BACKEND.onrender.com/orders", {
+      const res = await fetch("https://correio-elegante-7atm.onrender.com/", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
