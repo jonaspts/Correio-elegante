@@ -317,7 +317,7 @@ export default function Pricing({ goToHome }) {
                 <div className="double-input">
                   <div className="input-group">
                     <label>Turma</label>
-                    <input type="text" placeholder="Ex: 2ºB" />
+                    <input type="text" placeholder="Ex: 3ºA-DS" />
                   </div>
                 </div>
 
