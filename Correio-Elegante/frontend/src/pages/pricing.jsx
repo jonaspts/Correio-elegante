@@ -115,8 +115,6 @@ export default function Pricing({ goToHome }) {
       return;
     }
 
-const { google } = require("googleapis");
-
 if (!process.env.GOOGLE_CREDS) {
   throw new Error("GOOGLE_CREDS não definida");
 }
