@@ -60,7 +60,7 @@ export default function Home({ goToPricing = () => {} }) {
             <h1>Correio Elegante</h1>
 
             <p className="hero-text">
-              Sistema oficial do Dia dos Namorados da escola.
+              Sistema oficial do Dia dos Namorados da ETEMAA.
               Mensagens podem ser enviadas de forma anônima ou identificada,
               organizadas e entregues durante o evento.
             </p>

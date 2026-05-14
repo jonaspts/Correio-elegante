@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import "../App.css";
 
 export default function Pricing({ goToHome }) {
@@ -6,12 +6,21 @@ export default function Pricing({ goToHome }) {
   const [selected, setSelected] = useState(null);
 
   const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState(false);
+  const [sent, setSent] = useState(false);
   const [lastSend, setLastSend] = useState(0);
 
   const [senderType, setSenderType] = useState("anonimo");
+  const [receiverType, setReceiverType] = useState("anonimo");
   const [paymentMethod, setPaymentMethod] = useState("pix");
   const [fileName, setFileName] = useState("");
+
+  const [senderName, setSenderName] = useState("");
+  const [receiverName, setReceiverName] = useState("");
+  const [message, setMessage] = useState("");
+  const [course, setCourse] = useState("");
+  const [classroom, setClassroom] = useState("");
+
+  const formRef = useRef(null);
 
   const plans = [
     {
@@ -44,40 +53,59 @@ export default function Pricing({ goToHome }) {
     },
   ];
 
+  useEffect(() => {
+    if (senderType === "anonimo") {
+      setSenderName("");
+    }
+  }, [senderType]);
+
+  useEffect(() => {
+    if (receiverType === "anonimo") {
+      setCourse("");
+      setClassroom("");
+    }
+  }, [receiverType]);
+
+  const handlePlanSelect = (plan) => {
+    setSelected(plan);
+    setTimeout(() => {
+      formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 100);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const now = Date.now();
-
     if (loading) return;
 
+    const now = Date.now();
     if (now - lastSend < 5000) {
       alert("Espere alguns segundos antes de enviar novamente");
       return;
     }
-
-    const receiverName = document.querySelector(
-      'input[placeholder="Nome da pessoa"]'
-    )?.value;
-
-    const message = document.querySelector("textarea")?.value;
-
-    const senderNameInput = document.querySelector(
-      'input[placeholder="Digite seu nome"]'
-    )?.value;
 
     if (!selected) {
       alert("Escolha uma opção antes de enviar");
       return;
     }
 
-    if (!receiverName || !message) {
+    if (!receiverName.trim() || !message.trim()) {
       alert("Preencha todos os campos obrigatórios");
       return;
     }
 
-    if (senderType === "identificado" && !senderNameInput) {
+    if (senderType === "identificado" && !senderName.trim()) {
       alert("Digite seu nome");
+      return;
+    }
+
+    if (receiverType === "identificado" && !course) {
+      alert("Selecione o curso");
+      return;
+    }
+
+    if (receiverType === "identificado" && !classroom) {
+      alert("Selecione a turma");
       return;
     }
 
@@ -88,10 +116,11 @@ export default function Pricing({ goToHome }) {
 
     const payload = {
       senderType,
-      senderName: senderType === "identificado" ? senderNameInput : "Anônimo",
-      receiverName,
+      senderName: senderType === "identificado" ? senderName.trim() : "Anônimo",
+      receiverName: receiverName.trim(),
+      receiverClassroom: receiverType === "identificado" ? classroom : "",
       plan: selected.title,
-      message,
+      message: message.trim(),
       paymentMethod,
     };
 
@@ -100,9 +129,7 @@ export default function Pricing({ goToHome }) {
 
       const res = await fetch("https://correio-elegante-7atm.onrender.com/orders", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
 
@@ -119,30 +146,22 @@ export default function Pricing({ goToHome }) {
         throw new Error(responseData?.error || "Erro no backend");
       }
 
-      setSuccess(true);
       setLastSend(now);
+      setSent(true);
 
       setTimeout(() => {
-        setSuccess(false);
-      }, 3000);
-
-      setSelected(null);
-      setFileName("");
-      setSenderType("anonimo");
-      setPaymentMethod("pix");
-
-      const nameInput = document.querySelector(
-        'input[placeholder="Digite seu nome"]'
-      );
-      if (nameInput) nameInput.value = "";
-
-      const receiverInput = document.querySelector(
-        'input[placeholder="Nome da pessoa"]'
-      );
-      if (receiverInput) receiverInput.value = "";
-
-      const textarea = document.querySelector("textarea");
-      if (textarea) textarea.value = "";
+        setSent(false);
+        setSelected(null);
+        setSenderType("anonimo");
+        setReceiverType("anonimo");
+        setPaymentMethod("pix");
+        setFileName("");
+        setSenderName("");
+        setReceiverName("");
+        setMessage("");
+        setCourse("");
+        setClassroom("");
+      }, 2200);
     } catch (err) {
       console.error(err);
       alert("Backend não está rodando");
@@ -204,172 +223,271 @@ export default function Pricing({ goToHome }) {
         </div>
       )}
 
-      {success && (
+      {sent && (
         <div className="success-overlay">
           <div className="success-box">
-            <h2>💘 Pedido enviado!</h2>
+            <div className="success-badge">✓</div>
+            <h2>Pedido enviado!</h2>
             <p>Seu correio elegante foi registrado com sucesso.</p>
           </div>
         </div>
       )}
 
-      <main className="pricing-container">
-        <button className="back-btn" onClick={goToHome} type="button">
-          ← Voltar
-        </button>
+      <main className="checkout-shell">
+        <section className="hero-column">
+          <button className="back-btn" onClick={goToHome} type="button">
+            ← Voltar
+          </button>
 
-        <section className="pricing-hero">
-          <span className="badge">💘 Correio Elegante • 3 anos 2026</span>
+          <section className="pricing-hero">
+            <span className="badge">💘 Correio Elegante • 3º anos 2026</span>
+            <h1>Tabela de Opções</h1>
+            <p>
+              Escolha uma opção, preencha os dados e participe do Correio Elegante da escola.
+            </p>
+          </section>
 
-          <h1>Tabela de Opções</h1>
-
-          <p>
-            Escolha uma opção, preencha os dados e participe do Correio Elegante
-            da escola.
-          </p>
-        </section>
-
-        <section className="plans-grid">
-          {plans.map((plan) => (
-            <article
-              key={plan.id}
-              className={`plan-card ${
-                selected?.id === plan.id ? "selected" : ""
-              }`}
-            >
-              <div className="plan-top">
-                <span className="plan-emoji">{plan.emoji}</span>
-                <span className="plan-price">{plan.price}</span>
-              </div>
-
-              <h2>{plan.title}</h2>
-              <p>{plan.desc}</p>
-
-              <button
-                type="button"
-                className="select-btn"
-                onClick={() => setSelected(plan)}
-                disabled={loading}
+          <section className="plans-grid">
+            {plans.map((plan) => (
+              <article
+                key={plan.id}
+                className={`plan-card ${selected?.id === plan.id ? "selected" : ""}`}
               >
-                Escolher opção
-              </button>
-            </article>
-          ))}
+                <div className="plan-top">
+                  <span className="plan-emoji">{plan.emoji}</span>
+                  <span className="plan-price">{plan.price}</span>
+                </div>
+
+                <h2>{plan.title}</h2>
+                <p>{plan.desc}</p>
+
+                <button
+                  type="button"
+                  className="select-btn"
+                  onClick={() => handlePlanSelect(plan)}
+                  disabled={loading}
+                >
+                  Escolher opção
+                </button>
+              </article>
+            ))}
+          </section>
         </section>
 
-        {selected && (
-          <section className="form-wrapper">
+        <aside ref={formRef} className={`checkout-panel ${selected ? "open" : ""}`}>
+          {!selected ? (
+            <div className="panel-empty">
+              <div>
+                <h2>Escolha uma opção para começar</h2>
+                <p>O formulário vai aparecer aqui ao lado.</p>
+              </div>
+            </div>
+          ) : (
             <div className="form-card">
               <div className="form-header">
                 <span className="selected-emoji">{selected.emoji}</span>
-
                 <div>
                   <p className="form-small">Produto escolhido</p>
                   <h2>{selected.title}</h2>
                 </div>
               </div>
 
-              <form onSubmit={handleSubmit}>
-                <div className="radio-group">
-                  <label
-                    className={`radio-option ${
-                      senderType === "identificado" ? "active" : ""
-                    }`}
-                  >
-                    <input
-                      type="radio"
-                      name="tipo"
-                      value="identificado"
-                      checked={senderType === "identificado"}
-                      onChange={(e) => setSenderType(e.target.value)}
-                    />
-                    Nome identificado
-                  </label>
+              <form onSubmit={handleSubmit} className="elegant-form">
+                {/* Seção Remetente */}
+                <div className="form-section">
+                  <h3>💌 Remetente</h3>
 
-                  <label
-                    className={`radio-option ${
-                      senderType === "anonimo" ? "active" : ""
-                    }`}
-                  >
-                    <input
-                      type="radio"
-                      name="tipo"
-                      value="anonimo"
-                      checked={senderType === "anonimo"}
-                      onChange={(e) => setSenderType(e.target.value)}
-                    />
-                    Anônimo
-                  </label>
-                </div>
-
-                {senderType === "identificado" && (
                   <div className="input-group">
-                    <label>Seu nome</label>
-                    <input type="text" placeholder="Digite seu nome" />
-                  </div>
-                )}
+                    <label>Tipo de envio</label>
+                    <div className="radio-group">
+                      <label
+                        className={`radio-option ${senderType === "identificado" ? "active" : ""}`}
+                      >
+                        <input
+                          type="radio"
+                          name="senderType"
+                          value="identificado"
+                          checked={senderType === "identificado"}
+                          onChange={(e) => setSenderType(e.target.value)}
+                        />
+                        Identificado
+                      </label>
 
-                <div className="input-group">
-                  <label>Para quem será enviado</label>
-                  <input type="text" placeholder="Nome da pessoa" />
+                      <label
+                        className={`radio-option ${senderType === "anonimo" ? "active" : ""}`}
+                      >
+                        <input
+                          type="radio"
+                          name="senderType"
+                          value="anonimo"
+                          checked={senderType === "anonimo"}
+                          onChange={(e) => setSenderType(e.target.value)}
+                        />
+                        Anônimo
+                      </label>
+                    </div>
+                  </div>
+
+                  {senderType === "identificado" && (
+                    <div className="input-group">
+                      <label>Seu nome</label>
+                      <input
+                        type="text"
+                        value={senderName}
+                        onChange={(e) => setSenderName(e.target.value)}
+                        placeholder="Digite seu nome completo"
+                      />
+                    </div>
+                  )}
                 </div>
 
-                <div className="double-input">
+                <div className="form-section-divider" />
+
+                {/* Seção Destinatário */}
+                <div className="form-section">
+                  <h3>🎯 Destinatário</h3>
+
                   <div className="input-group">
-                    <label>Turma</label>
-                    <input type="text" placeholder="Ex: 3ºA-DS" />
+                    <label>Nome do destinatário</label>
+                    <input
+                      type="text"
+                      value={receiverName}
+                      onChange={(e) => setReceiverName(e.target.value)}
+                      placeholder="Para quem será enviado"
+                    />
+                  </div>
+
+                  <div className="input-group">
+                    <label>Turma/Curso</label>
+                    <div className="radio-group">
+                      <label
+                        className={`radio-option ${course === "ADM" ? "active" : ""}`}
+                      >
+                        <input
+                          type="radio"
+                          name="course"
+                          value="ADM"
+                          checked={course === "ADM"}
+                          onChange={(e) => {
+                            setCourse(e.target.value);
+                            setClassroom("");
+                            setReceiverType("identificado");
+                          }}
+                        />
+                        ADM
+                      </label>
+
+                      <label
+                        className={`radio-option ${course === "DS" ? "active" : ""}`}
+                      >
+                        <input
+                          type="radio"
+                          name="course"
+                          value="DS"
+                          checked={course === "DS"}
+                          onChange={(e) => {
+                            setCourse(e.target.value);
+                            setClassroom("");
+                            setReceiverType("identificado");
+                          }}
+                        />
+                        DS
+                      </label>
+
+                      <label
+                        className={`radio-option ${receiverType === "anonimo" ? "active" : ""}`}
+                      >
+                        <input
+                          type="radio"
+                          name="course"
+                          value=""
+                          checked={receiverType === "anonimo"}
+                          onChange={() => {
+                            setReceiverType("anonimo");
+                            setCourse("");
+                            setClassroom("");
+                          }}
+                        />
+                        Anônimo
+                      </label>
+                    </div>
+                  </div>
+
+                  {course && receiverType === "identificado" && (
+                    <div className="input-group">
+                      <label>Turma do destinatário</label>
+                      <div className="class-grid">
+                        {["1A", "1B", "2A", "2B", "3A", "3B"].map((t) => {
+                          const full = `${t}-${course}`;
+                          return (
+                            <button
+                              key={full}
+                              type="button"
+                              className={`class-btn ${classroom === full ? "active" : ""}`}
+                              onClick={() => setClassroom(full)}
+                            >
+                              {full}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="input-group">
+                    <label>Sua mensagem</label>
+                    <textarea
+                      rows="5"
+                      value={message}
+                      onChange={(e) => setMessage(e.target.value)}
+                      placeholder="Escreva sua mensagem carinhosa..."
+                    />
                   </div>
                 </div>
 
-                <div className="input-group">
-                  <label>Mensagem</label>
-                  <textarea rows="5" placeholder="Escreva sua mensagem..." />
-                </div>
+                <div className="form-section-divider" />
 
-                <div className="payment-box">
-                  <h3>💳 Forma de pagamento</h3>
+                {/* Seção Pagamento */}
+                <div className="form-section">
+                  <h3>💳 Pagamento</h3>
 
-                  <div className="payment-options">
-                    <label
-                      className={`payment-option ${
-                        paymentMethod === "pix" ? "active" : ""
-                      }`}
-                    >
-                      <input
-                        type="radio"
-                        name="payment"
-                        value="pix"
-                        checked={paymentMethod === "pix"}
-                        onChange={(e) => setPaymentMethod(e.target.value)}
-                      />
-                      Pix
-                    </label>
+                  <div className="input-group">
+                    <label>Forma de pagamento</label>
+                    <div className="payment-options">
+                      <label
+                        className={`payment-option ${paymentMethod === "pix" ? "active" : ""}`}
+                      >
+                        <input
+                          type="radio"
+                          name="payment"
+                          value="pix"
+                          checked={paymentMethod === "pix"}
+                          onChange={(e) => setPaymentMethod(e.target.value)}
+                        />
+                        Pix
+                      </label>
 
-                    <label
-                      className={`payment-option ${
-                        paymentMethod === "especie" ? "active" : ""
-                      }`}
-                    >
-                      <input
-                        type="radio"
-                        name="payment"
-                        value="especie"
-                        checked={paymentMethod === "especie"}
-                        onChange={(e) => setPaymentMethod(e.target.value)}
-                      />
-                      Em espécie
-                    </label>
+                      <label
+                        className={`payment-option ${
+                          paymentMethod === "especie" ? "active" : ""
+                        }`}
+                      >
+                        <input
+                          type="radio"
+                          name="payment"
+                          value="especie"
+                          checked={paymentMethod === "especie"}
+                          onChange={(e) => setPaymentMethod(e.target.value)}
+                        />
+                        Em espécie
+                      </label>
+                    </div>
                   </div>
 
                   {paymentMethod === "pix" && (
                     <div className="pix-box">
                       <h3>💘 Chave Pix</h3>
-                      <span>Pagamento online</span>
-
-                      <div className="pix-key">
-                        correioeleganteetemaa@gmail.com
-                      </div>
-
+                      <div className="pix-key">correioeleganteetemaa@gmail.com</div>
                       <p className="pix-warning">
                         Após realizar o pagamento, envie o comprovante abaixo.
                       </p>
@@ -377,13 +495,11 @@ export default function Pricing({ goToHome }) {
                       <label className="upload-area">
                         <input
                           type="file"
+                          accept="image/*,.pdf"
                           onChange={(e) =>
-                            setFileName(
-                              e.target.files[0] ? e.target.files[0].name : ""
-                            )
+                            setFileName(e.target.files[0] ? e.target.files[0].name : "")
                           }
                         />
-
                         <div>
                           <strong>
                             {fileName
@@ -400,8 +516,8 @@ export default function Pricing({ goToHome }) {
                     <div className="cash-box">
                       <h3>💵 Pagamento em espécie</h3>
                       <p>
-                        O pagamento deverá ser entregue presencialmente para os
-                        representantes dos 3 anos.
+                        O pagamento deverá ser entregue presencialmente para os representantes
+                        dos 3º Anos.
                       </p>
                     </div>
                   )}
@@ -412,8 +528,8 @@ export default function Pricing({ goToHome }) {
                 </button>
               </form>
             </div>
-          </section>
-        )}
+          )}
+        </aside>
       </main>
     </div>
   );
