@@ -13,7 +13,13 @@ const spreadsheetId = "12_DPoKN-kQV6oP9PCz_Xg7cEekbb3VfwekbSfLDBmAI";
 
 async function addRow(data) {
   const client = await auth.getClient();
-  const googleSheets = google.sheets({ version: "v4", auth: client });
+
+  const googleSheets = google.sheets({
+    version: "v4",
+    auth: client,
+  });
+
+  console.log("DADOS RECEBIDOS NO SHEETS:", data);
 
   await googleSheets.spreadsheets.values.append({
     spreadsheetId,
@@ -22,12 +28,12 @@ async function addRow(data) {
     requestBody: {
       values: [[
         data.dataHora || new Date().toLocaleString("pt-BR"),
-        data.de,
-        data.para,
-        data.turma,
-        data.item,
-        data.mensagem,
-        data.pagamento
+        data.de || "",
+        data.para || "",
+        data.receiverClassroom || "",
+        data.item || "",
+        data.mensagem || "",
+        data.pagamento || ""
       ]]
     }
   });
