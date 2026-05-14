@@ -17,14 +17,14 @@ async function addRow(data) {
 
   await googleSheets.spreadsheets.values.append({
     spreadsheetId,
-    range: "A:G",
+    range: "A:H",
     valueInputOption: "USER_ENTERED",
     requestBody: {
       values: [[
         data.dataHora || new Date().toLocaleString("pt-BR"),
         data.de,
         data.para,
-        data.turma,
+        data.course,
         data.item,
         data.mensagem,
         data.pagamento
