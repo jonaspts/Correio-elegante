@@ -119,7 +119,10 @@ export default function Pricing({ goToHome }) {
       senderType,
       senderName: senderType === "identificado" ? senderName.trim() : "Anônimo",
       receiverName: receiverName.trim(),
-      receiverClassroom: receiverType === "identificado" ? classroom : "",
+      receiverClassroom:
+        receiverType === "identificado"
+          ? `${classroom}-${course}`
+          : "Anônimo",
       plan: selected.title,
       message: message.trim(),
       paymentMethod,
@@ -469,9 +472,8 @@ export default function Pricing({ goToHome }) {
                       </label>
 
                       <label
-                        className={`payment-option ${
-                          paymentMethod === "especie" ? "active" : ""
-                        }`}
+                        className={`payment-option ${paymentMethod === "especie" ? "active" : ""
+                          }`}
                       >
                         <input
                           type="radio"
