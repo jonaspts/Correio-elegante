@@ -24,7 +24,7 @@ async function addRow(data) {
         data.dataHora || new Date().toLocaleString("pt-BR"),
         data.de,
         data.para,
-        data.course,
+        data.fullClassroom,
         data.item,
         data.mensagem,
         data.pagamento

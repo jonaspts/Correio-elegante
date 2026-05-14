@@ -19,6 +19,7 @@ export default function Pricing({ goToHome }) {
   const [message, setMessage] = useState("");
   const [course, setCourse] = useState("");
   const [classroom, setClassroom] = useState("");
+  const fullClassroom = `${classroom}-${course}`;
 
   const formRef = useRef(null);
 
