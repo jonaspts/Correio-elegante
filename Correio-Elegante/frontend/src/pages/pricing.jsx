@@ -114,11 +114,6 @@ export default function Pricing({ goToHome }) {
       alert("Envie o comprovante do Pix");
       return;
     }
-
-if (!process.env.GOOGLE_CREDS) {
-  throw new Error("GOOGLE_CREDS não definida");
-}
-
 const auth = new google.auth.GoogleAuth({
   credentials: JSON.parse(process.env.GOOGLE_CREDS),
   scopes: ["https://www.googleapis.com/auth/spreadsheets"],
