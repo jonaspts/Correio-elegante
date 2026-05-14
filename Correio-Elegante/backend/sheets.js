@@ -25,6 +25,7 @@ async function addRow(data) {
         data.de,
         data.para,
         data.course,
+        data.turma
         data.item,
         data.mensagem,
         data.pagamento
