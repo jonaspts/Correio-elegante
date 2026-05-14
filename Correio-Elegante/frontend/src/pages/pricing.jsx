@@ -120,7 +120,18 @@ export default function Pricing({ goToHome }) {
       const res = await fetch("https://correio-elegante-7atm.onrender.com/orders", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+        body: JSON.stringify({
+          plan: selected?.title,
+          senderType,
+          senderName,
+          receiverType,
+          receiverName,
+          message,
+          course,
+          classroom,
+          paymentMethod,
+          fileName
+        }),
       });
 
       const responseText = await res.text();

@@ -23,16 +23,16 @@ app.use(express.json());
 
 app.post("/orders", async (req, res) => {
   console.log("CHEGOU:", req.body);
-  
+
 
   try {
     await addRow({
-      ...req.body,
       dataHora: getBrazilHour(),
       de: req.body.senderType === "anonimo"
         ? "Anônimo"
         : req.body.senderName || "Sem nome",
       para: req.body.receiverName || "",
+      receiverClassroom: req.body.classroom || "",
       item: req.body.plan || "",
       mensagem: req.body.message || "",
       pagamento: req.body.paymentMethod || ""
