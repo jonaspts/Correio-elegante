@@ -17,7 +17,7 @@ async function addRow(data) {
 
   await googleSheets.spreadsheets.values.append({
     spreadsheetId,
-    range: "A:F",
+    range: "A:G",
     valueInputOption: "USER_ENTERED",
     requestBody: {
       values: [[
