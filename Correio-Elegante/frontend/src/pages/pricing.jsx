@@ -20,7 +20,6 @@ export default function Pricing({ goToHome }) {
   const [course, setCourse] = useState("");
   const [classroom, setClassroom] = useState("");
 
-
   const formRef = useRef(null);
 
   const plans = [
@@ -29,28 +28,29 @@ export default function Pricing({ goToHome }) {
       emoji: "💌",
       title: "Mensagem Simples",
       price: "R$ 2,00",
-      desc: "!!A ser decidido!!",
+      features: ["!!A ser decidido!!", "!!A ser decidido!!", "!!A ser decidido!!"],
     },
     {
       id: "p2",
       emoji: "❤️",
       title: "Mensagem Premium",
       price: "R$ 4,00",
-      desc: "!!A ser decidido!!",
+      features: ["!!A ser decidido!!", "!!A ser decidido!!", "!!A ser decidido!!"],
     },
     {
       id: "p3",
       emoji: "🎁",
       title: "Combo Especial",
       price: "R$ 6,00",
-      desc: "!!A ser decidido!!",
+      features: ["!!A ser decidido!!", "!!A ser decidido!!", "!!A ser decidido!!"],
     },
     {
       id: "p4",
       emoji: "🔥",
       title: "Ultra Destaque",
       price: "R$ 10,00",
-      desc: "!!A ser decidido!!",
+      features: ["!!A ser decidido!!", "!!A ser decidido!!", "!!A ser decidido!!"],
+      highlighted: true,
     },
   ];
 
@@ -81,12 +81,12 @@ export default function Pricing({ goToHome }) {
 
     const now = Date.now();
     if (now - lastSend < 5000) {
-      alert("Espere alguns segundos antes de enviar novamente");
+      alert("Aguarde alguns segundos antes de enviar novamente");
       return;
     }
 
     if (!selected) {
-      alert("Escolha uma opção antes de enviar");
+      alert("Por favor, escolha um plano antes de continuar");
       return;
     }
 
@@ -96,24 +96,25 @@ export default function Pricing({ goToHome }) {
     }
 
     if (senderType === "identificado" && !senderName.trim()) {
-      alert("Digite seu nome");
+      alert("Digite seu nome completo");
       return;
     }
 
     if (receiverType === "identificado" && !course) {
-      alert("Selecione o curso");
+      alert("Selecione o curso do destinatário");
       return;
     }
 
     if (receiverType === "identificado" && !classroom) {
-      alert("Selecione a turma");
+      alert("Selecione a turma do destinatário");
       return;
     }
 
     if (paymentMethod === "pix" && !fileName) {
-      alert("Envie o comprovante do Pix");
+      alert("Por favor, envie o comprovante do Pix");
       return;
     }
+
     try {
       setLoading(true);
 
@@ -130,7 +131,7 @@ export default function Pricing({ goToHome }) {
           course,
           classroom,
           paymentMethod,
-          fileName
+          fileName,
         }),
       });
 
@@ -144,7 +145,7 @@ export default function Pricing({ goToHome }) {
       }
 
       if (!res.ok) {
-        throw new Error(responseData?.error || "Erro no backend");
+        throw new Error(responseData?.error || "Erro ao processar pedido");
       }
 
       setLastSend(now);
@@ -162,10 +163,10 @@ export default function Pricing({ goToHome }) {
         setMessage("");
         setCourse("");
         setClassroom("");
-      }, 2200);
+      }, 2500);
     } catch (err) {
       console.error(err);
-      alert("Backend não está rodando");
+      alert("Erro ao conectar com o servidor. Tente novamente.");
     } finally {
       setLoading(false);
     }
@@ -218,8 +219,8 @@ export default function Pricing({ goToHome }) {
         <div className="loading-overlay">
           <div className="loading-box">
             <div className="spinner" />
-            <h2>Enviando pedido...</h2>
-            <p>Aguarde um momento 💘</p>
+            <h2>Processando pedido...</h2>
+            <p>Aguarde enquanto registramos sua mensagem 💘</p>
           </div>
         </div>
       )}
@@ -228,8 +229,8 @@ export default function Pricing({ goToHome }) {
         <div className="success-overlay">
           <div className="success-box">
             <div className="success-badge">✓</div>
-            <h2>Pedido enviado!</h2>
-            <p>Seu correio elegante foi registrado com sucesso.</p>
+            <h2>Pedido enviado com sucesso!</h2>
+            <p>Seu correio elegante foi registrado e será entregue em breve.</p>
           </div>
         </div>
       )}
@@ -237,14 +238,15 @@ export default function Pricing({ goToHome }) {
       <main className="checkout-shell">
         <section className="hero-column">
           <button className="back-btn" onClick={goToHome} type="button">
-            ← Voltar
+            ← Voltar para início
           </button>
 
           <section className="pricing-hero">
-            <span className="badge">💘 Correio Elegante • 3º anos 2026</span>
+            <span className="badge">💘 Correio Elegante • Turmas 3º Anos 2026</span>
             <h1>Tabela de Opções</h1>
             <p>
-              Escolha uma opção, preencha os dados e participe do Correio Elegante da escola.
+              Selecione a opção ideal para enviar sua mensagem especial. 
+              Preencha os dados e participe do Correio Elegante da ETEMAA.
             </p>
           </section>
 
@@ -252,15 +254,35 @@ export default function Pricing({ goToHome }) {
             {plans.map((plan) => (
               <article
                 key={plan.id}
-                className={`plan-card ${selected?.id === plan.id ? "selected" : ""}`}
+                className={`plan-card ${selected?.id === plan.id ? "selected" : ""} ${
+                  plan.highlighted ? "highlighted" : ""
+                }`}
               >
+                {plan.highlighted && <div className="popular-badge">Mais Popular</div>}
+                
                 <div className="plan-top">
                   <span className="plan-emoji">{plan.emoji}</span>
                   <span className="plan-price">{plan.price}</span>
                 </div>
 
                 <h2>{plan.title}</h2>
-                <p>{plan.desc}</p>
+                
+                <ul className="plan-features">
+                  {plan.features.map((feature, idx) => (
+                    <li key={idx}>
+                      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                        <path
+                          d="M13.5 4.5L6 12L2.5 8.5"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                      {feature}
+                    </li>
+                  ))}
+                </ul>
 
                 <button
                   type="button"
@@ -268,7 +290,7 @@ export default function Pricing({ goToHome }) {
                   onClick={() => handlePlanSelect(plan)}
                   disabled={loading}
                 >
-                  Escolher opção
+                  {selected?.id === plan.id ? "Selecionado ✓" : "Selecionar plano"}
                 </button>
               </article>
             ))}
@@ -278,9 +300,10 @@ export default function Pricing({ goToHome }) {
         <aside ref={formRef} className={`checkout-panel ${selected ? "open" : ""}`}>
           {!selected ? (
             <div className="panel-empty">
-              <div>
-                <h2>Escolha uma opção para começar</h2>
-                <p>O formulário vai aparecer aqui ao lado.</p>
+              <div className="empty-state">
+                <div className="empty-icon">📋</div>
+                <h2>Selecione um plano</h2>
+                <p>Escolha uma das opções ao lado para preencher o formulário de pedido.</p>
               </div>
             </div>
           ) : (
@@ -288,52 +311,55 @@ export default function Pricing({ goToHome }) {
               <div className="form-header">
                 <span className="selected-emoji">{selected.emoji}</span>
                 <div>
-                  <p className="form-small">Produto escolhido</p>
+                  <p className="form-small">Plano Selecionado</p>
                   <h2>{selected.title}</h2>
+                  <p className="form-price">{selected.price}</p>
                 </div>
               </div>
 
               <form onSubmit={handleSubmit} className="elegant-form">
                 {/* Seção Remetente */}
                 <div className="form-section">
-                  <h3>💌 Remetente</h3>
+                  <h3>
+                    <span className="section-icon">💌</span>
+                    Informações do Remetente
+                  </h3>
 
                   <div className="input-group">
-                    <label>Tipo de envio</label>
+                    <label htmlFor="sender-type">Tipo de envio</label>
                     <div className="radio-group">
-                      <label
-                        className={`radio-option ${senderType === "identificado" ? "active" : ""}`}
-                      >
+                      <label className={`radio-option ${senderType === "identificado" ? "active" : ""}`}>
                         <input
                           type="radio"
                           name="senderType"
+                          id="sender-identificado"
                           value="identificado"
                           checked={senderType === "identificado"}
                           onChange={(e) => setSenderType(e.target.value)}
                         />
-                        Identificado
+                        <span>Identificado</span>
                       </label>
 
-                      <label
-                        className={`radio-option ${senderType === "anonimo" ? "active" : ""}`}
-                      >
+                      <label className={`radio-option ${senderType === "anonimo" ? "active" : ""}`}>
                         <input
                           type="radio"
                           name="senderType"
+                          id="sender-anonimo"
                           value="anonimo"
                           checked={senderType === "anonimo"}
                           onChange={(e) => setSenderType(e.target.value)}
                         />
-                        Anônimo
+                        <span>Anônimo</span>
                       </label>
                     </div>
                   </div>
 
                   {senderType === "identificado" && (
                     <div className="input-group">
-                      <label>Seu nome</label>
+                      <label htmlFor="sender-name">Seu nome completo</label>
                       <input
                         type="text"
+                        id="sender-name"
                         value={senderName}
                         onChange={(e) => setSenderName(e.target.value)}
                         placeholder="Digite seu nome completo"
@@ -342,31 +368,35 @@ export default function Pricing({ goToHome }) {
                   )}
                 </div>
 
-                <div className="form-section-divider" />
+                <div className="form-divider" />
 
                 {/* Seção Destinatário */}
                 <div className="form-section">
-                  <h3>🎯 Destinatário</h3>
+                  <h3>
+                    <span className="section-icon">🎯</span>
+                    Informações do Destinatário
+                  </h3>
 
                   <div className="input-group">
-                    <label>Nome do destinatário</label>
+                    <label htmlFor="receiver-name">Nome do destinatário *</label>
                     <input
                       type="text"
+                      id="receiver-name"
                       value={receiverName}
                       onChange={(e) => setReceiverName(e.target.value)}
-                      placeholder="Para quem será enviado"
+                      placeholder="Para quem será enviada a mensagem"
+                      required
                     />
                   </div>
 
                   <div className="input-group">
-                    <label>Turma/Curso</label>
+                    <label htmlFor="course">Curso</label>
                     <div className="radio-group">
-                      <label
-                        className={`radio-option ${course === "ADM" ? "active" : ""}`}
-                      >
+                      <label className={`radio-option ${course === "ADM" ? "active" : ""}`}>
                         <input
                           type="radio"
                           name="course"
+                          id="course-adm"
                           value="ADM"
                           checked={course === "ADM"}
                           onChange={(e) => {
@@ -375,15 +405,14 @@ export default function Pricing({ goToHome }) {
                             setReceiverType("identificado");
                           }}
                         />
-                        ADM
+                        <span>Administração</span>
                       </label>
 
-                      <label
-                        className={`radio-option ${course === "DS" ? "active" : ""}`}
-                      >
+                      <label className={`radio-option ${course === "DS" ? "active" : ""}`}>
                         <input
                           type="radio"
                           name="course"
+                          id="course-ds"
                           value="DS"
                           checked={course === "DS"}
                           onChange={(e) => {
@@ -392,15 +421,14 @@ export default function Pricing({ goToHome }) {
                             setReceiverType("identificado");
                           }}
                         />
-                        DS
+                        <span>Des. Sistemas</span>
                       </label>
 
-                      <label
-                        className={`radio-option ${receiverType === "anonimo" ? "active" : ""}`}
-                      >
+                      <label className={`radio-option ${receiverType === "anonimo" ? "active" : ""}`}>
                         <input
                           type="radio"
                           name="course"
+                          id="course-none"
                           value=""
                           checked={receiverType === "anonimo"}
                           onChange={() => {
@@ -409,14 +437,14 @@ export default function Pricing({ goToHome }) {
                             setClassroom("");
                           }}
                         />
-                        Anônimo
+                        <span>Não informar</span>
                       </label>
                     </div>
                   </div>
 
                   {course && receiverType === "identificado" && (
                     <div className="input-group">
-                      <label>Turma do destinatário</label>
+                      <label htmlFor="classroom">Turma do destinatário</label>
                       <div className="class-grid">
                         {["1A", "1B", "2A", "2B", "3A", "3B"].map((t) => {
                           const full = `${t}-${course}`;
@@ -436,60 +464,88 @@ export default function Pricing({ goToHome }) {
                   )}
 
                   <div className="input-group">
-                    <label>Sua mensagem</label>
+                    <label htmlFor="message">Sua mensagem *</label>
                     <textarea
+                      id="message"
                       rows="5"
                       value={message}
                       onChange={(e) => setMessage(e.target.value)}
-                      placeholder="Escreva sua mensagem carinhosa..."
+                      placeholder="Escreva aqui sua mensagem especial..."
+                      required
                     />
+                    <span className="input-hint">
+                      {message.length}/500 caracteres
+                    </span>
                   </div>
                 </div>
 
-                <div className="form-section-divider" />
+                <div className="form-divider" />
 
                 {/* Seção Pagamento */}
                 <div className="form-section">
-                  <h3>💳 Pagamento</h3>
+                  <h3>
+                    <span className="section-icon">💳</span>
+                    Forma de Pagamento
+                  </h3>
 
                   <div className="input-group">
-                    <label>Forma de pagamento</label>
+                    <label htmlFor="payment">Método de pagamento</label>
                     <div className="payment-options">
-                      <label
-                        className={`payment-option ${paymentMethod === "pix" ? "active" : ""}`}
-                      >
+                      <label className={`payment-option ${paymentMethod === "pix" ? "active" : ""}`}>
                         <input
                           type="radio"
                           name="payment"
+                          id="payment-pix"
                           value="pix"
                           checked={paymentMethod === "pix"}
                           onChange={(e) => setPaymentMethod(e.target.value)}
                         />
-                        Pix
+                        <div className="payment-content">
+                          <span className="payment-icon">🔑</span>
+                          <span>Pix</span>
+                        </div>
                       </label>
 
-                      <label
-                        className={`payment-option ${paymentMethod === "especie" ? "active" : ""
-                          }`}
-                      >
+                      <label className={`payment-option ${paymentMethod === "especie" ? "active" : ""}`}>
                         <input
                           type="radio"
                           name="payment"
+                          id="payment-cash"
                           value="especie"
                           checked={paymentMethod === "especie"}
                           onChange={(e) => setPaymentMethod(e.target.value)}
                         />
-                        Em espécie
+                        <div className="payment-content">
+                          <span className="payment-icon">💵</span>
+                          <span>Espécie</span>
+                        </div>
                       </label>
                     </div>
                   </div>
 
                   {paymentMethod === "pix" && (
                     <div className="pix-box">
-                      <h3>💘 Chave Pix</h3>
-                      <div className="pix-key">correioeleganteetemaa@gmail.com</div>
-                      <p className="pix-warning">
-                        Após realizar o pagamento, envie o comprovante abaixo.
+                      <div className="pix-header">
+                        <h4>Chave Pix para pagamento</h4>
+                      </div>
+                      
+                      <div className="pix-key-container">
+                        <div className="pix-key">correioeleganteetemaa@gmail.com</div>
+                        <button
+                          type="button"
+                          className="copy-btn"
+                          onClick={() => {
+                            navigator.clipboard.writeText("correioeleganteetemaa@gmail.com");
+                            alert("Chave Pix copiada!");
+                          }}
+                        >
+                          Copiar
+                        </button>
+                      </div>
+
+                      <p className="pix-instruction">
+                        Realize o pagamento no valor de <strong>{selected.price}</strong> e 
+                        envie o comprovante abaixo.
                       </p>
 
                       <label className="upload-area">
@@ -500,13 +556,20 @@ export default function Pricing({ goToHome }) {
                             setFileName(e.target.files[0] ? e.target.files[0].name : "")
                           }
                         />
-                        <div>
-                          <strong>
-                            {fileName
-                              ? "📎 " + fileName
-                              : "Clique para enviar o comprovante"}
-                          </strong>
-                          <p>PNG, JPG ou PDF</p>
+                        <div className="upload-content">
+                          {fileName ? (
+                            <>
+                              <span className="upload-icon success">📎</span>
+                              <strong>{fileName}</strong>
+                              <p>Arquivo anexado com sucesso</p>
+                            </>
+                          ) : (
+                            <>
+                              <span className="upload-icon">📤</span>
+                              <strong>Clique para enviar o comprovante</strong>
+                              <p>Aceito: PNG, JPG ou PDF (máx. 5MB)</p>
+                            </>
+                          )}
                         </div>
                       </label>
                     </div>
@@ -514,17 +577,41 @@ export default function Pricing({ goToHome }) {
 
                   {paymentMethod === "especie" && (
                     <div className="cash-box">
-                      <h3>💵 Pagamento em espécie</h3>
+                      <div className="cash-icon">💵</div>
+                      <h4>Pagamento em dinheiro</h4>
                       <p>
-                        O pagamento deverá ser entregue presencialmente para os representantes
-                        dos 3º Anos.
+                        O pagamento no valor de <strong>{selected.price}</strong> deverá 
+                        ser entregue presencialmente para os representantes dos 3º Anos.
                       </p>
+                      <div className="info-alert">
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                          <path
+                            d="M8 14A6 6 0 1 0 8 2a6 6 0 0 0 0 12Z"
+                            stroke="currentColor"
+                            strokeWidth="1.5"
+                          />
+                          <path
+                            d="M8 11V8M8 5h.01"
+                            stroke="currentColor"
+                            strokeWidth="1.5"
+                            strokeLinecap="round"
+                          />
+                        </svg>
+                        <span>**Algum aviso vai estar aqui**</span>
+                      </div>
                     </div>
                   )}
                 </div>
 
                 <button type="submit" className="confirm-btn" disabled={loading}>
-                  {loading ? "Enviando..." : "Confirmar pedido 💘"}
+                  {loading ? (
+                    <>
+                      <span className="btn-spinner"></span>
+                      Processando...
+                    </>
+                  ) : (
+                    <>Confirmar pedido 💘</>
+                  )}
                 </button>
               </form>
             </div>
