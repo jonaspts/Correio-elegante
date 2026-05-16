@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef } from "react";
+import { supabase } from "../lib/supabase";
 import "../App.css";
 
 export default function Pricing({ goToHome }) {
@@ -139,26 +140,30 @@ export default function Pricing({ goToHome }) {
     try {
       setLoading(true);
 
-      const res = await fetch("https://correio-elegante-7atm.onrender.com/orders", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          plan: selected?.title,
-          senderType,
-          senderName,
-          receiverType,
-          receiverName,
-          message,
-          course,
-          classroom,
-          paymentMethod,
-          fileName,
-          orderCode
-        }),
-      });
+      const { data, error } = await supabase
+        .from("orders")
+        .insert([
+          {
+            plan: selected?.title,
+            sender_type: senderType,
+            sender_name: senderName,
+            receiver_type: receiverType,
+            receiver_name: receiverName,
+            message,
+            course,
+            classroom,
+            payment_method: paymentMethod,
+            file_name: fileName,
+            order_code: orderCode,
+            status: "pending",
+          },
+        ]);
 
-      const responseText = await res.text();
-      let responseData = null;
+      if (error) {
+        throw error;
+      }
+      setLastSend(now);
+      setSent(true);
 
       try {
         responseData = responseText ? JSON.parse(responseText) : null;
