@@ -1,6 +1,5 @@
 const express = require("express");
 const cors = require("cors");
-const { addRow } = require("./sheets");
 const { addRow, orderCodeExists } = require("./sheets");
 function getBrazilHour() {
   const now = new Date();
