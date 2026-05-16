@@ -13,7 +13,8 @@ export default function Pricing({ goToHome }) {
   const [senderType, setSenderType] = useState("anonimo");
   const [receiverType, setReceiverType] = useState("anonimo");
   const [paymentMethod, setPaymentMethod] = useState("pix");
-  const [fileName, setFileName] = useState("");
+  const [proofUrl, setProofUrl] = useState("");
+  const [fileUploading, setFileUploading] = useState(false);
 
   const [senderName, setSenderName] = useState("");
   const [receiverName, setReceiverName] = useState("");
@@ -21,6 +22,8 @@ export default function Pricing({ goToHome }) {
   const [course, setCourse] = useState("");
   const [classroom, setClassroom] = useState("");
   const [orderCode, setOrderCode] = useState(""); // NOVO
+  const [fileName, setFileName] = useState("");
+  const [proofFile, setProofFile] = useState(null);
 
   const formRef = useRef(null);
 
@@ -56,7 +59,7 @@ export default function Pricing({ goToHome }) {
     },
   ];
 
-  // NOVA FUNÇÃO
+  // FUNÇÃO Geradora de codigo
   const gerarCodigoPedido = () => {
     const caracteres = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // sem 0,O,1,I pra não confundir
     let codigo = 'CARTA-';
@@ -95,6 +98,33 @@ export default function Pricing({ goToHome }) {
       formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
     }, 100);
   };
+  async function uploadProof(file) {
+    if (!file) return null;
+
+    setFileUploading(true);
+
+    const fileName = `${Date.now()}-${file.name}`;
+
+    const { error } = await supabase.storage
+      .from("proofs")
+      .upload(fileName, file, {
+        upsert: false,
+      });
+
+    if (error) {
+      console.error(error);
+      setFileUploading(false);
+      return null;
+    }
+
+    const { data } = supabase.storage
+      .from("proofs")
+      .getPublicUrl(fileName);
+
+    setFileUploading(false);
+
+    return data.publicUrl;
+  }
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -123,7 +153,7 @@ export default function Pricing({ goToHome }) {
       return alert("Selecione a turma");
     }
 
-    if (paymentMethod === "pix" && !fileName) {
+    if (paymentMethod === "pix" && !proofUrl) {
       return alert("Envie o comprovante do Pix");
     }
 
@@ -144,7 +174,7 @@ export default function Pricing({ goToHome }) {
           message,
           classroom,
           payment_method: paymentMethod,
-          file_name: fileName,
+          proof_url: proofUrl,
           order_code: code,
           status: "pending",
         },
@@ -561,9 +591,16 @@ export default function Pricing({ goToHome }) {
                         <input
                           type="file"
                           accept="image/*,.pdf"
-                          onChange={(e) =>
-                            setFileName(e.target.files[0] ? e.target.files[0].name : "")
-                          }
+                          onChange={async (e) => {
+                            const file = e.target.files[0];
+                            if (!file) return;
+
+                            setFileName(file.name);
+                            setProofFile(file);
+
+                            const url = await uploadProof(file);
+                            setProofUrl(url);
+                          }}
                         />
                         <div className="upload-content">
                           {fileName ? (
@@ -576,7 +613,7 @@ export default function Pricing({ goToHome }) {
                             <>
                               <span className="upload-icon">📤</span>
                               <strong>Clique para enviar o comprovante</strong>
-                              <p>Aceito: PNG, JPG ou PDF (máx. 5MB)</p>
+                              <p>Aceito: PNG, JPG ou PDF (máx. 10MB)</p>
                             </>
                           )}
                         </div>

@@ -5,108 +5,189 @@ export default function Admin() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("all");
-  const [error, setError] = useState(null);
+  const [search, setSearch] = useState("");
 
   async function fetchOrders() {
-    try {
-      const { data, error } = await supabase
-        .from("orders")
-        .select("*")
-        .order("created_at", { ascending: false });
+    const { data, error } = await supabase
+      .from("orders")
+      .select("*")
+      .order("created_at", { ascending: false });
 
-      if (error) {
-        console.error(error);
-        setError("Erro ao buscar pedidos");
-        setLoading(false);
-        return;
-      }
-
-      setOrders(data || []);
-      setError(null);
-    } catch (err) {
-      console.error(err);
-      setError("Erro inesperado");
-    } finally {
+    if (error) {
+      console.error(error);
       setLoading(false);
+      return;
     }
+
+    setOrders(data || []);
+    setLoading(false);
   }
 
   useEffect(() => {
     fetchOrders();
-
     const interval = setInterval(fetchOrders, 5000);
     return () => clearInterval(interval);
   }, []);
 
-  async function updateStatus(id, status) {
+  async function updateStatus(id, newStatus) {
+    const order = orders.find((o) => o.id === id);
+
     const { error } = await supabase
       .from("orders")
-      .update({ status })
+      .update({
+        status: newStatus,
+        previous_status: order?.status || null,
+      })
       .eq("id", id);
 
     if (error) {
-      console.error(error);
       alert("Erro ao atualizar status");
-    } else {
-      fetchOrders();
+      return;
     }
+
+    fetchOrders();
   }
 
-  const filteredOrders = (orders || []).filter((order) => {
-    if (filter === "all") return true;
-    return order.status === filter;
-  });
+  async function undoStatus(order) {
+    if (!order?.previous_status) return;
 
-  if (loading) return <h2 style={{ padding: 20 }}>Carregando pedidos...</h2>;
+    const { error } = await supabase
+      .from("orders")
+      .update({
+        status: order.previous_status,
+        previous_status: null,
+      })
+      .eq("id", order.id);
 
-  if (error) return <h2 style={{ padding: 20, color: "red" }}>{error}</h2>;
+    if (error) {
+      alert("Erro ao desfazer");
+      return;
+    }
+
+    fetchOrders();
+  }
+
+  function formatDate(dateString) {
+    if (!dateString) return "—";
+    return new Date(dateString).toLocaleString("pt-BR");
+  }
+
+  const filteredOrders = orders
+    .filter((order) => {
+      if (filter === "all") return true;
+      return order.status === filter;
+    })
+    .filter((order) =>
+      order.order_code?.toLowerCase().includes(search.toLowerCase())
+    );
+
+  if (loading) return <h2>Carregando...</h2>;
 
   return (
-    <div style={{ padding: 20 }}>
+    <div style={{ padding: 20, color: "white" }}>
       <h1>📦 Admin - Pedidos</h1>
 
-      <div style={{ display: "flex", gap: 10, marginBottom: 20, flexWrap: "wrap" }}>
+      {/* SEARCH */}
+      <input
+        placeholder="Pesquisar por código..."
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+        style={{ marginBottom: 10, padding: 6 }}
+      />
+
+      {/* FILTERS */}
+      <div style={{ display: "flex", gap: 10, marginBottom: 20 }}>
         <button onClick={() => setFilter("all")}>Todos</button>
         <button onClick={() => setFilter("pending")}>Pendentes</button>
         <button onClick={() => setFilter("paid")}>Pagos</button>
         <button onClick={() => setFilter("delivered")}>Entregues</button>
       </div>
 
-      {filteredOrders.length === 0 ? (
-        <p>Nenhum pedido encontrado para esse filtro.</p>
-      ) : (
-        filteredOrders.map((order) => (
-          <div
-            key={order.id}
-            style={{
-              border: "1px solid #ccc",
-              marginBottom: 10,
-              padding: 10,
-              borderRadius: 8,
-            }}
-          >
-            <p><strong>Código:</strong> {order.order_code}</p>
-            <p><strong>Plano:</strong> {order.plan}</p>
-            <p><strong>Mensagem:</strong> {order.message}</p>
-            <p><strong>Destinatário:</strong> {order.receiver_name}</p>
-            <p><strong>Status:</strong> {order.status}</p>
+      {/* ORDERS */}
+      {filteredOrders.map((order) => (
+        <div
+          key={order.id}
+          style={{
+            border: "1px solid rgba(255,255,255,0.1)",
+            padding: 12,
+            marginBottom: 12,
+          }}
+        >
+          <p><strong>ID:</strong> {order.id}</p>
+          <p><strong>Código:</strong> {order.order_code}</p>
+          <p><strong>Plano:</strong> {order.plan}</p>
+          <p><strong>Mensagem:</strong> {order.message}</p>
+          <p><strong>Destinatário:</strong> {order.receiver_name}</p>
+          <p><strong>Status:</strong> {order.status}</p>
 
-            <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-              <button onClick={() => updateStatus(order.id, "pending")}>
-                Pending
-              </button>
+          {/* PAGAMENTO */}
+          <p>
+            <strong>Pagamento:</strong>{" "}
+            {order.payment_method === "pix"
+              ? "PIX"
+              : order.payment_method === "cash"
+              ? "Espécie"
+              : order.payment_method}
+          </p>
 
-              <button onClick={() => updateStatus(order.id, "paid")}>
-                Paid
-              </button>
+          <p>
+            <strong>Data:</strong> {formatDate(order.created_at)}
+          </p>
 
-              <button onClick={() => updateStatus(order.id, "delivered")}>
-                Delivered
-              </button>
+          {/* DEBUG TOTAL (banco inteiro) */}
+          <details style={{ marginTop: 10 }}>
+            <summary>Ver JSON completo</summary>
+            <pre style={{ fontSize: 12 }}>
+              {JSON.stringify(order, null, 2)}
+            </pre>
+          </details>
+
+          {/* COMPROVANTE (SÓ PIX) */}
+          {order.payment_method === "pix" && order.proof_url && (
+            <div style={{ marginTop: 10 }}>
+              <p><strong>Comprovante PIX:</strong></p>
+
+              <a
+                href={order.proof_url}
+                target="_blank"
+                rel="noreferrer"
+              >
+                Abrir comprovante
+              </a>
+
+              <div>
+                <img
+                  src={order.proof_url}
+                  alt="comprovante"
+                  style={{ width: 200 }}
+                />
+              </div>
             </div>
+          )}
+
+          {/* ACTIONS */}
+          <div style={{ display: "flex", gap: 10, marginTop: 10 }}>
+            <button onClick={() => updateStatus(order.id, "pending")}>
+              Pending
+            </button>
+
+            <button onClick={() => updateStatus(order.id, "paid")}>
+              Paid
+            </button>
+
+            <button onClick={() => updateStatus(order.id, "delivered")}>
+              Delivered
+            </button>
+
+            <button
+              onClick={() => undoStatus(order)}
+              disabled={!order.previous_status}
+            >
+              Undo
+            </button>
           </div>
-        ))
-      )}
+        </div>
+      ))}
     </div>
   );
 }
