@@ -145,22 +145,16 @@ export default function Pricing({ goToHome }) {
         .insert([
           {
             plan: selected?.title,
-
             sender_type: senderType,
             sender_name: senderName,
-
             receiver_type: receiverType,
             receiver_name: receiverName,
-
-            message,
             course,
+            message,
             classroom,
-
             payment_method: paymentMethod,
             file_name: fileName,
-
             order_code: orderCode,
-
             status: "pending",
           },
         ]);
@@ -168,23 +162,9 @@ export default function Pricing({ goToHome }) {
       console.log("SUPABASE ERROR:", error);
       console.log("SUPABASE DATA:", data);
 
-      if (error) {
-        throw error;
-      }
-      setLastSend(now);
-      setSent(true);
+      if (error) throw error;
 
-      try {
-        responseData = responseText ? JSON.parse(responseText) : null;
-      } catch {
-        responseData = null;
-      }
-
-      if (!res.ok) {
-        throw new Error(responseData?.error || "Erro ao processar pedido");
-      }
-
-      setLastSend(now);
+      setLastSend(Date.now());
       setSent(true);
 
       setTimeout(() => {
@@ -201,9 +181,10 @@ export default function Pricing({ goToHome }) {
         setClassroom("");
         setOrderCode("");
       }, 2500);
+
     } catch (err) {
       console.error(err);
-      alert("Erro ao conectar com o servidor. Tente novamente.");
+      alert("Erro ao enviar pedido.");
     } finally {
       setLoading(false);
     }
