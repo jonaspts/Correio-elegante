@@ -139,7 +139,7 @@ export default function Pricing({ goToHome }) {
     try {
       setLoading(true);
 
-      await fetch("https://correio-elegante-7atm.onrender.com/orders", {
+      const res = await fetch("https://correio-elegante-7atm.onrender.com/orders", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -156,6 +156,7 @@ export default function Pricing({ goToHome }) {
           orderCode
         }),
       });
+
       const responseText = await res.text();
       let responseData = null;
 
