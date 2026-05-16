@@ -139,28 +139,31 @@ export default function Pricing({ goToHome }) {
 
     try {
       setLoading(true);
+      if (!selected) return alert("Escolha um plano");
+      if (!receiverName) return alert("Digite o nome");
+      if (!message) return alert("Digite a mensagem");
 
       const { data, error } = await supabase
-  .from("orders")
-  .insert([
-    {
-      plan: "teste",
-      sender_type: "anonimo",
-      sender_name: "teste",
-      receiver_type: "anonimo",
-      receiver_name: "teste",
-      course: "DS",
-      message: "teste",
-      classroom: "3A-DS",
-      payment_method: "pix",
-      file_name: "teste",
-      order_code: "CARTA-TESTE",
-      status: "pending",
-    },
-  ]);
+        .from("orders")
+        .insert([
+          {
+            plan: selected?.title,
+            sender_type: senderType,
+            sender_name: senderName,
+            receiver_type: receiverType,
+            receiver_name: receiverName,
+            course: course,
+            message: message,
+            classroom: classroom,
+            payment_method: paymentMethod,
+            file_name: fileName,
+            order_code: orderCode,
+            status: "pending",
+          },
+        ]);
 
-console.log("ERROR:", JSON.stringify(error, null, 2));
-console.log("DATA:", data);
+      console.log("ERROR:", JSON.stringify(error, null, 2));
+      console.log("DATA:", data);
 
 
       if (error) throw error;
