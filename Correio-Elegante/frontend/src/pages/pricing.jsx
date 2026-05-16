@@ -165,6 +165,9 @@ export default function Pricing({ goToHome }) {
           },
         ]);
 
+      console.log("SUPABASE ERROR:", error);
+      console.log("SUPABASE DATA:", data);
+
       if (error) {
         throw error;
       }
