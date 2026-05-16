@@ -141,26 +141,27 @@ export default function Pricing({ goToHome }) {
       setLoading(true);
 
       const { data, error } = await supabase
-        .from("orders")
-        .insert([
-          {
-            plan: "teste",
-            sender_type: "anonimo",
-            sender_name: "teste",
-            receiver_type: "anonimo",
-            receiver_name: "teste",
-            course: "DS",
-            message: "teste",
-            classroom: "3A-DS",
-            payment_method: "pix",
-            file_name: "teste.png",
-            order_code: "CARTA-TESTE",
-            status: "pending",
-          },
-        ]);
+  .from("orders")
+  .insert([
+    {
+      plan: "teste",
+      sender_type: "anonimo",
+      sender_name: "teste",
+      receiver_type: "anonimo",
+      receiver_name: "teste",
+      course: "DS",
+      message: "teste",
+      classroom: "3A-DS",
+      payment_method: "pix",
+      file_name: "teste",
+      order_code: "CARTA-TESTE",
+      status: "pending",
+    },
+  ]);
 
-      console.log("ERROR:", error);
-      console.log("DATA:", data);
+console.log("ERROR:", JSON.stringify(error, null, 2));
+console.log("DATA:", data);
+
 
       if (error) throw error;
 
