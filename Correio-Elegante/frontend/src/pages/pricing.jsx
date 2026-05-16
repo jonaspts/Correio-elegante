@@ -118,22 +118,29 @@ export default function Pricing({ goToHome }) {
     try {
       setLoading(true);
 
-      const res = await fetch("https://correio-elegante-7atm.onrender.com/orders", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          plan: selected?.title,
-          senderType,
-          senderName,
-          receiverType,
-          receiverName,
-          message,
-          course,
-          classroom,
-          paymentMethod,
-          fileName,
-        }),
-      });
+            const { data, error } = await supabase
+        .from("orders")
+        .insert([
+          {
+            plan: selected?.title,
+            sender_type: senderType,
+            sender_name: senderName,
+            receiver_type: receiverType,
+            receiver_name: receiverName,
+            message: message,
+            course: course,
+            classroom: classroom,
+            payment_method: paymentMethod,
+            file_name: fileName,
+            status: "AGUARDANDO",
+            value: selected?.price
+          }
+        ])
+        .select();
+
+      if (error) {
+        throw error;
+      }
 
       const responseText = await res.text();
       let responseData = null;
