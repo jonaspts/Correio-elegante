@@ -80,13 +80,13 @@ export default function Pricing({ goToHome }) {
   }, [receiverType]);
 
   // NOVO useEffect para gerar código quando selecionar especie
-useEffect(() => {
-  if (paymentMethod !== "especie") return;
-  if (!selected) return;
-  if (orderCode) return;
+  useEffect(() => {
+    if (paymentMethod !== "especie") return;
+    if (!selected) return;
+    if (orderCode) return;
 
-  setOrderCode(gerarCodigoPedido());
-}, [paymentMethod, selected, orderCode]);
+    setOrderCode(gerarCodigoPedido());
+  }, [paymentMethod, selected, orderCode]);
 
   const handlePlanSelect = (plan) => {
     setSelected(plan);
@@ -139,26 +139,23 @@ useEffect(() => {
     try {
       setLoading(true);
 
-      const { data, error } = await supabase
-        .from("orders")
-        .insert([
-          {
-            plan: selected?.title,
-            sender_type: senderType,
-            sender_name: senderName,
-            receiver_type: receiverType,
-            receiver_name: receiverName,
-            message: message,
-            course: course,
-            classroom: classroom,
-            payment_method: paymentMethod,
-            file_name: fileName,
-            order_code: orderCode, // ADICIONADO ID
-            status: "AGUARDANDO",
-            value: selected?.price
-          }
-        ])
-        .select();
+      await fetch("https://correio-elegante-7atm.onrender.com/orders", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          plan: selected?.title,
+          senderType,
+          senderName,
+          receiverType,
+          receiverName,
+          message,
+          course,
+          classroom,
+          paymentMethod,
+          fileName,
+          orderCode
+        }),
+      });
 
       if (error) {
         throw error;
@@ -275,7 +272,7 @@ useEffect(() => {
             <span className="badge">💘 Correio Elegante • Turmas 3º Anos 2026</span>
             <h1>Tabela de Opções</h1>
             <p>
-              Selecione a opção ideal para enviar sua mensagem especial. 
+              Selecione a opção ideal para enviar sua mensagem especial.
               Preencha os dados e participe do Correio Elegante da ETEMAA.
             </p>
           </section>
@@ -284,19 +281,18 @@ useEffect(() => {
             {plans.map((plan) => (
               <article
                 key={plan.id}
-                className={`plan-card ${selected?.id === plan.id ? "selected" : ""} ${
-                  plan.highlighted ? "highlighted" : ""
-                }`}
+                className={`plan-card ${selected?.id === plan.id ? "selected" : ""} ${plan.highlighted ? "highlighted" : ""
+                  }`}
               >
                 {plan.highlighted && <div className="popular-badge">Mais Popular</div>}
-                
+
                 <div className="plan-top">
                   <span className="plan-emoji">{plan.emoji}</span>
                   <span className="plan-price">{plan.price}</span>
                 </div>
 
                 <h2>{plan.title}</h2>
-                
+
                 <ul className="plan-features">
                   {plan.features.map((feature, idx) => (
                     <li key={idx}>
@@ -574,7 +570,7 @@ useEffect(() => {
                       </div>
 
                       <p className="pix-instruction">
-                        Realize o pagamento no valor de <strong>{selected.price}</strong> e 
+                        Realize o pagamento no valor de <strong>{selected.price}</strong> e
                         envie o comprovante abaixo.
                       </p>
 
@@ -632,7 +628,7 @@ useEffect(() => {
                         </div>
                       )}
                       <p>
-                        O pagamento no valor de <strong>{selected.price}</strong> deverá 
+                        O pagamento no valor de <strong>{selected.price}</strong> deverá
                         ser entregue presencialmente para os representantes dos 3º Anos.
                       </p>
                       <div className="info-alert">
