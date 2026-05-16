@@ -77,6 +77,8 @@ export default function Pricing({ goToHome }) {
   useEffect(() => {
     if (senderType === "anonimo") {
       setSenderName("");
+      setSenderCourse("");
+      setSenderClassroom("");
     }
   }, [senderType]);
 
@@ -135,23 +137,21 @@ export default function Pricing({ goToHome }) {
     if (!receiverName.trim()) return alert("Digite o nome");
     if (!message.trim()) return alert("Digite a mensagem");
 
-    if (senderType === "identificado" && !senderName.trim()) {
-      return alert("Digite seu nome completo");
-    }
+    if (senderType === "identificado") {
+      if (!senderName.trim()) {
+        return alert("Digite seu nome completo");
+      }
 
-    if (!senderCourse) {
-      return alert("Selecione o curso do remetente");
-    }
-
-    if (!senderClassroom) {
-      return alert("Selecione a turma do remetente");
+      if (senderCourse && !senderClassroom) {
+        return alert("Selecione a turma do remetente");
+      }
     }
 
     if (receiverType === "identificado" && !course) {
       return alert("Selecione o curso");
     }
 
-    if (receiverType === "identificado" && !classroom) {
+    if (receiverType === "identificado" && course && !classroom) {
       return alert("Selecione a turma");
     }
 
@@ -168,13 +168,14 @@ export default function Pricing({ goToHome }) {
         {
           plan: selected.title,
           sender_type: senderType,
-          sender_name: senderName,
-          sender_course: senderCourse,
-          sender_classroom: senderClassroom,
+          sender_name: senderType === "anonimo" ? null : senderName,
+          sender_course: senderType === "anonimo" ? null : senderCourse || null,
+          sender_classroom:
+            senderType === "anonimo" ? null : senderCourse ? senderClassroom : null,
           receiver_type: receiverType,
           receiver_name: receiverName,
-          course,
-          classroom,
+          course: receiverType === "anonimo" ? null : course || null,
+          classroom: receiverType === "anonimo" ? null : course ? classroom : null,
           message,
           payment_method: paymentMethod,
           proof_url: proofUrl,
@@ -300,8 +301,9 @@ export default function Pricing({ goToHome }) {
             {plans.map((plan) => (
               <article
                 key={plan.id}
-                className={`plan-card ${selected?.id === plan.id ? "selected" : ""} ${plan.highlighted ? "highlighted" : ""
-                  }`}
+                className={`plan-card ${selected?.id === plan.id ? "selected" : ""} ${
+                  plan.highlighted ? "highlighted" : ""
+                }`}
               >
                 {plan.highlighted && <div className="popular-badge">Mais Popular</div>}
 
@@ -366,13 +368,17 @@ export default function Pricing({ goToHome }) {
                 <div className="form-section">
                   <h3>
                     <span className="section-icon">💌</span>
-                    Informações do Remetente (Quem Envia)
+                    Informações de quem envia
                   </h3>
 
                   <div className="input-group">
                     <label htmlFor="sender-type">Tipo de envio</label>
                     <div className="radio-group">
-                      <label className={`radio-option ${senderType === "identificado" ? "active" : ""}`}>
+                      <label
+                        className={`radio-option ${
+                          senderType === "identificado" ? "active" : ""
+                        }`}
+                      >
                         <input
                           type="radio"
                           name="senderType"
@@ -384,7 +390,9 @@ export default function Pricing({ goToHome }) {
                         <span>Identificado</span>
                       </label>
 
-                      <label className={`radio-option ${senderType === "anonimo" ? "active" : ""}`}>
+                      <label
+                        className={`radio-option ${senderType === "anonimo" ? "active" : ""}`}
+                      >
                         <input
                           type="radio"
                           name="senderType"
@@ -399,86 +407,103 @@ export default function Pricing({ goToHome }) {
                   </div>
 
                   {senderType === "identificado" && (
-                    <div className="input-group">
-                      <label htmlFor="sender-name">Seu nome completo</label>
-                      <input
-                        type="text"
-                        id="sender-name"
-                        value={senderName}
-                        onChange={(e) => setSenderName(e.target.value)}
-                        placeholder="Digite seu nome completo"
-                      />
-                    </div>
-                  )}
-
-                  <div className="input-group">
-                    <label htmlFor="sender-course">Curso do remetente</label>
-                    <div className="radio-group">
-                      <label className={`radio-option ${senderCourse === "ADM" ? "active" : ""}`}>
+                    <>
+                      <div className="input-group">
+                        <label htmlFor="sender-name">Seu nome completo</label>
                         <input
-                          type="radio"
-                          name="senderCourse"
-                          id="sender-course-adm"
-                          value="ADM"
-                          checked={senderCourse === "ADM"}
-                          onChange={(e) => {
-                            setSenderCourse(e.target.value);
-                            setSenderClassroom("");
-                          }}
+                          type="text"
+                          id="sender-name"
+                          value={senderName}
+                          onChange={(e) => setSenderName(e.target.value)}
+                          placeholder="Digite seu nome completo"
                         />
-                        <span>Administração</span>
-                      </label>
-
-                      <label className={`radio-option ${senderCourse === "DS" ? "active" : ""}`}>
-                        <input
-                          type="radio"
-                          name="senderCourse"
-                          id="sender-course-ds"
-                          value="DS"
-                          checked={senderCourse === "DS"}
-                          onChange={(e) => {
-                            setSenderCourse(e.target.value);
-                            setSenderClassroom("");
-                          }}
-                        />
-                        <span>Des. Sistemas</span>
-                      </label>
-                      <label className={`radio-option ${senderCourse === "" ? "active" : ""}`}>
-                        <input
-                          type="radio"
-                          name="senderCourse"
-                          value=""
-                          checked={senderCourse === ""}
-                          onChange={() => {
-                            setSenderCourse("");
-                            setSenderClassroom("");
-                          }}
-                        />
-                        <span>Não informar</span>
-                      </label>
-                    </div>
-                  </div>
-
-
-                  {senderCourse && (
-                    <div className="input-group">
-                      <label htmlFor="sender-classroom">Turma do remetente</label>
-                      <div className="class-grid">
-                        {["1A", "1B", "2A", "2B", "3A", "3B"].map((t) => {
-                          const full = `${t}-${senderCourse}`;
-                          return (
-                            <button
-                              key={full}
-                              type="button"
-                              className={`class-btn ${senderClassroom === full ? "active" : ""}`}
-                              onClick={() => setSenderClassroom(full)}
-                            >
-                              {full}
-                            </button>
-                          );
-                        })}
                       </div>
-                    </div>
+
+                      <div className="input-group">
+                        <label htmlFor="sender-course">Curso do remetente</label>
+                        <div className="radio-group">
+                          <label
+                            className={`radio-option ${
+                              senderCourse === "ADM" ? "active" : ""
+                            }`}
+                          >
+                            <input
+                              type="radio"
+                              name="senderCourse"
+                              id="sender-course-adm"
+                              value="ADM"
+                              checked={senderCourse === "ADM"}
+                              onChange={(e) => {
+                                setSenderCourse(e.target.value);
+                                setSenderClassroom("");
+                              }}
+                            />
+                            <span>Administração</span>
+                          </label>
+
+                          <label
+                            className={`radio-option ${
+                              senderCourse === "DS" ? "active" : ""
+                            }`}
+                          >
+                            <input
+                              type="radio"
+                              name="senderCourse"
+                              id="sender-course-ds"
+                              value="DS"
+                              checked={senderCourse === "DS"}
+                              onChange={(e) => {
+                                setSenderCourse(e.target.value);
+                                setSenderClassroom("");
+                              }}
+                            />
+                            <span>Des. Sistemas</span>
+                          </label>
+
+                          <label
+                            className={`radio-option ${
+                              senderCourse === "" ? "active" : ""
+                            }`}
+                          >
+                            <input
+                              type="radio"
+                              name="senderCourse"
+                              id="sender-course-none"
+                              value=""
+                              checked={senderCourse === ""}
+                              onChange={() => {
+                                setSenderCourse("");
+                                setSenderClassroom("");
+                              }}
+                            />
+                            <span>Não informar</span>
+                          </label>
+                        </div>
+                      </div>
+
+                      {senderCourse && (
+                        <div className="input-group">
+                          <label htmlFor="sender-classroom">Turma do remetente</label>
+                          <div className="class-grid">
+                            {["1A", "1B", "2A", "2B", "3A", "3B"].map((t) => {
+                              const full = `${t}-${senderCourse}`;
+                              return (
+                                <button
+                                  key={full}
+                                  type="button"
+                                  className={`class-btn ${
+                                    senderClassroom === full ? "active" : ""
+                                  }`}
+                                  onClick={() => setSenderClassroom(full)}
+                                >
+                                  {full}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+                    </>
                   )}
                 </div>
 
@@ -537,7 +562,9 @@ export default function Pricing({ goToHome }) {
                         <span>Des. Sistemas</span>
                       </label>
 
-                      <label className={`radio-option ${receiverType === "anonimo" ? "active" : ""}`}>
+                      <label
+                        className={`radio-option ${receiverType === "anonimo" ? "active" : ""}`}
+                      >
                         <input
                           type="radio"
                           name="course"
@@ -616,7 +643,11 @@ export default function Pricing({ goToHome }) {
                         </div>
                       </label>
 
-                      <label className={`payment-option ${paymentMethod === "especie" ? "active" : ""}`}>
+                      <label
+                        className={`payment-option ${
+                          paymentMethod === "especie" ? "active" : ""
+                        }`}
+                      >
                         <input
                           type="radio"
                           name="payment"

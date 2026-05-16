@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
 import "../App.css";
 
-export default function Admin() {
+export default function Admin({ goToHome }) {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("all");
@@ -176,6 +176,10 @@ export default function Admin() {
     <div className="admin-page">
       {/* HEADER */}
       <header className="admin-header">
+        <button className="back-btn" onClick={goToHome} type="button">
+          ← Voltar para início
+        </button>
+        
         <div className="admin-header-content">
           <h1>
             <span className="header-icon">📦</span>
