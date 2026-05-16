@@ -19,9 +19,14 @@ export default function Pricing({ goToHome }) {
   const [senderName, setSenderName] = useState("");
   const [receiverName, setReceiverName] = useState("");
   const [message, setMessage] = useState("");
+
+  const [senderCourse, setSenderCourse] = useState("");
+  const [senderClassroom, setSenderClassroom] = useState("");
+
   const [course, setCourse] = useState("");
   const [classroom, setClassroom] = useState("");
-  const [orderCode, setOrderCode] = useState(""); // NOVO
+
+  const [orderCode, setOrderCode] = useState("");
   const [fileName, setFileName] = useState("");
   const [proofFile, setProofFile] = useState(null);
 
@@ -59,15 +64,14 @@ export default function Pricing({ goToHome }) {
     },
   ];
 
-  // FUNÇÃO Geradora de codigo
   const gerarCodigoPedido = () => {
-    const caracteres = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // sem 0,O,1,I pra não confundir
-    let codigo = 'CARTA-';
+    const caracteres = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+    let codigo = "CARTA-";
     for (let i = 0; i < 6; i++) {
       const indiceAleatorio = Math.floor(Math.random() * caracteres.length);
       codigo += caracteres[indiceAleatorio];
     }
-    return codigo; // ex: CARTA-X7KM4P
+    return codigo;
   };
 
   useEffect(() => {
@@ -83,21 +87,13 @@ export default function Pricing({ goToHome }) {
     }
   }, [receiverType]);
 
-  // NOVO useEffect para gerar código quando selecionar especie
-  useEffect(() => {
-    if (paymentMethod !== "especie") return;
-    if (!selected) return;
-    if (orderCode) return;
-
-    setOrderCode(gerarCodigoPedido());
-  }, [paymentMethod, selected, orderCode]);
-
   const handlePlanSelect = (plan) => {
     setSelected(plan);
     setTimeout(() => {
       formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
     }, 100);
   };
+
   async function uploadProof(file) {
     if (!file) return null;
 
@@ -117,9 +113,7 @@ export default function Pricing({ goToHome }) {
       return null;
     }
 
-    const { data } = supabase.storage
-      .from("proofs")
-      .getPublicUrl(fileName);
+    const { data } = supabase.storage.from("proofs").getPublicUrl(fileName);
 
     setFileUploading(false);
 
@@ -145,6 +139,14 @@ export default function Pricing({ goToHome }) {
       return alert("Digite seu nome completo");
     }
 
+    if (!senderCourse) {
+      return alert("Selecione o curso do remetente");
+    }
+
+    if (!senderClassroom) {
+      return alert("Selecione a turma do remetente");
+    }
+
     if (receiverType === "identificado" && !course) {
       return alert("Selecione o curso");
     }
@@ -160,7 +162,6 @@ export default function Pricing({ goToHome }) {
     try {
       setLoading(true);
 
-      // 🔥 GERA O CÓDIGO AQUI (garante único por envio)
       const code = gerarCodigoPedido();
 
       const { data, error } = await supabase.from("orders").insert([
@@ -168,11 +169,13 @@ export default function Pricing({ goToHome }) {
           plan: selected.title,
           sender_type: senderType,
           sender_name: senderName,
+          sender_course: senderCourse,
+          sender_classroom: senderClassroom,
           receiver_type: receiverType,
           receiver_name: receiverName,
           course,
-          message,
           classroom,
+          message,
           payment_method: paymentMethod,
           proof_url: proofUrl,
           order_code: code,
@@ -185,9 +188,7 @@ export default function Pricing({ goToHome }) {
 
       if (error) throw error;
 
-      // 🔥 MOSTRA O CÓDIGO PRO USUÁRIO
       setOrderCode(code);
-
       setLastSend(now);
       setSent(true);
 
@@ -198,7 +199,11 @@ export default function Pricing({ goToHome }) {
         setReceiverType("anonimo");
         setPaymentMethod("pix");
         setFileName("");
+        setProofFile(null);
+        setProofUrl("");
         setSenderName("");
+        setSenderCourse("");
+        setSenderClassroom("");
         setReceiverName("");
         setMessage("");
         setCourse("");
@@ -212,6 +217,7 @@ export default function Pricing({ goToHome }) {
       setLoading(false);
     }
   };
+
   useEffect(() => {
     function spawnHeart() {
       const id = Math.random().toString(36).substr(2, 9);
@@ -357,11 +363,10 @@ export default function Pricing({ goToHome }) {
               </div>
 
               <form onSubmit={handleSubmit} className="elegant-form">
-                {/* Seção Remetente */}
                 <div className="form-section">
                   <h3>
                     <span className="section-icon">💌</span>
-                    Informações do Remetente
+                    Informações do Remetente (Quem Envia)
                   </h3>
 
                   <div className="input-group">
@@ -405,11 +410,80 @@ export default function Pricing({ goToHome }) {
                       />
                     </div>
                   )}
+
+                  <div className="input-group">
+                    <label htmlFor="sender-course">Curso do remetente</label>
+                    <div className="radio-group">
+                      <label className={`radio-option ${senderCourse === "ADM" ? "active" : ""}`}>
+                        <input
+                          type="radio"
+                          name="senderCourse"
+                          id="sender-course-adm"
+                          value="ADM"
+                          checked={senderCourse === "ADM"}
+                          onChange={(e) => {
+                            setSenderCourse(e.target.value);
+                            setSenderClassroom("");
+                          }}
+                        />
+                        <span>Administração</span>
+                      </label>
+
+                      <label className={`radio-option ${senderCourse === "DS" ? "active" : ""}`}>
+                        <input
+                          type="radio"
+                          name="senderCourse"
+                          id="sender-course-ds"
+                          value="DS"
+                          checked={senderCourse === "DS"}
+                          onChange={(e) => {
+                            setSenderCourse(e.target.value);
+                            setSenderClassroom("");
+                          }}
+                        />
+                        <span>Des. Sistemas</span>
+                      </label>
+                      <label className={`radio-option ${senderCourse === "" ? "active" : ""}`}>
+                        <input
+                          type="radio"
+                          name="senderCourse"
+                          value=""
+                          checked={senderCourse === ""}
+                          onChange={() => {
+                            setSenderCourse("");
+                            setSenderClassroom("");
+                          }}
+                        />
+                        <span>Não informar</span>
+                      </label>
+                    </div>
+                  </div>
+
+
+                  {senderCourse && (
+                    <div className="input-group">
+                      <label htmlFor="sender-classroom">Turma do remetente</label>
+                      <div className="class-grid">
+                        {["1A", "1B", "2A", "2B", "3A", "3B"].map((t) => {
+                          const full = `${t}-${senderCourse}`;
+                          return (
+                            <button
+                              key={full}
+                              type="button"
+                              className={`class-btn ${senderClassroom === full ? "active" : ""}`}
+                              onClick={() => setSenderClassroom(full)}
+                            >
+                              {full}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 <div className="form-divider" />
 
-                {/* Seção Destinatário */}
                 <div className="form-section">
                   <h3>
                     <span className="section-icon">🎯</span>
@@ -512,15 +586,12 @@ export default function Pricing({ goToHome }) {
                       placeholder="Escreva aqui sua mensagem especial..."
                       required
                     />
-                    <span className="input-hint">
-                      {message.length}/500 caracteres
-                    </span>
+                    <span className="input-hint">{message.length}/500 caracteres</span>
                   </div>
                 </div>
 
                 <div className="form-divider" />
 
-                {/* Seção Pagamento */}
                 <div className="form-section">
                   <h3>
                     <span className="section-icon">💳</span>
@@ -647,10 +718,12 @@ export default function Pricing({ goToHome }) {
                           </p>
                         </div>
                       )}
+
                       <p>
                         O pagamento no valor de <strong>{selected.price}</strong> deverá
                         ser entregue presencialmente para os representantes dos 3º Anos.
                       </p>
+
                       <div className="info-alert">
                         <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                           <path
