@@ -144,23 +144,23 @@ export default function Pricing({ goToHome }) {
         .from("orders")
         .insert([
           {
-            plan: selected?.title,
-            sender_type: senderType,
-            sender_name: senderName,
-            receiver_type: receiverType,
-            receiver_name: receiverName,
-            course,
-            message,
-            classroom,
-            payment_method: paymentMethod,
-            file_name: fileName,
-            order_code: orderCode,
+            plan: "teste",
+            sender_type: "anonimo",
+            sender_name: "teste",
+            receiver_type: "anonimo",
+            receiver_name: "teste",
+            course: "DS",
+            message: "teste",
+            classroom: "3A-DS",
+            payment_method: "pix",
+            file_name: "teste.png",
+            order_code: "CARTA-TESTE",
             status: "pending",
           },
         ]);
 
-      console.log("SUPABASE ERROR:", error);
-      console.log("SUPABASE DATA:", data);
+      console.log("ERROR:", error);
+      console.log("DATA:", data);
 
       if (error) throw error;
 
