@@ -145,16 +145,22 @@ export default function Pricing({ goToHome }) {
         .insert([
           {
             plan: selected?.title,
+
             sender_type: senderType,
             sender_name: senderName,
+
             receiver_type: receiverType,
             receiver_name: receiverName,
+
             message,
             course,
             classroom,
+
             payment_method: paymentMethod,
             file_name: fileName,
+
             order_code: orderCode,
+
             status: "pending",
           },
         ]);
