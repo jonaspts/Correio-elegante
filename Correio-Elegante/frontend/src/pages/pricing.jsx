@@ -19,6 +19,7 @@ export default function Pricing({ goToHome }) {
   const [message, setMessage] = useState("");
   const [course, setCourse] = useState("");
   const [classroom, setClassroom] = useState("");
+  const [orderCode, setOrderCode] = useState(""); // NOVO
 
   const formRef = useRef(null);
 
@@ -54,6 +55,17 @@ export default function Pricing({ goToHome }) {
     },
   ];
 
+  // NOVA FUNÇÃO
+  const gerarCodigoPedido = () => {
+    const caracteres = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // sem 0,O,1,I pra não confundir
+    let codigo = 'CARTA-';
+    for (let i = 0; i < 6; i++) {
+      const indiceAleatorio = Math.floor(Math.random() * caracteres.length);
+      codigo += caracteres[indiceAleatorio];
+    }
+    return codigo; // ex: CARTA-X7KM4P
+  };
+
   useEffect(() => {
     if (senderType === "anonimo") {
       setSenderName("");
@@ -66,6 +78,15 @@ export default function Pricing({ goToHome }) {
       setClassroom("");
     }
   }, [receiverType]);
+
+  // NOVO useEffect para gerar código quando selecionar especie
+useEffect(() => {
+  if (paymentMethod !== "especie") return;
+  if (!selected) return;
+  if (orderCode) return;
+
+  setOrderCode(gerarCodigoPedido());
+}, [paymentMethod, selected, orderCode]);
 
   const handlePlanSelect = (plan) => {
     setSelected(plan);
@@ -118,7 +139,7 @@ export default function Pricing({ goToHome }) {
     try {
       setLoading(true);
 
-            const { data, error } = await supabase
+      const { data, error } = await supabase
         .from("orders")
         .insert([
           {
@@ -132,6 +153,7 @@ export default function Pricing({ goToHome }) {
             classroom: classroom,
             payment_method: paymentMethod,
             file_name: fileName,
+            order_code: orderCode, // ADICIONADO ID
             status: "AGUARDANDO",
             value: selected?.price
           }
@@ -170,6 +192,7 @@ export default function Pricing({ goToHome }) {
         setMessage("");
         setCourse("");
         setClassroom("");
+        setOrderCode("");
       }, 2500);
     } catch (err) {
       console.error(err);
@@ -535,7 +558,7 @@ export default function Pricing({ goToHome }) {
                       <div className="pix-header">
                         <h4>Chave Pix para pagamento</h4>
                       </div>
-                      
+
                       <div className="pix-key-container">
                         <div className="pix-key">correioeleganteetemaa@gmail.com</div>
                         <button
@@ -586,6 +609,28 @@ export default function Pricing({ goToHome }) {
                     <div className="cash-box">
                       <div className="cash-icon">💵</div>
                       <h4>Pagamento em dinheiro</h4>
+
+                      {orderCode && (
+                        <div className="order-code-box">
+                          <p className="order-code-label">Código do seu pedido:</p>
+                          <div className="order-code-display">
+                            <strong>{orderCode}</strong>
+                            <button
+                              type="button"
+                              className="copy-code-btn"
+                              onClick={() => {
+                                navigator.clipboard.writeText(orderCode);
+                                alert("Código copiado!");
+                              }}
+                            >
+                              📋
+                            </button>
+                          </div>
+                          <p className="order-code-hint">
+                            Guarde este código para acompanhar seu pedido
+                          </p>
+                        </div>
+                      )}
                       <p>
                         O pagamento no valor de <strong>{selected.price}</strong> deverá 
                         ser entregue presencialmente para os representantes dos 3º Anos.

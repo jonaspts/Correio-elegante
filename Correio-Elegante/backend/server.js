@@ -1,6 +1,7 @@
 const express = require("express");
 const cors = require("cors");
 const { addRow } = require("./sheets");
+const { addRow, orderCodeExists } = require("./sheets");
 function getBrazilHour() {
   const now = new Date();
 
@@ -24,6 +25,9 @@ app.use(express.json());
 app.post("/orders", async (req, res) => {
   console.log("CHEGOU:", req.body);
 
+  if (!req.body.plan || !req.body.receiverName || !req.body.message) {
+  return res.status(400).json({ error: "Campos obrigatórios faltando" });
+}
 
   try {
     await addRow({
@@ -35,7 +39,8 @@ app.post("/orders", async (req, res) => {
       receiverClassroom: req.body.classroom || "",
       item: req.body.plan || "",
       mensagem: req.body.message || "",
-      pagamento: req.body.paymentMethod || ""
+      pagamento: req.body.paymentMethod || "",
+      orderCode: req.body.orderCode || ""
     });
 
     res.json({ ok: true });

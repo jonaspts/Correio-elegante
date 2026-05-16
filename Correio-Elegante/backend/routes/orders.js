@@ -25,9 +25,27 @@ router.post("/", (req, res) => {
     para: req.body.receiverName,
     item: req.body.plan,
     mensagem: req.body.message,
-    pagamento: req.body.paymentMethod
+    pagamento: req.body.paymentMethod,
+    orderCode: req.body.orderCode
   };
 
+  // 👇 AQUI ENTRA A VALIDAÇÃO
+
+  // 🔒 1. valida se existe código
+  if (!newOrder.orderCode) {
+    return res.status(400).json({
+      error: "Pedido sem código"
+    });
+  }
+
+  // 🔒 2. verifica duplicado
+  if (orders.some(o => o.orderCode === newOrder.orderCode)) {
+    return res.status(409).json({
+      error: "Código de pedido já utilizado"
+    });
+  }
+
+  // 👇 só depois disso salva
   orders.push(newOrder);
 
   fs.writeFileSync(DB_FILE, JSON.stringify(orders, null, 2));
