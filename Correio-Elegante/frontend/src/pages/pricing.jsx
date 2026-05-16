@@ -156,11 +156,6 @@ export default function Pricing({ goToHome }) {
           orderCode
         }),
       });
-
-      if (error) {
-        throw error;
-      }
-
       const responseText = await res.text();
       let responseData = null;
 
