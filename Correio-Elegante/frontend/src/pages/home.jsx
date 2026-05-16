@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-export default function Home({ goToPricing = () => {} }) {
+export default function Home({ goToPricing = () => { }, goToAdmin = () => { } }) {
   const [hearts, setHearts] = useState([]);
 
   useEffect(() => {
@@ -45,6 +45,11 @@ export default function Home({ goToPricing = () => {} }) {
           </span>
         ))}
       </div>
+
+
+      <button className="admin-btn" onClick={goToAdmin}>
+        Admin
+      </button>
 
       <main className="container">
         {/* HERO */}

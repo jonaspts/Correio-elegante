@@ -3,63 +3,71 @@ import { motion, AnimatePresence } from "framer-motion";
 
 import Home from "./pages/home";
 import Pricing from "./pages/pricing";
+import Admin from "./pages/admin";
 
 export default function App() {
   const [currentPage, setCurrentPage] = useState("home");
 
   const pageVariants = {
-    initial: (direction) => ({
+    initial: {
       opacity: 0,
-      x: direction === "home" ? -100 : 100,
-    }),
-
+      x: 80,
+    },
     animate: {
       opacity: 1,
       x: 0,
-      transition: {
-        duration: 0.5,
-        ease: [0.4, 0, 0.2, 1],
-      },
+      transition: { duration: 0.35 },
     },
-
-    exit: (direction) => ({
+    exit: {
       opacity: 0,
-      x: direction === "home" ? 100 : -100,
-      transition: {
-        duration: 0.4,
-        ease: [0.4, 0, 0.2, 1],
-      },
-    }),
+      x: -80,
+      transition: { duration: 0.25 },
+    },
   };
 
   return (
     <div className="app-container">
       <AnimatePresence mode="wait">
-        {currentPage === "home" ? (
+
+        {currentPage === "home" && (
           <motion.div
             key="home"
-            custom="home"
             variants={pageVariants}
             initial="initial"
             animate="animate"
             exit="exit"
-            className="page-wrapper"
           >
-            <Home goToPricing={() => setCurrentPage("pricing")} />
+            <Home
+              goToPricing={() => setCurrentPage("pricing")}
+              goToAdmin={() => setCurrentPage("admin")}
+            />
           </motion.div>
-        ) : (
+        )}
+
+        {currentPage === "pricing" && (
           <motion.div
             key="pricing"
-            custom="pricing"
             variants={pageVariants}
             initial="initial"
             animate="animate"
             exit="exit"
-            className="page-wrapper"
           >
             <Pricing goToHome={() => setCurrentPage("home")} />
           </motion.div>
         )}
+
+        {currentPage === "admin" && (
+          <motion.div
+            key="admin"
+            variants={pageVariants}
+            initial="initial"
+            animate="animate"
+            exit="exit"
+          >
+            <Admin goToHome={() => setCurrentPage("home")} />
+          </motion.div>
+        )}
+
       </AnimatePresence>
     </div>
   );
