@@ -107,68 +107,58 @@ export default function Pricing({ goToHome }) {
       return;
     }
 
-    if (!selected) {
-      alert("Por favor, escolha um plano antes de continuar");
-      return;
-    }
-
-    if (!receiverName.trim() || !message.trim()) {
-      alert("Preencha todos os campos obrigatórios");
-      return;
-    }
+    if (!selected) return alert("Escolha um plano");
+    if (!receiverName.trim()) return alert("Digite o nome");
+    if (!message.trim()) return alert("Digite a mensagem");
 
     if (senderType === "identificado" && !senderName.trim()) {
-      alert("Digite seu nome completo");
-      return;
+      return alert("Digite seu nome completo");
     }
 
     if (receiverType === "identificado" && !course) {
-      alert("Selecione o curso do destinatário");
-      return;
+      return alert("Selecione o curso");
     }
 
     if (receiverType === "identificado" && !classroom) {
-      alert("Selecione a turma do destinatário");
-      return;
+      return alert("Selecione a turma");
     }
 
     if (paymentMethod === "pix" && !fileName) {
-      alert("Por favor, envie o comprovante do Pix");
-      return;
+      return alert("Envie o comprovante do Pix");
     }
 
     try {
       setLoading(true);
-      if (!selected) return alert("Escolha um plano");
-      if (!receiverName) return alert("Digite o nome");
-      if (!message) return alert("Digite a mensagem");
 
-      const { data, error } = await supabase
-        .from("orders")
-        .insert([
-          {
-            plan: selected?.title,
-            sender_type: senderType,
-            sender_name: senderName,
-            receiver_type: receiverType,
-            receiver_name: receiverName,
-            course: course,
-            message: message,
-            classroom: classroom,
-            payment_method: paymentMethod,
-            file_name: fileName,
-            order_code: orderCode,
-            status: "pending",
-          },
-        ]);
+      // 🔥 GERA O CÓDIGO AQUI (garante único por envio)
+      const code = gerarCodigoPedido();
 
-      console.log("ERROR:", JSON.stringify(error, null, 2));
+      const { data, error } = await supabase.from("orders").insert([
+        {
+          plan: selected.title,
+          sender_type: senderType,
+          sender_name: senderName,
+          receiver_type: receiverType,
+          receiver_name: receiverName,
+          course,
+          message,
+          classroom,
+          payment_method: paymentMethod,
+          file_name: fileName,
+          order_code: code,
+          status: "pending",
+        },
+      ]);
+
+      console.log("ERROR:", error);
       console.log("DATA:", data);
-
 
       if (error) throw error;
 
-      setLastSend(Date.now());
+      // 🔥 MOSTRA O CÓDIGO PRO USUÁRIO
+      setOrderCode(code);
+
+      setLastSend(now);
       setSent(true);
 
       setTimeout(() => {
@@ -185,7 +175,6 @@ export default function Pricing({ goToHome }) {
         setClassroom("");
         setOrderCode("");
       }, 2500);
-
     } catch (err) {
       console.error(err);
       alert("Erro ao enviar pedido.");
@@ -193,7 +182,6 @@ export default function Pricing({ goToHome }) {
       setLoading(false);
     }
   };
-
   useEffect(() => {
     function spawnHeart() {
       const id = Math.random().toString(36).substr(2, 9);
