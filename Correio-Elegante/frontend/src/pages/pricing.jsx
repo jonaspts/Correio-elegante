@@ -36,32 +36,25 @@ export default function Pricing({ goToHome }) {
     {
       id: "p1",
       emoji: "💌",
-      title: "Mensagem Simples",
-      price: "R$ 2,00",
+      title: "Carta",
+      price: "R$ 1,00",
       features: ["!!A ser decidido!!", "!!A ser decidido!!", "!!A ser decidido!!"],
     },
     {
       id: "p2",
       emoji: "❤️",
-      title: "Mensagem Premium",
-      price: "R$ 4,00",
+      title: "Carta com Pirulito",
+      price: "R$ 2,00",
       features: ["!!A ser decidido!!", "!!A ser decidido!!", "!!A ser decidido!!"],
     },
     {
       id: "p3",
       emoji: "🎁",
-      title: "Combo Especial",
-      price: "R$ 6,00",
+      title: "carta com bombom",
+      price: "R$ 3,00",
       features: ["!!A ser decidido!!", "!!A ser decidido!!", "!!A ser decidido!!"],
     },
-    {
-      id: "p4",
-      emoji: "🔥",
-      title: "Ultra Destaque",
-      price: "R$ 10,00",
-      features: ["!!A ser decidido!!", "!!A ser decidido!!", "!!A ser decidido!!"],
-      highlighted: true,
-    },
+
   ];
 
   const gerarCodigoPedido = () => {
