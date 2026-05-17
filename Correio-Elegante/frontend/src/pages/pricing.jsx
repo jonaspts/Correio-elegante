@@ -666,7 +666,7 @@ return (
                 {senderType === "identificado" && (
                   <>
                     <div className="input-group">
-                      <label htmlFor="sender-name">Seu nome completo</label>
+                      <label htmlFor="sender-name">Seu nome</label>
                       <input
                         type="text"
                         id="sender-name"
