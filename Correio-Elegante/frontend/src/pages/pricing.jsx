@@ -169,7 +169,6 @@ export default function Pricing({ goToHome }) {
           plan: selected.title,
           sender_type: senderType,
           sender_name: senderType === "anonimo" ? null : senderName,
-          sender_course: senderType === "anonimo" ? null : senderCourse || null,
           sender_classroom:
             senderType === "anonimo" ? null : senderCourse ? senderClassroom : null,
           receiver_type: receiverType,
