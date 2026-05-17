@@ -591,8 +591,23 @@ return (
                 {selected?.id === plan.id ? "Selecionado ✓" : "Selecionar plano"}
               </button>
             </article>
+            
+            
           ))}
         </div>
+         <div className="promo-block">
+          <div className="promo-icon">🎁</div>
+          <h3>Concorra a uma Cesta Especial!</h3>
+          <p>
+            Quem mais gastar no <strong>Correio Elegante</strong> ganhará uma cesta repleta de surpresas.
+            Quanto mais você enviar mensagens, maiores suas chances!
+          </p>
+          <div className="promo-footer">
+            <span className="promo-badge">💝 Acumule gastos</span>
+            <span className="promo-badge">🏆 Único ganhador</span>
+          </div>
+        </div>
+        
       </section>
 
       {/* COLUNA DO FORMULÁRIO (direita) */}
@@ -776,20 +791,6 @@ return (
                         }}
                       />
                       <span>Des. Sistemas</span>
-                    </label>
-                    <label className={`radio-option ${receiverType === "anonimo" ? "active" : ""}`}>
-                      <input
-                        type="radio"
-                        name="course"
-                        value=""
-                        checked={receiverType === "anonimo"}
-                        onChange={() => {
-                          setReceiverType("anonimo");
-                          setCourse("");
-                          setClassroom("");
-                        }}
-                      />
-                      <span>Não informar</span>
                     </label>
                   </div>
                 </div>
@@ -981,6 +982,5 @@ return (
         )}
       </aside>
     </main>
-    <footer></footer>
   </div>
 )};
