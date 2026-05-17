@@ -81,7 +81,7 @@ export default function Login() {
       </div>
 
       <div className="login-card">
-        <h1 className="title">Correio Elegante 💌</h1>
+        <h1 className="title">Correio Elegante</h1>
         <p className="subtitle">Crie sua conta ou entre no sistema</p>
 
         <div className="toggle">
