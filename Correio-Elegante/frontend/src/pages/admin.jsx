@@ -73,15 +73,11 @@ export default function Admin({ goToHome }) {
 
   async function updateStatus(id, newStatus) {
     const order = orders.find((o) => o.id === id);
-
-    const oldStatus = order?.status;
+    if (!order) return;
 
     const { error } = await supabase
       .from("orders")
-      .update({
-        status: newStatus,
-        previous_status: oldStatus || null,
-      })
+      .update({ status: newStatus })
       .eq("id", id);
 
     if (error) {
@@ -89,22 +85,14 @@ export default function Admin({ goToHome }) {
       return;
     }
 
-    // só conta no profile quando realmente muda para delivered
-    if (newStatus === "delivered" && oldStatus !== "delivered") {
-      const { error: rpcError } = await supabase.rpc("approve_order", {
-        order_id: id,
-      });
-
-      if (rpcError) {
-        console.log(rpcError);
-        alert("Erro ao atualizar perfil");
-        return;
-      }
-    }
+    // 🔥 ESSENCIAL: recalcula tudo no banco
+    await supabase.rpc("sync_profile_stats", {
+      p_user: order.user_id,
+    });
 
     fetchOrders();
   }
-
+  
   async function deleteOrder(id) {
     if (
       !confirm(

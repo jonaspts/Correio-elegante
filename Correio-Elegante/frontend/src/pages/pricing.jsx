@@ -371,10 +371,21 @@ export default function Pricing({ goToHome }) {
     try {
       setLoading(true);
 
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      const valorMap = {
+        "Carta": 1,
+        "Carta com Pirulito": 2,
+        "Carta com Bombom": 3,
+      };
+
       const code = gerarCodigoPedido();
 
       const { data, error } = await supabase.from("orders").insert([
         {
+          user_id: user?.id,
           plan: selected.title,
           sender_type: senderType,
           sender_name: senderType === "anonimo" ? null : senderName,
@@ -389,6 +400,7 @@ export default function Pricing({ goToHome }) {
           proof_url: proofUrl,
           order_code: code,
           status: "pending",
+          valor: valorMap[selected.title],
         },
       ]);
 
@@ -432,555 +444,556 @@ export default function Pricing({ goToHome }) {
     currency: "BRL",
   }).format(totalGasto);
 
-return (
-  <div className="pricing-page">
-    <div className="binary-bg" />
-    <div className="heart-bg">
-      {hearts.map((h) => (
-        <span
-          key={h.id}
-          className="heart"
-          style={{ left: `${h.x}px`, top: `${h.y}px`, fontSize: `${h.size}px` }}
-        >
-          {h.char}
-        </span>
-      ))}
-    </div>
-
-    {loading && (
-      <div className="loading-overlay">
-        <div className="loading-box">
-          <div className="spinner" />
-          <h2>Processando pedido...</h2>
-          <p>Aguarde enquanto registramos sua mensagem 💘</p>
-        </div>
+  return (
+    <div className="pricing-page">
+      <div className="binary-bg" />
+      <div className="heart-bg">
+        {hearts.map((h) => (
+          <span
+            key={h.id}
+            className="heart"
+            style={{ left: `${h.x}px`, top: `${h.y}px`, fontSize: `${h.size}px` }}
+          >
+            {h.char}
+          </span>
+        ))}
       </div>
-    )}
 
-    {sent && (
-      <div className="success-overlay">
-        <div className="success-box">
-          <div className="success-badge">✓</div>
-          <h2>Pedido enviado com sucesso!</h2>
-          <p>Seu correio elegante foi registrado e será entregue na data marcada</p>
-        </div>
-      </div>
-    )}
-
-    <main className="checkout-shell">
-      {/* COLUNA PRINCIPAL (centralizada) */}
-      <section className="hero-column">
-        <button className="back-btn" onClick={goToHome} type="button">
-          ← Voltar para início
-        </button>
-
-        {/* Painel de perfil (agora dentro da coluna principal) */}
-        {profileId && !loadingProfile && (
-          <div className="profile-wrapper">
-            <div onClick={() => setShowProfilePanel((prev) => !prev)} className="profile-header">
-              <div>
-                <div className="profile-name">{nome ? `Olá, ${nome}` : profileEmail}</div>
-                <div className="profile-subtitle">
-                  {turma ? `Turma: ${turma}` : "Toque para ver seu perfil"}
-                </div>
-              </div>
-              <div className="profile-toggle">{showProfilePanel ? "▲" : "▼"}</div>
-            </div>
-            {showProfilePanel && (
-              <div className="profile-panel">
-                <div className="profile-grid">
-                  <div className="profile-item">
-                    <div className="profile-label">Nome</div>
-                    <div className="profile-value">{nome || "Não informado"}</div>
-                  </div>
-                  <div className="profile-item">
-                    <div className="profile-label">Turma</div>
-                    <div className="profile-value">{turma || "Não informado"}</div>
-                  </div>
-                  <div className="profile-item">
-                    <div className="profile-label">Cartinhas compradas</div>
-                    <div className="profile-value">{cartinhasCompradas}</div>
-                  </div>
-                  <div className="profile-item">
-                    <div className="profile-label">Total gasto</div>
-                    <div className="profile-value">{formattedTotalGasto}</div>
-                  </div>
-                  <div className="profile-item">
-                    <div className="profile-label">Telefone</div>
-                    <div className="profile-value">{phoneFromProfile || telefone || "Não informado"}</div>
-                  </div>
-                  <div className="profile-item">
-                    <div className="profile-label">Email</div>
-                    <div className="profile-value">{profileEmail || "Não informado"}</div>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Contador regressivo */}
-        <div className="countdown-container">
-          <div className="countdown-title">Prazo de envio das cartas</div>
-          <div className="countdown-timer">
-            <div className="countdown-item">
-              <div className="countdown-value">{String(timeLeft.days).padStart(2, "0")}</div>
-              <div className="countdown-label">Dias</div>
-            </div>
-            <div className="countdown-separator">:</div>
-            <div className="countdown-item">
-              <div className="countdown-value">{String(timeLeft.hours).padStart(2, "0")}</div>
-              <div className="countdown-label">Horas</div>
-            </div>
-            <div className="countdown-separator">:</div>
-            <div className="countdown-item">
-              <div className="countdown-value">{String(timeLeft.minutes).padStart(2, "0")}</div>
-              <div className="countdown-label">Min</div>
-            </div>
-            <div className="countdown-separator">:</div>
-            <div className="countdown-item">
-              <div className="countdown-value">{String(timeLeft.seconds).padStart(2, "0")}</div>
-              <div className="countdown-label">Seg</div>
-            </div>
+      {loading && (
+        <div className="loading-overlay">
+          <div className="loading-box">
+            <div className="spinner" />
+            <h2>Processando pedido...</h2>
+            <p>Aguarde enquanto registramos sua mensagem 💘</p>
           </div>
         </div>
+      )}
 
-        {/* Hero e planos (centralizados) */}
-        <div className="pricing-hero">
-          <span className="badge">💘 Correio Elegante • Turmas 3º Anos 2026</span>
-          <h1>Tabela de Opções</h1>
-          <p>
-            Selecione a opção ideal para enviar sua mensagem especial. Preencha os dados e
-            participe do Correio Elegante da ETEMAA.
-          </p>
+      {sent && (
+        <div className="success-overlay">
+          <div className="success-box">
+            <div className="success-badge">✓</div>
+            <h2>Pedido enviado com sucesso!</h2>
+            <p>Seu correio elegante foi registrado e será entregue na data marcada</p>
+          </div>
         </div>
+      )}
 
-        <div className="plans-grid">
-          {plans.map((plan) => (
-            <article
-              key={plan.id}
-              className={`plan-card ${selected?.id === plan.id ? "selected" : ""}`}
-            >
-              <div className="plan-top">
-                <span className="plan-emoji">{plan.emoji}</span>
-                <span className="plan-price">{plan.price}</span>
+      <main className="checkout-shell">
+        {/* COLUNA PRINCIPAL (centralizada) */}
+        <section className="hero-column">
+          <button className="back-btn" onClick={goToHome} type="button">
+            ← Voltar para início
+          </button>
+
+          {/* Painel de perfil (agora dentro da coluna principal) */}
+          {profileId && !loadingProfile && (
+            <div className="profile-wrapper">
+              <div onClick={() => setShowProfilePanel((prev) => !prev)} className="profile-header">
+                <div>
+                  <div className="profile-name">{nome ? `Olá, ${nome}` : profileEmail}</div>
+                  <div className="profile-subtitle">
+                    {turma ? `Turma: ${turma}` : "Toque para ver seu perfil"}
+                  </div>
+                </div>
+                <div className="profile-toggle">{showProfilePanel ? "▲" : "▼"}</div>
               </div>
-              <h2>{plan.title}</h2>
-              <ul className="plan-features">
-                {plan.features.map((feature, idx) => (
-                  <li key={idx}>
-                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                      <path
-                        d="M13.5 4.5L6 12L2.5 8.5"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </svg>
-                    {feature}
-                  </li>
-                ))}
-              </ul>
-              <button
-                type="button"
-                className="select-btn"
-                onClick={() => handlePlanSelect(plan)}
-                disabled={loading}
+              {showProfilePanel && (
+                <div className="profile-panel">
+                  <div className="profile-grid">
+                    <div className="profile-item">
+                      <div className="profile-label">Nome</div>
+                      <div className="profile-value">{nome || "Não informado"}</div>
+                    </div>
+                    <div className="profile-item">
+                      <div className="profile-label">Turma</div>
+                      <div className="profile-value">{turma || "Não informado"}</div>
+                    </div>
+                    <div className="profile-item">
+                      <div className="profile-label">Cartinhas compradas</div>
+                      <div className="profile-value">{cartinhasCompradas}</div>
+                    </div>
+                    <div className="profile-item">
+                      <div className="profile-label">Total gasto</div>
+                      <div className="profile-value">{formattedTotalGasto}</div>
+                    </div>
+                    <div className="profile-item">
+                      <div className="profile-label">Telefone</div>
+                      <div className="profile-value">{phoneFromProfile || telefone || "Não informado"}</div>
+                    </div>
+                    <div className="profile-item">
+                      <div className="profile-label">Email</div>
+                      <div className="profile-value">{profileEmail || "Não informado"}</div>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Contador regressivo */}
+          <div className="countdown-container">
+            <div className="countdown-title">Prazo de envio das cartas</div>
+            <div className="countdown-timer">
+              <div className="countdown-item">
+                <div className="countdown-value">{String(timeLeft.days).padStart(2, "0")}</div>
+                <div className="countdown-label">Dias</div>
+              </div>
+              <div className="countdown-separator">:</div>
+              <div className="countdown-item">
+                <div className="countdown-value">{String(timeLeft.hours).padStart(2, "0")}</div>
+                <div className="countdown-label">Horas</div>
+              </div>
+              <div className="countdown-separator">:</div>
+              <div className="countdown-item">
+                <div className="countdown-value">{String(timeLeft.minutes).padStart(2, "0")}</div>
+                <div className="countdown-label">Min</div>
+              </div>
+              <div className="countdown-separator">:</div>
+              <div className="countdown-item">
+                <div className="countdown-value">{String(timeLeft.seconds).padStart(2, "0")}</div>
+                <div className="countdown-label">Seg</div>
+              </div>
+            </div>
+          </div>
+
+          {/* Hero e planos (centralizados) */}
+          <div className="pricing-hero">
+            <span className="badge">💘 Correio Elegante • Turmas 3º Anos 2026</span>
+            <h1>Tabela de Opções</h1>
+            <p>
+              Selecione a opção ideal para enviar sua mensagem especial. Preencha os dados e
+              participe do Correio Elegante da ETEMAA.
+            </p>
+          </div>
+
+          <div className="plans-grid">
+            {plans.map((plan) => (
+              <article
+                key={plan.id}
+                className={`plan-card ${selected?.id === plan.id ? "selected" : ""}`}
               >
-                {selected?.id === plan.id ? "Selecionado ✓" : "Selecionar plano"}
-              </button>
-            </article>
-            
-            
-          ))}
-        </div>
-         <div className="promo-block">
-          <div className="promo-icon">🎁</div>
-          <h3>Concorra a uma Cesta Especial!</h3>
-          <p>
-            A pessoa que mais gastar no <strong>Correio Elegante</strong> ganhará uma cesta repleta de surpresas.
-            Quanto mais você enviar mensagens, maiores são suas chances!
-          </p>
-          <div className="promo-footer">
-            <span className="promo-badge">💝 Acumule gastos</span>
-            <span className="promo-badge">🏆 Único ganhador</span>
-          </div>
-        </div>
-        
-      </section>
-
-      {/* COLUNA DO FORMULÁRIO (direita) */}
-      <aside ref={formRef} className={`checkout-panel ${selected ? "open" : ""}`}>
-        {!selected ? (
-          <div className="panel-empty">
-            <div className="empty-state">
-              <div className="empty-icon">📋</div>
-              <h2>Selecione um plano</h2>
-              <p>Escolha uma das opções ao lado para preencher o formulário de pedido.</p>
-            </div>
-          </div>
-        ) : (
-          <div className="form-card">
-            <div className="form-header">
-              <span className="selected-emoji">{selected.emoji}</span>
-              <div>
-                <p className="form-small">Plano Selecionado</p>
-                <h2>{selected.title}</h2>
-                <p className="form-price">{selected.price}</p>
-              </div>
-            </div>
-
-            <form onSubmit={handleSubmit} className="elegant-form">
-              {/* Quem envia */}
-              <div className="form-section">
-                <h3>
-                  <span className="section-icon">💌</span> Informações de quem envia
-                </h3>
-                <div className="input-group">
-                  <label htmlFor="sender-type">Tipo de envio</label>
-                  <div className="radio-group">
-                    <label className={`radio-option ${senderType === "identificado" ? "active" : ""}`}>
-                      <input
-                        type="radio"
-                        name="senderType"
-                        value="identificado"
-                        checked={senderType === "identificado"}
-                        onChange={(e) => setSenderType(e.target.value)}
-                      />
-                      <span>Identificado</span>
-                    </label>
-                    <label className={`radio-option ${senderType === "anonimo" ? "active" : ""}`}>
-                      <input
-                        type="radio"
-                        name="senderType"
-                        value="anonimo"
-                        checked={senderType === "anonimo"}
-                        onChange={(e) => setSenderType(e.target.value)}
-                      />
-                      <span>Anônimo</span>
-                    </label>
-                  </div>
+                <div className="plan-top">
+                  <span className="plan-emoji">{plan.emoji}</span>
+                  <span className="plan-price">{plan.price}</span>
                 </div>
-
-                {senderType === "identificado" && (
-                  <>
-                    <div className="input-group">
-                      <label htmlFor="sender-name">Seu nome</label>
-                      <input
-                        type="text"
-                        id="sender-name"
-                        value={senderName}
-                        onChange={(e) => setSenderName(e.target.value)}
-                        placeholder="Digite seu nome completo"
-                      />
-                    </div>
-                    <div className="input-group">
-                      <label htmlFor="sender-course">Curso do remetente</label>
-                      <div className="radio-group">
-                        <label className={`radio-option ${senderCourse === "ADM" ? "active" : ""}`}>
-                          <input
-                            type="radio"
-                            name="senderCourse"
-                            value="ADM"
-                            checked={senderCourse === "ADM"}
-                            onChange={(e) => {
-                              setSenderCourse(e.target.value);
-                              setSenderClassroom("");
-                            }}
-                          />
-                          <span>Administração</span>
-                        </label>
-                        <label className={`radio-option ${senderCourse === "DS" ? "active" : ""}`}>
-                          <input
-                            type="radio"
-                            name="senderCourse"
-                            value="DS"
-                            checked={senderCourse === "DS"}
-                            onChange={(e) => {
-                              setSenderCourse(e.target.value);
-                              setSenderClassroom("");
-                            }}
-                          />
-                          <span>Des. Sistemas</span>
-                        </label>
-                        <label className={`radio-option ${senderCourse === "" ? "active" : ""}`}>
-                          <input
-                            type="radio"
-                            name="senderCourse"
-                            value=""
-                            checked={senderCourse === ""}
-                            onChange={() => {
-                              setSenderCourse("");
-                              setSenderClassroom("");
-                            }}
-                          />
-                          <span>Não informar</span>
-                        </label>
-                      </div>
-                    </div>
-                    {senderCourse && (
-                      <div className="input-group">
-                        <label htmlFor="sender-classroom">Turma do remetente</label>
-                        <div className="class-grid">
-                          {["1A", "1B", "2A", "2B", "3A", "3B"].map((t) => {
-                            const full = `${t}-${senderCourse}`;
-                            return (
-                              <button
-                                key={full}
-                                type="button"
-                                className={`class-btn ${senderClassroom === full ? "active" : ""}`}
-                                onClick={() => setSenderClassroom(full)}
-                              >
-                                {full}
-                              </button>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    )}
-                  </>
-                )}
-              </div>
-
-              <div className="form-divider" />
-
-              {/* Destinatário */}
-              <div className="form-section">
-                <h3>
-                  <span className="section-icon">🎯</span> Informações do Destinatário
-                </h3>
-                <div className="input-group">
-                  <label htmlFor="receiver-name">Nome do destinatário *</label>
-                  <input
-                    type="text"
-                    id="receiver-name"
-                    value={receiverName}
-                    onChange={(e) => setReceiverName(e.target.value)}
-                    placeholder="Para quem será enviada a mensagem"
-                    required
-                  />
-                </div>
-                <div className="input-group">
-                  <label htmlFor="course">Curso</label>
-                  <div className="radio-group">
-                    <label className={`radio-option ${course === "ADM" ? "active" : ""}`}>
-                      <input
-                        type="radio"
-                        name="course"
-                        value="ADM"
-                        checked={course === "ADM"}
-                        onChange={(e) => {
-                          setCourse(e.target.value);
-                          setClassroom("");
-                          setReceiverType("identificado");
-                        }}
-                      />
-                      <span>Administração</span>
-                    </label>
-                    <label className={`radio-option ${course === "DS" ? "active" : ""}`}>
-                      <input
-                        type="radio"
-                        name="course"
-                        value="DS"
-                        checked={course === "DS"}
-                        onChange={(e) => {
-                          setCourse(e.target.value);
-                          setClassroom("");
-                          setReceiverType("identificado");
-                        }}
-                      />
-                      <span>Des. Sistemas</span>
-                    </label>
-                  </div>
-                </div>
-                {course && receiverType === "identificado" && (
-                  <div className="input-group">
-                    <label htmlFor="classroom">Turma do destinatário</label>
-                    <div className="class-grid">
-                      {["1A", "1B", "2A", "2B", "3A", "3B"].map((t) => {
-                        const full = `${t}-${course}`;
-                        return (
-                          <button
-                            key={full}
-                            type="button"
-                            className={`class-btn ${classroom === full ? "active" : ""}`}
-                            onClick={() => setClassroom(full)}
-                          >
-                            {full}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
-                <div className="input-group">
-                  <label htmlFor="message">Sua mensagem *</label>
-                  <textarea
-                    id="message"
-                    rows="5"
-                    value={message}
-                    onChange={(e) => setMessage(e.target.value)}
-                    placeholder="Escreva aqui sua mensagem especial..."
-                    required
-                  />
-                  <span className="input-hint">{message.length}/500 caracteres</span>
-                </div>
-              </div>
-
-              <div className="form-divider" />
-
-              {/* Pagamento */}
-              <div className="form-section">
-                <h3>
-                  <span className="section-icon">💳</span> Forma de Pagamento
-                </h3>
-                <div className="input-group">
-                  <label htmlFor="payment">Método de pagamento</label>
-                  <div className="payment-options">
-                    <label className={`payment-option ${paymentMethod === "pix" ? "active" : ""}`}>
-                      <input
-                        type="radio"
-                        name="payment"
-                        value="pix"
-                        checked={paymentMethod === "pix"}
-                        onChange={(e) => setPaymentMethod(e.target.value)}
-                      />
-                      <div className="payment-content">
-                        <span className="payment-icon">🔑</span>
-                        <span>Pix</span>
-                      </div>
-                    </label>
-                    <label className={`payment-option ${paymentMethod === "especie" ? "active" : ""}`}>
-                      <input
-                        type="radio"
-                        name="payment"
-                        value="especie"
-                        checked={paymentMethod === "especie"}
-                        onChange={(e) => setPaymentMethod(e.target.value)}
-                      />
-                      <div className="payment-content">
-                        <span className="payment-icon">💵</span>
-                        <span>Espécie</span>
-                      </div>
-                    </label>
-                  </div>
-                </div>
-
-                {paymentMethod === "pix" && (
-                  <div className="pix-box">
-                    <div className="pix-header">
-                      <h4>Chave Pix para pagamento</h4>
-                    </div>
-                    <div className="pix-key-container">
-                      <div className="pix-key">correioeleganteetemaa@gmail.com</div>
-                      <button
-                        type="button"
-                        className="copy-btn"
-                        onClick={() => {
-                          navigator.clipboard.writeText("correioeleganteetemaa@gmail.com");
-                          alert("Chave Pix copiada!");
-                        }}
-                      >
-                        Copiar
-                      </button>
-                    </div>
-                    <p className="pix-instruction">
-                      Realize o pagamento no valor de <strong>{selected.price}</strong> e envie o
-                      comprovante abaixo.
-                    </p>
-                    <label className="upload-area">
-                      <input
-                        type="file"
-                        accept="image/*,.pdf"
-                        onChange={async (e) => {
-                          const file = e.target.files[0];
-                          if (!file) return;
-                          setFileName(file.name);
-                          setProofFile(file);
-                          const url = await uploadProof(file);
-                          setProofUrl(url);
-                        }}
-                      />
-                      <div className="upload-content">
-                        {fileName ? (
-                          <>
-                            <span className="upload-icon success">📎</span>
-                            <strong>{fileName}</strong>
-                            <p>Arquivo anexado com sucesso</p>
-                          </>
-                        ) : (
-                          <>
-                            <span className="upload-icon">📤</span>
-                            <strong>Clique para enviar o comprovante</strong>
-                            <p>Aceito: PNG, JPG ou PDF (máx. 10MB)</p>
-                          </>
-                        )}
-                      </div>
-                    </label>
-                  </div>
-                )}
-
-                {paymentMethod === "especie" && (
-                  <div className="cash-box">
-                    <div className="cash-icon">💵</div>
-                    <h4>Pagamento em dinheiro</h4>
-                    {orderCode && (
-                      <div className="order-code-box">
-                        <p className="order-code-label">Código do seu pedido:</p>
-                        <div className="order-code-display">
-                          <strong>{orderCode}</strong>
-                          <button
-                            type="button"
-                            className="copy-code-btn"
-                            onClick={() => {
-                              navigator.clipboard.writeText(orderCode);
-                              alert("Código copiado!");
-                            }}
-                          >
-                            📋
-                          </button>
-                        </div>
-                        <p className="order-code-hint">Guarde este código para acompanhar seu pedido</p>
-                      </div>
-                    )}
-                    <p>
-                      O pagamento no valor de <strong>{selected.price}</strong> deverá ser entregue
-                      presencialmente para os representantes dos 3º Anos.
-                    </p>
-                    <div className="info-alert">
+                <h2>{plan.title}</h2>
+                <ul className="plan-features">
+                  {plan.features.map((feature, idx) => (
+                    <li key={idx}>
                       <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                         <path
-                          d="M8 14A6 6 0 1 0 8 2a6 6 0 0 0 0 12Z"
+                          d="M13.5 4.5L6 12L2.5 8.5"
                           stroke="currentColor"
-                          strokeWidth="1.5"
-                        />
-                        <path
-                          d="M8 11V8M8 5h.01"
-                          stroke="currentColor"
-                          strokeWidth="1.5"
+                          strokeWidth="2"
                           strokeLinecap="round"
+                          strokeLinejoin="round"
                         />
                       </svg>
-                      <span>Traga o valor exato para facilitar o pagamento</span>
-                    </div>
-                  </div>
-                )}
+                      {feature}
+                    </li>
+                  ))}
+                </ul>
+                <button
+                  type="button"
+                  className="select-btn"
+                  onClick={() => handlePlanSelect(plan)}
+                  disabled={loading}
+                >
+                  {selected?.id === plan.id ? "Selecionado ✓" : "Selecionar plano"}
+                </button>
+              </article>
+
+
+            ))}
+          </div>
+          <div className="promo-block">
+            <div className="promo-icon">🎁</div>
+            <h3>Concorra a uma Cesta Especial!</h3>
+            <p>
+              A pessoa que mais gastar no <strong>Correio Elegante</strong> ganhará uma cesta repleta de surpresas.
+              Quanto mais você enviar mensagens, maiores são suas chances!
+            </p>
+            <div className="promo-footer">
+              <span className="promo-badge">💝 Acumule gastos</span>
+              <span className="promo-badge">🏆 Único ganhador</span>
+            </div>
+          </div>
+
+        </section>
+
+        {/* COLUNA DO FORMULÁRIO (direita) */}
+        <aside ref={formRef} className={`checkout-panel ${selected ? "open" : ""}`}>
+          {!selected ? (
+            <div className="panel-empty">
+              <div className="empty-state">
+                <div className="empty-icon">📋</div>
+                <h2>Selecione um plano</h2>
+                <p>Escolha uma das opções ao lado para preencher o formulário de pedido.</p>
+              </div>
+            </div>
+          ) : (
+            <div className="form-card">
+              <div className="form-header">
+                <span className="selected-emoji">{selected.emoji}</span>
+                <div>
+                  <p className="form-small">Plano Selecionado</p>
+                  <h2>{selected.title}</h2>
+                  <p className="form-price">{selected.price}</p>
+                </div>
               </div>
 
-              <button type="submit" className="confirm-btn" disabled={loading}>
-                {loading ? (
-                  <>
-                    <span className="btn-spinner"></span> Processando...
-                  </>
-                ) : (
-                  <>Confirmar pedido 💘</>
-                )}
-              </button>
-            </form>
-          </div>
-        )}
-      </aside>
-    </main>
-  </div>
-)};
+              <form onSubmit={handleSubmit} className="elegant-form">
+                {/* Quem envia */}
+                <div className="form-section">
+                  <h3>
+                    <span className="section-icon">💌</span> Informações de quem envia
+                  </h3>
+                  <div className="input-group">
+                    <label htmlFor="sender-type">Tipo de envio</label>
+                    <div className="radio-group">
+                      <label className={`radio-option ${senderType === "identificado" ? "active" : ""}`}>
+                        <input
+                          type="radio"
+                          name="senderType"
+                          value="identificado"
+                          checked={senderType === "identificado"}
+                          onChange={(e) => setSenderType(e.target.value)}
+                        />
+                        <span>Identificado</span>
+                      </label>
+                      <label className={`radio-option ${senderType === "anonimo" ? "active" : ""}`}>
+                        <input
+                          type="radio"
+                          name="senderType"
+                          value="anonimo"
+                          checked={senderType === "anonimo"}
+                          onChange={(e) => setSenderType(e.target.value)}
+                        />
+                        <span>Anônimo</span>
+                      </label>
+                    </div>
+                  </div>
+
+                  {senderType === "identificado" && (
+                    <>
+                      <div className="input-group">
+                        <label htmlFor="sender-name">Seu nome</label>
+                        <input
+                          type="text"
+                          id="sender-name"
+                          value={senderName}
+                          onChange={(e) => setSenderName(e.target.value)}
+                          placeholder="Digite seu nome completo"
+                        />
+                      </div>
+                      <div className="input-group">
+                        <label htmlFor="sender-course">Curso do remetente</label>
+                        <div className="radio-group">
+                          <label className={`radio-option ${senderCourse === "ADM" ? "active" : ""}`}>
+                            <input
+                              type="radio"
+                              name="senderCourse"
+                              value="ADM"
+                              checked={senderCourse === "ADM"}
+                              onChange={(e) => {
+                                setSenderCourse(e.target.value);
+                                setSenderClassroom("");
+                              }}
+                            />
+                            <span>Administração</span>
+                          </label>
+                          <label className={`radio-option ${senderCourse === "DS" ? "active" : ""}`}>
+                            <input
+                              type="radio"
+                              name="senderCourse"
+                              value="DS"
+                              checked={senderCourse === "DS"}
+                              onChange={(e) => {
+                                setSenderCourse(e.target.value);
+                                setSenderClassroom("");
+                              }}
+                            />
+                            <span>Des. Sistemas</span>
+                          </label>
+                          <label className={`radio-option ${senderCourse === "" ? "active" : ""}`}>
+                            <input
+                              type="radio"
+                              name="senderCourse"
+                              value=""
+                              checked={senderCourse === ""}
+                              onChange={() => {
+                                setSenderCourse("");
+                                setSenderClassroom("");
+                              }}
+                            />
+                            <span>Não informar</span>
+                          </label>
+                        </div>
+                      </div>
+                      {senderCourse && (
+                        <div className="input-group">
+                          <label htmlFor="sender-classroom">Turma do remetente</label>
+                          <div className="class-grid">
+                            {["1A", "1B", "2A", "2B", "3A", "3B"].map((t) => {
+                              const full = `${t}-${senderCourse}`;
+                              return (
+                                <button
+                                  key={full}
+                                  type="button"
+                                  className={`class-btn ${senderClassroom === full ? "active" : ""}`}
+                                  onClick={() => setSenderClassroom(full)}
+                                >
+                                  {full}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+                    </>
+                  )}
+                </div>
+
+                <div className="form-divider" />
+
+                {/* Destinatário */}
+                <div className="form-section">
+                  <h3>
+                    <span className="section-icon">🎯</span> Informações do Destinatário
+                  </h3>
+                  <div className="input-group">
+                    <label htmlFor="receiver-name">Nome do destinatário *</label>
+                    <input
+                      type="text"
+                      id="receiver-name"
+                      value={receiverName}
+                      onChange={(e) => setReceiverName(e.target.value)}
+                      placeholder="Para quem será enviada a mensagem"
+                      required
+                    />
+                  </div>
+                  <div className="input-group">
+                    <label htmlFor="course">Curso</label>
+                    <div className="radio-group">
+                      <label className={`radio-option ${course === "ADM" ? "active" : ""}`}>
+                        <input
+                          type="radio"
+                          name="course"
+                          value="ADM"
+                          checked={course === "ADM"}
+                          onChange={(e) => {
+                            setCourse(e.target.value);
+                            setClassroom("");
+                            setReceiverType("identificado");
+                          }}
+                        />
+                        <span>Administração</span>
+                      </label>
+                      <label className={`radio-option ${course === "DS" ? "active" : ""}`}>
+                        <input
+                          type="radio"
+                          name="course"
+                          value="DS"
+                          checked={course === "DS"}
+                          onChange={(e) => {
+                            setCourse(e.target.value);
+                            setClassroom("");
+                            setReceiverType("identificado");
+                          }}
+                        />
+                        <span>Des. Sistemas</span>
+                      </label>
+                    </div>
+                  </div>
+                  {course && receiverType === "identificado" && (
+                    <div className="input-group">
+                      <label htmlFor="classroom">Turma do destinatário</label>
+                      <div className="class-grid">
+                        {["1A", "1B", "2A", "2B", "3A", "3B"].map((t) => {
+                          const full = `${t}-${course}`;
+                          return (
+                            <button
+                              key={full}
+                              type="button"
+                              className={`class-btn ${classroom === full ? "active" : ""}`}
+                              onClick={() => setClassroom(full)}
+                            >
+                              {full}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                  <div className="input-group">
+                    <label htmlFor="message">Sua mensagem *</label>
+                    <textarea
+                      id="message"
+                      rows="5"
+                      value={message}
+                      onChange={(e) => setMessage(e.target.value)}
+                      placeholder="Escreva aqui sua mensagem especial..."
+                      required
+                    />
+                    <span className="input-hint">{message.length}/500 caracteres</span>
+                  </div>
+                </div>
+
+                <div className="form-divider" />
+
+                {/* Pagamento */}
+                <div className="form-section">
+                  <h3>
+                    <span className="section-icon">💳</span> Forma de Pagamento
+                  </h3>
+                  <div className="input-group">
+                    <label htmlFor="payment">Método de pagamento</label>
+                    <div className="payment-options">
+                      <label className={`payment-option ${paymentMethod === "pix" ? "active" : ""}`}>
+                        <input
+                          type="radio"
+                          name="payment"
+                          value="pix"
+                          checked={paymentMethod === "pix"}
+                          onChange={(e) => setPaymentMethod(e.target.value)}
+                        />
+                        <div className="payment-content">
+                          <span className="payment-icon">🔑</span>
+                          <span>Pix</span>
+                        </div>
+                      </label>
+                      <label className={`payment-option ${paymentMethod === "especie" ? "active" : ""}`}>
+                        <input
+                          type="radio"
+                          name="payment"
+                          value="especie"
+                          checked={paymentMethod === "especie"}
+                          onChange={(e) => setPaymentMethod(e.target.value)}
+                        />
+                        <div className="payment-content">
+                          <span className="payment-icon">💵</span>
+                          <span>Espécie</span>
+                        </div>
+                      </label>
+                    </div>
+                  </div>
+
+                  {paymentMethod === "pix" && (
+                    <div className="pix-box">
+                      <div className="pix-header">
+                        <h4>Chave Pix para pagamento</h4>
+                      </div>
+                      <div className="pix-key-container">
+                        <div className="pix-key">correioeleganteetemaa@gmail.com</div>
+                        <button
+                          type="button"
+                          className="copy-btn"
+                          onClick={() => {
+                            navigator.clipboard.writeText("correioeleganteetemaa@gmail.com");
+                            alert("Chave Pix copiada!");
+                          }}
+                        >
+                          Copiar
+                        </button>
+                      </div>
+                      <p className="pix-instruction">
+                        Realize o pagamento no valor de <strong>{selected.price}</strong> e envie o
+                        comprovante abaixo.
+                      </p>
+                      <label className="upload-area">
+                        <input
+                          type="file"
+                          accept="image/*,.pdf"
+                          onChange={async (e) => {
+                            const file = e.target.files[0];
+                            if (!file) return;
+                            setFileName(file.name);
+                            setProofFile(file);
+                            const url = await uploadProof(file);
+                            setProofUrl(url);
+                          }}
+                        />
+                        <div className="upload-content">
+                          {fileName ? (
+                            <>
+                              <span className="upload-icon success">📎</span>
+                              <strong>{fileName}</strong>
+                              <p>Arquivo anexado com sucesso</p>
+                            </>
+                          ) : (
+                            <>
+                              <span className="upload-icon">📤</span>
+                              <strong>Clique para enviar o comprovante</strong>
+                              <p>Aceito: PNG, JPG ou PDF (máx. 10MB)</p>
+                            </>
+                          )}
+                        </div>
+                      </label>
+                    </div>
+                  )}
+
+                  {paymentMethod === "especie" && (
+                    <div className="cash-box">
+                      <div className="cash-icon">💵</div>
+                      <h4>Pagamento em dinheiro</h4>
+                      {orderCode && (
+                        <div className="order-code-box">
+                          <p className="order-code-label">Código do seu pedido:</p>
+                          <div className="order-code-display">
+                            <strong>{orderCode}</strong>
+                            <button
+                              type="button"
+                              className="copy-code-btn"
+                              onClick={() => {
+                                navigator.clipboard.writeText(orderCode);
+                                alert("Código copiado!");
+                              }}
+                            >
+                              📋
+                            </button>
+                          </div>
+                          <p className="order-code-hint">Guarde este código para acompanhar seu pedido</p>
+                        </div>
+                      )}
+                      <p>
+                        O pagamento no valor de <strong>{selected.price}</strong> deverá ser entregue
+                        presencialmente para os representantes dos 3º Anos.
+                      </p>
+                      <div className="info-alert">
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                          <path
+                            d="M8 14A6 6 0 1 0 8 2a6 6 0 0 0 0 12Z"
+                            stroke="currentColor"
+                            strokeWidth="1.5"
+                          />
+                          <path
+                            d="M8 11V8M8 5h.01"
+                            stroke="currentColor"
+                            strokeWidth="1.5"
+                            strokeLinecap="round"
+                          />
+                        </svg>
+                        <span>Traga o valor exato para facilitar o pagamento</span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                <button type="submit" className="confirm-btn" disabled={loading}>
+                  {loading ? (
+                    <>
+                      <span className="btn-spinner"></span> Processando...
+                    </>
+                  ) : (
+                    <>Confirmar pedido 💘</>
+                  )}
+                </button>
+              </form>
+            </div>
+          )}
+        </aside>
+      </main>
+    </div>
+  )
+};
