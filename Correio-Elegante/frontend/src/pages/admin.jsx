@@ -18,6 +18,20 @@ export default function Admin({ goToHome }) {
   // troque pela sua senha real, ou use .env (recomendado)
   const ADMIN_PASSWORD = import.meta.env.VITE_ADMIN_PASSWORD || "1234";
 
+
+  const handleApprove = async (orderId) => {
+    const { error } = await supabase.rpc("approve_order", {
+      order_id: orderId,
+    });
+
+    if (error) {
+      console.log(error);
+      return;
+    }
+
+    alert("Pedido aprovado!");
+  };
+
   const pageVariants = {
     initial: { opacity: 0, scale: 0.96, y: 18 },
     animate: {
@@ -46,6 +60,7 @@ export default function Admin({ goToHome }) {
       return;
     }
 
+
     setOrders(data || []);
     setLoading(false);
   }
@@ -59,17 +74,32 @@ export default function Admin({ goToHome }) {
   async function updateStatus(id, newStatus) {
     const order = orders.find((o) => o.id === id);
 
+    const oldStatus = order?.status;
+
     const { error } = await supabase
       .from("orders")
       .update({
         status: newStatus,
-        previous_status: order?.status || null,
+        previous_status: oldStatus || null,
       })
       .eq("id", id);
 
     if (error) {
       alert("Erro ao atualizar status");
       return;
+    }
+
+    // só conta no profile quando realmente muda para delivered
+    if (newStatus === "delivered" && oldStatus !== "delivered") {
+      const { error: rpcError } = await supabase.rpc("approve_order", {
+        order_id: id,
+      });
+
+      if (rpcError) {
+        console.log(rpcError);
+        alert("Erro ao atualizar perfil");
+        return;
+      }
     }
 
     fetchOrders();

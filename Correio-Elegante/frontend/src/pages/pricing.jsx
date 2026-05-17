@@ -599,7 +599,7 @@ return (
           <div className="promo-icon">🎁</div>
           <h3>Concorra a uma Cesta Especial!</h3>
           <p>
-            Quem mais gastar no <strong>Correio Elegante</strong> ganhará uma cesta repleta de surpresas.
+            A pessoa que mais gastar no <strong>Correio Elegante</strong> ganhará uma cesta repleta de surpresas.
             Quanto mais você enviar mensagens, maiores suas chances!
           </p>
           <div className="promo-footer">
