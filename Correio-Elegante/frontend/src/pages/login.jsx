@@ -1,9 +1,11 @@
+import { useEffect } from "react";
 import { useState } from "react";
 import { supabase } from "../lib/supabase";
 
+import "../App.css";
 export default function Login() {
   const [mode, setMode] = useState("register"); // cadastro primeiro
-
+  const [hearts, setHearts] = useState([]);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [phone, setPhone] = useState("");
@@ -59,6 +61,28 @@ export default function Login() {
     setMode("login");
     setLoading(false);
   }
+  useEffect(() => {
+      function spawnHeart() {
+        const id = Math.random().toString(36).substr(2, 9);
+  
+        const newHeart = {
+          id,
+          x: Math.random() * window.innerWidth,
+          y: Math.random() * window.innerHeight,
+          size: 16 + Math.random() * 26,
+          char: Math.random() > 0.5 ? "❤" : "♥",
+        };
+  
+        setHearts((prev) => [...prev, newHeart].slice(-110));
+  
+        setTimeout(() => {
+          setHearts((prev) => prev.filter((heart) => heart.id !== id));
+        }, 5000);
+      }
+  
+      const interval = setInterval(spawnHeart, 90);
+      return () => clearInterval(interval);
+    }, []);
 
   async function handleGoogleLogin() {
     const { error } = await supabase.auth.signInWithOAuth({
@@ -72,13 +96,18 @@ export default function Login() {
 
   return (
     <div className="login-page">
-      <div className="hearts-bg">
-        <div className="heart"></div>
-        <div className="heart"></div>
-        <div className="heart"></div>
-        <div className="heart"></div>
-        <div className="heart"></div>
-      </div>
+      <div className="binary-bg" />
+    <div className="heart-bg">
+      {hearts.map((h) => (
+        <span
+          key={h.id}
+          className="heart"
+          style={{ left: `${h.x}px`, top: `${h.y}px`, fontSize: `${h.size}px` }}
+        >
+          {h.char}
+        </span>
+      ))}
+    </div>
 
       <div className="login-card">
         <h1 className="title">Correio Elegante</h1>
