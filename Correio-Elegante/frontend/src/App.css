@@ -629,7 +629,7 @@ body {
    RESET & BASE STYLES
    ======================================== */
 
-* {
+** {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
@@ -641,10 +641,6 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* ========================================
-   PAGE CONTAINER
-   ======================================== */
-
 .pricing-page {
   min-height: 100vh;
   position: relative;
@@ -655,10 +651,6 @@ body {
     radial-gradient(ellipse at bottom right, rgba(139, 0, 0, 0.12), transparent 45%),
     linear-gradient(180deg, #0a0303 0%, #140606 50%, #0a0202 100%);
 }
-
-/* ========================================
-   BACKGROUND EFFECTS
-   ======================================== */
 
 .binary-bg {
   position: fixed;
@@ -694,24 +686,17 @@ body {
     transform: translateY(0) scale(0.9) rotate(0deg);
     opacity: 0;
   }
-
   15% {
     opacity: 1;
   }
-
   85% {
     opacity: 0.8;
   }
-
   100% {
     transform: translateY(-200px) scale(1.2) rotate(15deg);
     opacity: 0;
   }
 }
-
-/* ========================================
-   LAYOUT CONTAINER
-   ======================================== */
 
 .checkout-shell {
   position: relative;
@@ -727,11 +712,10 @@ body {
 
 .hero-column {
   min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
-
-/* ========================================
-   BACK BUTTON
-   ======================================== */
 
 .back-btn {
   display: inline-flex;
@@ -748,6 +732,7 @@ body {
   backdrop-filter: blur(20px);
   font-size: 14px;
   font-weight: 600;
+  align-self: flex-start;
 }
 
 .back-btn:hover {
@@ -757,12 +742,68 @@ body {
   box-shadow: 0 4px 16px rgba(255, 50, 50, 0.15);
 }
 
-/* ========================================
-   HERO SECTION
-   ======================================== */
+.countdown-container {
+  align-self: stretch;
+  margin-bottom: 48px;
+  text-align: center;
+  background: rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 28px;
+  padding: 20px 16px;
+}
+
+.countdown-title {
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.6);
+  margin-bottom: 12px;
+}
+
+.countdown-timer {
+  display: flex;
+  justify-content: center;
+  align-items: baseline;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.countdown-item {
+  text-align: center;
+  min-width: 60px;
+}
+
+.countdown-value {
+  font-size: 2.2rem;
+  font-weight: 800;
+  background: linear-gradient(135deg, #fff, #ffb3b3);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+
+.countdown-label {
+  font-size: 0.7rem;
+  color: rgba(255, 255, 255, 0.5);
+  text-transform: uppercase;
+  margin-top: 4px;
+}
+
+.countdown-separator {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.4);
+  margin-bottom: 8px;
+}
 
 .pricing-hero {
+  text-align: center;
   margin-bottom: 56px;
+  width: 100%;
 }
 
 .badge {
@@ -794,20 +835,20 @@ body {
 
 .pricing-hero p {
   max-width: 640px;
-  margin: 0;
+  margin: 0 auto;
   color: rgba(255, 255, 255, 0.7);
   line-height: 1.7;
   font-size: 16px;
 }
 
-/* ========================================
-   PLANS GRID
-   ======================================== */
-
 .plans-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
   gap: 24px;
+  width: 100%;
+  max-width: 1000px;
+  margin: 0 auto;
+  justify-items: center;
 }
 
 .plan-card {
@@ -823,6 +864,8 @@ body {
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  width: 100%;
+  max-width: 320px;
 }
 
 .plan-card::before {
@@ -860,28 +903,6 @@ body {
 
 .plan-card.selected::before {
   opacity: 1;
-}
-
-.plan-card.highlighted {
-  border-color: rgba(255, 100, 100, 0.5);
-  background:
-    radial-gradient(circle at top left, rgba(255, 80, 80, 0.12), transparent 60%),
-    linear-gradient(145deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.06));
-}
-
-.popular-badge {
-  position: absolute;
-  top: 6px;
-  right: 16px;
-  padding: 6px 14px;
-  border-radius: 100px;
-  background: linear-gradient(135deg, #ff4444 0%, #cc0000 100%);
-  color: white;
-  font-size: 11px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  box-shadow: 0 4px 12px rgba(255, 40, 40, 0.3);
 }
 
 .plan-top {
@@ -968,10 +989,6 @@ body {
   transform: none;
 }
 
-/* ========================================
-   CHECKOUT PANEL
-   ======================================== */
-
 .checkout-panel {
   position: sticky;
   top: 40px;
@@ -1030,10 +1047,6 @@ body {
   font-size: 15px;
 }
 
-/* ========================================
-   FORM CARD
-   ======================================== */
-
 .form-card {
   padding: 40px;
   min-height: auto;
@@ -1077,10 +1090,6 @@ body {
   font-weight: 700;
 }
 
-/* ========================================
-   FORM SECTIONS
-   ======================================== */
-
 .elegant-form {
   display: flex;
   flex-direction: column;
@@ -1110,10 +1119,6 @@ body {
   background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
   margin: 36px 0;
 }
-
-/* ========================================
-   INPUT GROUPS
-   ======================================== */
 
 .input-group {
   display: flex;
@@ -1172,10 +1177,6 @@ body {
   color: rgba(255, 255, 255, 0.4);
   margin-top: -4px;
 }
-
-/* ========================================
-   RADIO GROUPS
-   ======================================== */
 
 .radio-group,
 .payment-options {
@@ -1243,10 +1244,6 @@ body {
   font-size: 1.2rem;
 }
 
-/* ========================================
-   CLASS GRID
-   ======================================== */
-
 .class-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -1278,10 +1275,6 @@ body {
   box-shadow: 0 4px 16px rgba(255, 40, 40, 0.3);
   transform: translateY(-2px);
 }
-
-/* ========================================
-   PAYMENT BOXES
-   ======================================== */
 
 .pix-box,
 .cash-box {
@@ -1376,9 +1369,59 @@ body {
   color: rgba(255, 200, 100, 0.8);
 }
 
-/* ========================================
-   UPLOAD AREA
-   ======================================== */
+.order-code-box {
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 16px;
+  padding: 20px;
+  margin-bottom: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.order-code-label {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.5);
+  margin-bottom: 12px;
+}
+
+.order-code-display {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  background: #0a0a0a;
+  padding: 12px 20px;
+  border-radius: 12px;
+  font-size: 1.25rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: #ff8888;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  margin-bottom: 12px;
+}
+
+.copy-code-btn {
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  font-size: 1.2rem;
+  cursor: pointer;
+  padding: 4px 12px;
+  border-radius: 8px;
+  transition: all 0.2s;
+}
+
+.copy-code-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: scale(1.05);
+}
+
+.order-code-hint {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.5);
+  margin: 0;
+}
 
 .upload-area {
   display: flex;
@@ -1434,10 +1477,6 @@ body {
   color: rgba(255, 255, 255, 0.5);
 }
 
-/* ========================================
-   CONFIRM BUTTON
-   ======================================== */
-
 .confirm-btn {
   border: none;
   padding: 18px 24px;
@@ -1483,10 +1522,6 @@ body {
   }
 }
 
-/* ========================================
-   LOADING OVERLAY
-   ======================================== */
-
 .loading-overlay {
   position: fixed;
   inset: 0;
@@ -1503,7 +1538,6 @@ body {
   from {
     opacity: 0;
   }
-
   to {
     opacity: 1;
   }
@@ -1542,10 +1576,6 @@ body {
   font-size: 15px;
 }
 
-/* ========================================
-   SUCCESS OVERLAY
-   ======================================== */
-
 .success-overlay {
   position: fixed;
   inset: 0;
@@ -1575,7 +1605,6 @@ body {
     transform: scale(0.9);
     opacity: 0;
   }
-
   to {
     transform: scale(1);
     opacity: 1;
@@ -1610,16 +1639,85 @@ body {
   font-size: 15px;
 }
 
-/* ========================================
-   RESPONSIVE DESIGN
-   ======================================== */
+.profile-wrapper {
+  margin-bottom: 32px;
+  background: rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 20px;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  align-self: stretch;
+}
+
+.profile-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.02);
+  transition: background 0.2s;
+}
+
+.profile-header:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.profile-name {
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: #fff;
+  margin-bottom: 4px;
+}
+
+.profile-subtitle {
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.profile-toggle {
+  font-size: 1.2rem;
+  color: rgba(255, 255, 255, 0.6);
+  transition: transform 0.2s;
+}
+
+.profile-panel {
+  padding: 20px 24px 24px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.profile-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
+}
+
+.profile-item {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.profile-label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.profile-value {
+  font-weight: 600;
+  color: #fff;
+  word-break: break-word;
+}
 
 @media (max-width: 1200px) {
   .checkout-shell {
     grid-template-columns: 1fr;
     gap: 40px;
   }
-
   .checkout-panel {
     position: relative;
     top: 0;
@@ -1630,57 +1728,49 @@ body {
   .checkout-shell {
     padding: 24px 16px 60px;
   }
-
   .pricing-hero {
     margin-bottom: 40px;
   }
-
   .plans-grid {
     grid-template-columns: repeat(2, 1fr);
     gap: 16px;
   }
-
   .plan-card {
     padding: 24px;
   }
-
   .plan-emoji {
     font-size: 2.25rem;
   }
-
   .plan-card h2 {
     font-size: 1.25rem;
   }
-
   .plan-features li {
     font-size: 13px;
   }
-
   .form-card {
     padding: 28px;
   }
-
   .form-header {
     flex-direction: column;
     align-items: flex-start;
     gap: 16px;
   }
-
   .selected-emoji {
     font-size: 3rem;
   }
-
   .class-grid {
     grid-template-columns: repeat(2, 1fr);
   }
-
   .radio-group,
   .payment-options {
     grid-template-columns: 1fr;
   }
-
   .pix-key-container {
     flex-direction: column;
+  }
+  .profile-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
   }
 }
 
@@ -1688,33 +1778,36 @@ body {
   .checkout-shell {
     padding: 20px 12px 50px;
   }
-
   .pricing-hero h1 {
     font-size: 2rem;
   }
-
   .plans-grid {
     grid-template-columns: 1fr;
     gap: 12px;
   }
-
   .form-card {
     padding: 24px;
   }
-
   .class-grid {
     grid-template-columns: repeat(3, 1fr);
     gap: 8px;
   }
-
   .class-btn {
     padding: 10px 8px;
     font-size: 13px;
   }
-
   .confirm-btn {
     font-size: 15px;
     padding: 16px 20px;
+  }
+  .countdown-timer {
+    gap: 8px;
+  }
+  .countdown-item {
+    min-width: 45px;
+  }
+  .countdown-value {
+    font-size: 1.5rem;
   }
 }
 

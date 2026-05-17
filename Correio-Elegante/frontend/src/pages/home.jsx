@@ -18,6 +18,7 @@ export default function Home({ goToPricing = () => {}, goToAdmin = () => {} }) {
   const [telefone, setTelefone] = useState("");
 
   const [cartinhasCompradas, setCartinhasCompradas] = useState(0);
+  const [totalGasto, setTotalGasto] = useState(0);
 
   const [showProfilePanel, setShowProfilePanel] = useState(false);
 
@@ -118,6 +119,43 @@ export default function Home({ goToPricing = () => {}, goToAdmin = () => {} }) {
     };
   }, []);
 
+  useEffect(() => {
+    let active = true;
+
+    async function loadTotalGasto() {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!active || !user) return;
+
+      const { data, error } = await supabase
+        .from("orders")
+        .select("valor")
+        .eq("user_id", user.id);
+
+      if (!active) return;
+
+      if (error) {
+        console.log("Erro ao carregar total gasto:", error.message);
+        return;
+      }
+
+      const total = (data || []).reduce((acc, item) => {
+        const value = Number(item.valor) || 0;
+        return acc + value;
+      }, 0);
+
+      setTotalGasto(total);
+    }
+
+    loadTotalGasto();
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
   async function handleSaveAdditionalInfo() {
     if (!profileId) return;
 
@@ -156,6 +194,11 @@ export default function Home({ goToPricing = () => {}, goToAdmin = () => {} }) {
     setShowInfoPopup(false);
     setSavingProfile(false);
   }
+
+  const formattedTotalGasto = new Intl.NumberFormat("pt-BR", {
+    style: "currency",
+    currency: "BRL",
+  }).format(totalGasto);
 
   return (
     <div className="page">
@@ -240,6 +283,15 @@ export default function Home({ goToPricing = () => {}, goToAdmin = () => {} }) {
                 </div>
 
                 <div>
+                  <div style={{ fontSize: "12px", opacity: 0.6 }}>
+                    Total gasto
+                  </div>
+                  <div style={{ fontSize: "14px", fontWeight: 600 }}>
+                    {formattedTotalGasto}
+                  </div>
+                </div>
+
+                <div>
                   <div style={{ fontSize: "12px", opacity: 0.6 }}>Telefone</div>
                   <div style={{ fontSize: "14px", fontWeight: 600 }}>
                     {phoneFromProfile || telefone || "Não informado"}
@@ -273,10 +325,6 @@ export default function Home({ goToPricing = () => {}, goToAdmin = () => {} }) {
           </span>
         ))}
       </div>
-
-      <button className="admin-btn" onClick={goToAdmin}>
-        Admin
-      </button>
 
       <button className="admin-btn" onClick={goToAdmin}>
         Admin
@@ -405,5 +453,3 @@ export default function Home({ goToPricing = () => {}, goToAdmin = () => {} }) {
     </div>
   );
 }
-
- 
