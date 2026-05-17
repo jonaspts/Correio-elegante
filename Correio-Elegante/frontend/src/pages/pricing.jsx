@@ -38,21 +38,21 @@ export default function Pricing({ goToHome }) {
       emoji: "💌",
       title: "Carta",
       price: "R$ 1,00",
-      features: ["!!A ser decidido!!", "!!A ser decidido!!", "!!A ser decidido!!"],
+      features: ["1 Carta",],
     },
     {
       id: "p2",
-      emoji: "❤️",
+      emoji: "💌 + 🍭",
       title: "Carta com Pirulito",
       price: "R$ 2,00",
-      features: ["!!A ser decidido!!", "!!A ser decidido!!", "!!A ser decidido!!"],
+      features: ["1 Carta", "1 Pirulito",],
     },
     {
       id: "p3",
-      emoji: "🎁",
+      emoji: "💌 + 🍬",
       title: "carta com bombom",
       price: "R$ 3,00",
-      features: ["!!A ser decidido!!", "!!A ser decidido!!", "!!A ser decidido!!"],
+      features: ["1 Carta", "1 bombom", ],
     },
 
   ];

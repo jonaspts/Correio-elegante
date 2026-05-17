@@ -1,7 +1,25 @@
 import { useEffect, useState } from "react";
+import { supabase } from "../lib/supabase";
 
-export default function Home({ goToPricing = () => { }, goToAdmin = () => { } }) {
+export default function Home({ goToPricing = () => {}, goToAdmin = () => {} }) {
   const [hearts, setHearts] = useState([]);
+
+  const [showInfoPopup, setShowInfoPopup] = useState(false);
+  const [loadingProfile, setLoadingProfile] = useState(true);
+  const [savingProfile, setSavingProfile] = useState(false);
+  const [isGoogleUser, setIsGoogleUser] = useState(false);
+
+  const [profileId, setProfileId] = useState("");
+  const [profileEmail, setProfileEmail] = useState("");
+  const [phoneFromProfile, setPhoneFromProfile] = useState("");
+
+  const [nome, setNome] = useState("");
+  const [turma, setTurma] = useState("");
+  const [telefone, setTelefone] = useState("");
+
+  const [cartinhasCompradas, setCartinhasCompradas] = useState(0);
+
+  const [showProfilePanel, setShowProfilePanel] = useState(false);
 
   useEffect(() => {
     function spawnHeart() {
@@ -26,9 +44,219 @@ export default function Home({ goToPricing = () => { }, goToAdmin = () => { } })
     return () => clearInterval(interval);
   }, []);
 
+  useEffect(() => {
+    let active = true;
+
+    async function loadProfile() {
+      setLoadingProfile(true);
+
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!active) return;
+
+      if (!user) {
+        setLoadingProfile(false);
+        return;
+      }
+
+      const provider = user.app_metadata?.provider;
+      const googleUser = provider === "google";
+      setIsGoogleUser(googleUser);
+
+      const { data: profileData, error } = await supabase
+        .from("profiles")
+        .select(
+          "id, email, phone, nome, turma, onboarding_completed, cartinhas_compradas"
+        )
+        .eq("id", user.id)
+        .maybeSingle();
+
+      if (!active) return;
+
+      if (error) {
+        alert("Erro ao carregar perfil: " + error.message);
+        setLoadingProfile(false);
+        return;
+      }
+
+      const savedPhone = profileData?.phone || "";
+      const savedNome = profileData?.nome || "";
+      const savedTurma = profileData?.turma || "";
+
+      setProfileId(user.id);
+      setProfileEmail(user.email || "");
+      setPhoneFromProfile(savedPhone);
+
+      setNome(savedNome);
+      setTurma(savedTurma);
+
+      setCartinhasCompradas(profileData?.cartinhas_compradas ?? 0);
+
+      if (googleUser) {
+        setTelefone(savedPhone || "");
+      } else {
+        setTelefone(savedPhone || "");
+      }
+
+      const shouldShowPopup =
+        !profileData ||
+        !profileData.onboarding_completed ||
+        !savedNome ||
+        !savedTurma ||
+        (googleUser && !savedPhone);
+
+      setShowInfoPopup(shouldShowPopup);
+      setLoadingProfile(false);
+    }
+
+    loadProfile();
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  async function handleSaveAdditionalInfo() {
+    if (!profileId) return;
+
+    if (!nome.trim() || !turma.trim()) {
+      alert("Preencha nome e turma.");
+      return;
+    }
+
+    if (isGoogleUser && !telefone.trim()) {
+      alert("Preencha o telefone.");
+      return;
+    }
+
+    setSavingProfile(true);
+
+    const phoneToSave = isGoogleUser
+      ? telefone.trim()
+      : phoneFromProfile || telefone.trim();
+
+    const { error } = await supabase.from("profiles").upsert({
+      id: profileId,
+      email: profileEmail,
+      phone: phoneToSave,
+      nome: nome.trim(),
+      turma: turma.trim(),
+      onboarding_completed: true,
+    });
+
+    if (error) {
+      alert("Erro ao salvar informações: " + error.message);
+      setSavingProfile(false);
+      return;
+    }
+
+    setPhoneFromProfile(phoneToSave);
+    setShowInfoPopup(false);
+    setSavingProfile(false);
+  }
+
   return (
     <div className="page">
       <div className="binary-bg" />
+
+      {/* PERFIL TOPO */}
+      {profileId && !loadingProfile && (
+        <div
+          style={{
+            width: "100%",
+            position: "relative",
+            zIndex: 10,
+            padding: "12px 18px",
+          }}
+        >
+          <div
+            onClick={() => setShowProfilePanel((prev) => !prev)}
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              gap: "12px",
+              padding: "12px 16px",
+              borderRadius: "14px",
+              background:
+                "linear-gradient(90deg, rgba(255,50,50,0.14), rgba(0,0,0,0.35))",
+              border: "1px solid rgba(255,255,255,0.08)",
+              color: "#fff",
+              cursor: "pointer",
+              backdropFilter: "blur(14px)",
+            }}
+          >
+            <div>
+              <div style={{ fontWeight: 700, fontSize: "14px" }}>
+                {nome ? `Olá, ${nome}` : profileEmail}
+              </div>
+              <div style={{ fontSize: "12px", opacity: 0.7 }}>
+                {turma ? `Turma: ${turma}` : "Toque para ver seu perfil"}
+              </div>
+            </div>
+
+            <div style={{ fontSize: "18px", opacity: 0.85 }}>
+              {showProfilePanel ? "▲" : "▼"}
+            </div>
+          </div>
+
+          {showProfilePanel && (
+            <div
+              style={{
+                marginTop: "10px",
+                padding: "14px 16px",
+                borderRadius: "14px",
+                background:
+                  "linear-gradient(145deg, rgba(255,255,255,0.08), rgba(255,255,255,0.04))",
+                border: "1px solid rgba(255,255,255,0.10)",
+                color: "#fff",
+                backdropFilter: "blur(16px)",
+              }}
+            >
+              <div style={{ display: "grid", gap: "10px" }}>
+                <div>
+                  <div style={{ fontSize: "12px", opacity: 0.6 }}>Nome</div>
+                  <div style={{ fontSize: "14px", fontWeight: 600 }}>
+                    {nome || "Não informado"}
+                  </div>
+                </div>
+
+                <div>
+                  <div style={{ fontSize: "12px", opacity: 0.6 }}>Turma</div>
+                  <div style={{ fontSize: "14px", fontWeight: 600 }}>
+                    {turma || "Não informado"}
+                  </div>
+                </div>
+
+                <div>
+                  <div style={{ fontSize: "12px", opacity: 0.6 }}>
+                    Cartinhas compradas
+                  </div>
+                  <div style={{ fontSize: "14px", fontWeight: 600 }}>
+                    {cartinhasCompradas}
+                  </div>
+                </div>
+
+                <div>
+                  <div style={{ fontSize: "12px", opacity: 0.6 }}>Telefone</div>
+                  <div style={{ fontSize: "14px", fontWeight: 600 }}>
+                    {phoneFromProfile || telefone || "Não informado"}
+                  </div>
+                </div>
+
+                <div>
+                  <div style={{ fontSize: "12px", opacity: 0.6 }}>Email</div>
+                  <div style={{ fontSize: "14px", fontWeight: 600 }}>
+                    {profileEmail || "Não informado"}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       <div className="heart-bg">
         {hearts.map((h) => (
@@ -46,13 +274,15 @@ export default function Home({ goToPricing = () => { }, goToAdmin = () => { } })
         ))}
       </div>
 
+      <button className="admin-btn" onClick={goToAdmin}>
+        Admin
+      </button>
 
       <button className="admin-btn" onClick={goToAdmin}>
         Admin
       </button>
 
       <main className="container">
-        {/* HERO */}
         <section className="hero">
           <div className="hero-content">
             <div className="brand-badge">
@@ -75,7 +305,6 @@ export default function Home({ goToPricing = () => { }, goToAdmin = () => { } })
           </div>
         </section>
 
-        {/* INFO CARDS */}
         <section className="info-section">
           <div className="info-card info-card-primary">
             <div className="info-header">
@@ -99,7 +328,6 @@ export default function Home({ goToPricing = () => { }, goToAdmin = () => { } })
           </div>
         </section>
 
-        {/* FEATURES */}
         <section className="features-section">
           <div className="section-header">
             <span className="section-tag">Como funciona</span>
@@ -127,7 +355,6 @@ export default function Home({ goToPricing = () => { }, goToAdmin = () => { } })
           </div>
         </section>
 
-        {/* STEPS */}
         <section className="steps-section">
           <div className="section-header">
             <span className="section-tag">Como participar</span>
@@ -161,7 +388,6 @@ export default function Home({ goToPricing = () => { }, goToAdmin = () => { } })
           </div>
         </section>
 
-        {/* CTA FINAL */}
         <section className="cta-section">
           <div className="cta-content">
             <span className="cta-tag">Preparado para Escolher?</span>
@@ -179,3 +405,5 @@ export default function Home({ goToPricing = () => { }, goToAdmin = () => { } })
     </div>
   );
 }
+
+ 
