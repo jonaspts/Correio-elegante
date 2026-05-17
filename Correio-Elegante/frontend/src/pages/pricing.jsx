@@ -600,7 +600,7 @@ return (
           <h3>Concorra a uma Cesta Especial!</h3>
           <p>
             A pessoa que mais gastar no <strong>Correio Elegante</strong> ganhará uma cesta repleta de surpresas.
-            Quanto mais você enviar mensagens, maiores suas chances!
+            Quanto mais você enviar mensagens, maiores são suas chances!
           </p>
           <div className="promo-footer">
             <span className="promo-badge">💝 Acumule gastos</span>
