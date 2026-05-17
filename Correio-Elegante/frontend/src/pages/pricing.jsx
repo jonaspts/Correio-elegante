@@ -462,7 +462,7 @@ return (
         <div className="success-box">
           <div className="success-badge">✓</div>
           <h2>Pedido enviado com sucesso!</h2>
-          <p>Seu correio elegante foi registrado e será entregue em breve.</p>
+          <p>Seu correio elegante foi registrado e será entregue na data marcada</p>
         </div>
       </div>
     )}
