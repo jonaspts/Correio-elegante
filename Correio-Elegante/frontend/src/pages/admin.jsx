@@ -85,14 +85,29 @@ export default function Admin({ goToHome }) {
       return;
     }
 
-    // 🔥 ESSENCIAL: recalcula tudo no banco
-    await supabase.rpc("sync_profile_stats", {
-      p_user: order.user_id,
-    });
+    // 🔥 ATUALIZA PROFILE MANUALMENTE AQUI (SEM RPC)
+    const { data: all } = await supabase
+      .from("orders")
+      .select("valor, status")
+      .eq("user_id", order.user_id)
+      .in("status", ["paid", "delivered"]);
 
+    const total = (all || []).reduce(
+      (acc, o) => acc + (Number(o.valor) || 0),
+      0
+    );
+
+    await supabase
+      .from("profiles")
+      .update({
+        cartinhas_compradas: all.length,
+        total_gasto: total,
+      })
+      .eq("id", order.user_id);
+      
     fetchOrders();
   }
-  
+
   async function deleteOrder(id) {
     if (
       !confirm(
