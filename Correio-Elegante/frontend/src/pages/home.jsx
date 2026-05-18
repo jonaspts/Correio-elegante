@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
 
-export default function Home({ goToPricing = () => {}, goToAdmin = () => {} }) {
+export default function Home({ goToPricing = () => { }, goToAdmin = () => { } }) {
   const [hearts, setHearts] = useState([]);
 
   const [showInfoPopup, setShowInfoPopup] = useState(false);
@@ -132,8 +132,8 @@ export default function Home({ goToPricing = () => {}, goToAdmin = () => {} }) {
       const { data, error } = await supabase
         .from("orders")
         .select("valor")
-        .eq("user_id", user.id);
-
+        .eq("user_id", user.id)
+        .eq("status", "paid");
       if (!active) return;
 
       if (error) {
@@ -451,106 +451,106 @@ export default function Home({ goToPricing = () => {}, goToAdmin = () => {} }) {
         </section>
       </main>
       {showInfoPopup && (
-  <div
-    style={{
-      position: "fixed",
-      inset: 0,
-      zIndex: 9999,
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      background: "rgba(0, 0, 0, 0.72)",
-      backdropFilter: "blur(10px)",
-      padding: "20px",
-    }}
-  >
-    <div
-      style={{
-        width: "100%",
-        maxWidth: "460px",
-        borderRadius: "20px",
-        background:
-          "radial-gradient(circle at top left, rgba(255, 60, 60, 0.14), transparent 60%), linear-gradient(145deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.04))",
-        border: "1px solid rgba(255, 255, 255, 0.12)",
-        boxShadow: "0 24px 80px rgba(0, 0, 0, 0.5)",
-        padding: "28px",
-        color: "#fff",
-      }}
-    >
-      <h2 style={{ margin: 0, fontSize: "1.6rem", fontWeight: "800" }}>
-        Antes de continuar
-      </h2>
-
-      <p style={{ marginTop: 10, fontSize: "14px", opacity: 0.8 }}>
-        Complete suas informações para usar o sistema.
-        Estás informações ficam apenas com os admistradores do evento
-        para melhor controle.
-      </p>
-
-      <div style={{ display: "flex", flexDirection: "column", gap: "12px", marginTop: 16 }}>
-        
-        <input
-          placeholder="Nome"
-          value={nome}
-          onChange={(e) => setNome(e.target.value)}
+        <div
           style={{
-            padding: "14px",
-            borderRadius: "12px",
-            border: "1px solid rgba(255,255,255,0.12)",
-            background: "rgba(255,255,255,0.05)",
-            color: "#fff",
-            outline: "none",
-          }}
-        />
-
-        <input
-          placeholder="Turma (ex: 3A-DS)"
-          value={turma}
-          onChange={(e) => setTurma(e.target.value)}
-          style={{
-            padding: "14px",
-            borderRadius: "12px",
-            border: "1px solid rgba(255,255,255,0.12)",
-            background: "rgba(255,255,255,0.05)",
-            color: "#fff",
-            outline: "none",
-          }}
-        />
-
-        <input
-          placeholder="Telefone"
-          value={telefone}
-          onChange={(e) => setTelefone(e.target.value)}
-          style={{
-            padding: "14px",
-            borderRadius: "12px",
-            border: "1px solid rgba(255,255,255,0.12)",
-            background: "rgba(255,255,255,0.05)",
-            color: "#fff",
-            outline: "none",
-          }}
-        />
-
-        <button
-          onClick={handleSaveAdditionalInfo}
-          disabled={savingProfile}
-          style={{
-            padding: "14px",
-            borderRadius: "12px",
-            border: "none",
-            background: "linear-gradient(135deg, #ff2d2d, #b30000)",
-            color: "#fff",
-            fontWeight: "700",
-            cursor: "pointer",
+            position: "fixed",
+            inset: 0,
+            zIndex: 9999,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            background: "rgba(0, 0, 0, 0.72)",
+            backdropFilter: "blur(10px)",
+            padding: "20px",
           }}
         >
-          {savingProfile ? "Salvando..." : "Continuar"}
-        </button>
-      </div>
-    </div>
-  </div>
-)}
-      
+          <div
+            style={{
+              width: "100%",
+              maxWidth: "460px",
+              borderRadius: "20px",
+              background:
+                "radial-gradient(circle at top left, rgba(255, 60, 60, 0.14), transparent 60%), linear-gradient(145deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.04))",
+              border: "1px solid rgba(255, 255, 255, 0.12)",
+              boxShadow: "0 24px 80px rgba(0, 0, 0, 0.5)",
+              padding: "28px",
+              color: "#fff",
+            }}
+          >
+            <h2 style={{ margin: 0, fontSize: "1.6rem", fontWeight: "800" }}>
+              Antes de continuar
+            </h2>
+
+            <p style={{ marginTop: 10, fontSize: "14px", opacity: 0.8 }}>
+              Complete suas informações para usar o sistema.
+              Estás informações ficam apenas com os admistradores do evento
+              para melhor controle.
+            </p>
+
+            <div style={{ display: "flex", flexDirection: "column", gap: "12px", marginTop: 16 }}>
+
+              <input
+                placeholder="Nome"
+                value={nome}
+                onChange={(e) => setNome(e.target.value)}
+                style={{
+                  padding: "14px",
+                  borderRadius: "12px",
+                  border: "1px solid rgba(255,255,255,0.12)",
+                  background: "rgba(255,255,255,0.05)",
+                  color: "#fff",
+                  outline: "none",
+                }}
+              />
+
+              <input
+                placeholder="Turma (ex: 3A-DS)"
+                value={turma}
+                onChange={(e) => setTurma(e.target.value)}
+                style={{
+                  padding: "14px",
+                  borderRadius: "12px",
+                  border: "1px solid rgba(255,255,255,0.12)",
+                  background: "rgba(255,255,255,0.05)",
+                  color: "#fff",
+                  outline: "none",
+                }}
+              />
+
+              <input
+                placeholder="Telefone"
+                value={telefone}
+                onChange={(e) => setTelefone(e.target.value)}
+                style={{
+                  padding: "14px",
+                  borderRadius: "12px",
+                  border: "1px solid rgba(255,255,255,0.12)",
+                  background: "rgba(255,255,255,0.05)",
+                  color: "#fff",
+                  outline: "none",
+                }}
+              />
+
+              <button
+                onClick={handleSaveAdditionalInfo}
+                disabled={savingProfile}
+                style={{
+                  padding: "14px",
+                  borderRadius: "12px",
+                  border: "none",
+                  background: "linear-gradient(135deg, #ff2d2d, #b30000)",
+                  color: "#fff",
+                  fontWeight: "700",
+                  cursor: "pointer",
+                }}
+              >
+                {savingProfile ? "Salvando..." : "Continuar"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }

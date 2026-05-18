@@ -42,6 +42,7 @@ export default function Pricing({ goToHome }) {
   const [savingProfile, setSavingProfile] = useState(false);
   const [isGoogleUser, setIsGoogleUser] = useState(false);
 
+
   // Estado do contador regressivo
   const [timeLeft, setTimeLeft] = useState({
     days: 0,
@@ -185,7 +186,8 @@ export default function Pricing({ goToHome }) {
       const { data, error } = await supabase
         .from("orders")
         .select("valor")
-        .eq("user_id", user.id);
+        .eq("user_id", user.id)
+        .eq("status", "paid");
 
       if (!active) return;
 
@@ -269,27 +271,31 @@ export default function Pricing({ goToHome }) {
   async function uploadProof(file) {
     if (!file) return null;
 
-    setFileUploading(true);
+    try {
+      setFileUploading(true);
 
-    const fileName = `${Date.now()}-${file.name}`;
+      const fileName = `${Date.now()}-${file.name}`;
 
-    const { error } = await supabase.storage
-      .from("proofs")
-      .upload(fileName, file, {
-        upsert: false,
-      });
+      const { error } = await supabase.storage
+        .from("proofs")
+        .upload(fileName, file, { upsert: false });
 
-    if (error) {
-      console.error(error);
-      setFileUploading(false);
+      if (error) {
+        console.error(error);
+        return null;
+      }
+
+      const { data } = supabase.storage
+        .from("proofs")
+        .getPublicUrl(fileName);
+
+      return data.publicUrl;
+    } catch (err) {
+      console.error(err);
       return null;
+    } finally {
+      setFileUploading(false);
     }
-
-    const { data } = supabase.storage.from("proofs").getPublicUrl(fileName);
-
-    setFileUploading(false);
-
-    return data.publicUrl;
   }
 
   async function handleSaveAdditionalInfo() {
@@ -364,8 +370,23 @@ export default function Pricing({ goToHome }) {
       return alert("Selecione a turma");
     }
 
-    if (paymentMethod === "pix" && !proofUrl) {
-      return alert("Envie o comprovante do Pix");
+    let finalProofUrl = proofUrl;
+
+    if (paymentMethod === "pix") {
+      if (!proofFile && !proofUrl) {
+        return alert("Envie o comprovante do Pix");
+      }
+
+      if (!proofUrl && proofFile) {
+        const url = await uploadProof(proofFile);
+
+        if (!url) {
+          return alert("Erro ao enviar comprovante");
+        }
+
+        setProofUrl(url);
+        finalProofUrl = url;
+      }
     }
 
     try {
@@ -376,10 +397,11 @@ export default function Pricing({ goToHome }) {
       } = await supabase.auth.getUser();
 
       const valorMap = {
-        "Carta": 1,
-        "Carta com Pirulito": 2,
-        "Carta com Bombom": 3,
+        p1: 1,
+        p2: 2,
+        p3: 3,
       };
+      const valor = valorMap[selected?.id] ?? 0;
 
       const code = gerarCodigoPedido();
 
@@ -397,10 +419,10 @@ export default function Pricing({ goToHome }) {
           classroom: receiverType === "anonimo" ? null : course ? classroom : null,
           message,
           payment_method: paymentMethod,
-          proof_url: proofUrl,
+          proof_url: finalProofUrl,
           order_code: code,
           status: "pending",
-          valor: valorMap[selected.title],
+          valor: valor,
         },
       ]);
 
@@ -911,7 +933,14 @@ export default function Pricing({ goToHome }) {
                             setFileName(file.name);
                             setProofFile(file);
                             const url = await uploadProof(file);
+
+                            if (!url) {
+                              alert("Erro ao enviar comprovante. Tente novamente.");
+                              return;
+                            }
+
                             setProofUrl(url);
+
                           }}
                         />
                         <div className="upload-content">

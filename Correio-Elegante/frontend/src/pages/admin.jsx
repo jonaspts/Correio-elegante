@@ -85,26 +85,6 @@ export default function Admin({ goToHome }) {
       return;
     }
 
-    // 🔥 ATUALIZA PROFILE MANUALMENTE AQUI (SEM RPC)
-    const { data: all } = await supabase
-      .from("orders")
-      .select("valor, status")
-      .eq("user_id", order.user_id)
-      .in("status", ["paid", "delivered"]);
-
-    const total = (all || []).reduce(
-      (acc, o) => acc + (Number(o.valor) || 0),
-      0
-    );
-
-    await supabase
-      .from("profiles")
-      .update({
-        cartinhas_compradas: all.length,
-        total_gasto: total,
-      })
-      .eq("id", order.user_id);
-      
     fetchOrders();
   }
 
@@ -163,6 +143,7 @@ export default function Admin({ goToHome }) {
     if (!dateString) return "—";
     const date = new Date(dateString);
     return date.toLocaleString("pt-BR", {
+      timeZone: "America/Recife",
       day: "2-digit",
       month: "2-digit",
       year: "numeric",
@@ -186,7 +167,7 @@ export default function Admin({ goToHome }) {
     if (hours < 24) return `${hours}h atrás`;
     return `${days}d atrás`;
   }
-
+  console.log("ORDERS STATE:", orders);
   const filteredOrders = orders
     .filter((order) => {
       if (filter === "all") return true;
