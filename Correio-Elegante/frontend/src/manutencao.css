@@ -1,0 +1,50 @@
+.maintenance-card {
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(12px);
+  border-radius: 32px;
+  padding: 48px 32px;
+  text-align: center;
+  max-width: 500px;
+  width: 90%;
+  margin: 0 auto;
+  box-shadow: 0 20px 35px -10px rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(255, 105, 180, 0.5);
+}
+
+.maintenance-icon {
+  font-size: 64px;
+  margin-bottom: 20px;
+  filter: drop-shadow(0 0 5px rgba(255, 105, 180, 0.5));
+}
+
+.maintenance-card h1 {
+  font-size: 2rem;
+  margin-bottom: 16px;
+  color: #ffb6c1;
+  text-shadow: 0 0 5px rgba(199, 21, 133, 0.5);
+}
+
+.maintenance-card p {
+  color: #f0f0f0;
+  line-height: 1.5;
+  font-size: 1.1rem;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.maintenance-card .back-btn {
+  margin-top: 24px;
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 105, 180, 0.5);
+  padding: 10px 24px;
+  border-radius: 40px;
+  cursor: pointer;
+  font-weight: 500;
+  color: white;
+  transition: all 0.2s;
+}
+
+.maintenance-card .back-btn:hover {
+  background: rgba(255, 105, 180, 0.3);
+  transform: scale(1.02);
+  border-color: #ff69b4;
+}
