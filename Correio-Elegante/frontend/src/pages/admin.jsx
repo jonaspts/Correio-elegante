@@ -14,6 +14,7 @@ export default function Admin({ goToHome }) {
   const [adminAccess, setAdminAccess] = useState(false);
   const [adminPassword, setAdminPassword] = useState("");
   const [passwordError, setPasswordError] = useState("");
+  const [fileUploading, setFileUploading] = useState(false);
 
   // troque pela sua senha real, ou use .env (recomendado)
   const ADMIN_PASSWORD = import.meta.env.VITE_ADMIN_PASSWORD || "1234";
@@ -167,7 +168,7 @@ export default function Admin({ goToHome }) {
     if (hours < 24) return `${hours}h atrás`;
     return `${days}d atrás`;
   }
-  console.log("ORDERS STATE:", orders);
+  
   const filteredOrders = orders
     .filter((order) => {
       if (filter === "all") return true;

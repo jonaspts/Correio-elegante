@@ -339,7 +339,6 @@ export default function Pricing({ goToHome }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     if (loading) return;
 
     const now = Date.now();
@@ -370,22 +369,17 @@ export default function Pricing({ goToHome }) {
       return alert("Selecione a turma");
     }
 
-    let finalProofUrl = proofUrl;
+    let finalProofUrl = null;
 
     if (paymentMethod === "pix") {
-      if (!proofFile && !proofUrl) {
-        return alert("Envie o comprovante do Pix");
+      if (!proofFile) {
+        return alert("Envie o comprovante");
       }
 
-      if (!proofUrl && proofFile) {
-        const url = await uploadProof(proofFile);
+      finalProofUrl = await uploadProof(proofFile);
 
-        if (!url) {
-          return alert("Erro ao enviar comprovante");
-        }
-
-        setProofUrl(url);
-        finalProofUrl = url;
+      if (!finalProofUrl) {
+        return alert("Erro no upload do comprovante");
       }
     }
 
@@ -403,7 +397,11 @@ export default function Pricing({ goToHome }) {
       };
       const valor = valorMap[selected?.id] ?? 0;
 
-      const code = gerarCodigoPedido();
+      let code = null;
+
+      if (paymentMethod === "especie") {
+        code = gerarCodigoPedido();
+      }
 
       const { data, error } = await supabase.from("orders").insert([
         {
@@ -927,20 +925,12 @@ export default function Pricing({ goToHome }) {
                         <input
                           type="file"
                           accept="image/*,.pdf"
-                          onChange={async (e) => {
+                          onChange={(e) => {
                             const file = e.target.files[0];
                             if (!file) return;
-                            setFileName(file.name);
+
                             setProofFile(file);
-                            const url = await uploadProof(file);
-
-                            if (!url) {
-                              alert("Erro ao enviar comprovante. Tente novamente.");
-                              return;
-                            }
-
-                            setProofUrl(url);
-
+                            setFileName(file.name);
                           }}
                         />
                         <div className="upload-content">
