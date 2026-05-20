@@ -11,8 +11,23 @@ export default function Login() {
   const [phone, setPhone] = useState("");
   const [loading, setLoading] = useState(false);
 
+  function isValidEmail(email) {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
+  }
+
   async function handleLogin(e) {
     e.preventDefault();
+
+    if (!isValidEmail(email)) {
+      alert("Digite um email válido");
+      return;
+    }
+
+    if (!password.trim()) {
+      alert("Digite a senha");
+      return;
+    }
+
     setLoading(true);
 
     const { error } = await supabase.auth.signInWithPassword({
@@ -28,6 +43,16 @@ export default function Login() {
   }
 
   async function handleRegister() {
+    if (!isValidEmail(email)) {
+      alert("Digite um email válido");
+      return;
+    }
+
+    if (password.trim().length < 6) {
+      alert("Senha precisa ter no mínimo 6 caracteres");
+      return;
+    }
+
     setLoading(true);
 
     const { data, error } = await supabase.auth.signUp({
@@ -44,45 +69,42 @@ export default function Login() {
     const user = data?.user;
 
     if (user) {
-      const { error: profileError } = await supabase.from("profiles").insert([
+      await supabase.from("profiles").insert([
         {
           id: user.id,
           email: email.trim(),
           phone: phone.trim(),
         },
       ]);
-
-      if (profileError) {
-        alert("Conta criada, mas erro no perfil: " + profileError.message);
-      }
     }
 
     alert("Conta criada com sucesso!");
     setMode("login");
     setLoading(false);
   }
+  
   useEffect(() => {
-      function spawnHeart() {
-        const id = Math.random().toString(36).substr(2, 9);
-  
-        const newHeart = {
-          id,
-          x: Math.random() * window.innerWidth,
-          y: Math.random() * window.innerHeight,
-          size: 16 + Math.random() * 26,
-          char: Math.random() > 0.5 ? "❤" : "♥",
-        };
-  
-        setHearts((prev) => [...prev, newHeart].slice(-110));
-  
-        setTimeout(() => {
-          setHearts((prev) => prev.filter((heart) => heart.id !== id));
-        }, 5000);
-      }
-  
-      const interval = setInterval(spawnHeart, 90);
-      return () => clearInterval(interval);
-    }, []);
+    function spawnHeart() {
+      const id = Math.random().toString(36).substr(2, 9);
+
+      const newHeart = {
+        id,
+        x: Math.random() * window.innerWidth,
+        y: Math.random() * window.innerHeight,
+        size: 16 + Math.random() * 26,
+        char: Math.random() > 0.5 ? "❤" : "♥",
+      };
+
+      setHearts((prev) => [...prev, newHeart].slice(-110));
+
+      setTimeout(() => {
+        setHearts((prev) => prev.filter((heart) => heart.id !== id));
+      }, 5000);
+    }
+
+    const interval = setInterval(spawnHeart, 90);
+    return () => clearInterval(interval);
+  }, []);
 
   async function handleGoogleLogin() {
     const { error } = await supabase.auth.signInWithOAuth({
@@ -97,17 +119,17 @@ export default function Login() {
   return (
     <div className="login-page">
       <div className="binary-bg" />
-    <div className="heart-bg">
-      {hearts.map((h) => (
-        <span
-          key={h.id}
-          className="heart"
-          style={{ left: `${h.x}px`, top: `${h.y}px`, fontSize: `${h.size}px` }}
-        >
-          {h.char}
-        </span>
-      ))}
-    </div>
+      <div className="heart-bg">
+        {hearts.map((h) => (
+          <span
+            key={h.id}
+            className="heart"
+            style={{ left: `${h.x}px`, top: `${h.y}px`, fontSize: `${h.size}px` }}
+          >
+            {h.char}
+          </span>
+        ))}
+      </div>
 
       <div className="login-card">
         <h1 className="title">Correio Elegante</h1>

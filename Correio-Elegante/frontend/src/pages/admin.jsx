@@ -17,7 +17,7 @@ export default function Admin({ goToHome }) {
   const [fileUploading, setFileUploading] = useState(false);
 
   // troque pela sua senha real, ou use .env (recomendado)
-  const ADMIN_PASSWORD = import.meta.env.VITE_ADMIN_PASSWORD || "1234";
+  const ADMIN_PASSWORD = import.meta.env.VITE_ADMIN_PASSWORD
 
 
   const handleApprove = async (orderId) => {
@@ -131,7 +131,7 @@ export default function Admin({ goToHome }) {
   function handlePasswordSubmit(e) {
     e.preventDefault();
 
-    if (adminPassword === ADMIN_PASSWORD) {
+    if (adminPassword.trim() === ADMIN_PASSWORD?.trim()) {
       setPasswordError("");
       setAdminAccess(true);
       return;
@@ -168,7 +168,7 @@ export default function Admin({ goToHome }) {
     if (hours < 24) return `${hours}h atrás`;
     return `${days}d atrás`;
   }
-  
+
   const filteredOrders = orders
     .filter((order) => {
       if (filter === "all") return true;
