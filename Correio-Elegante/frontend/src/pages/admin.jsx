@@ -1,55 +1,66 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "../lib/supabase";
 import "../App.css";
 
+const STATUS_CONFIG = {
+  pending: {
+    label: "Pendente",
+    icon: "⏳",
+    color: "#FFC864",
+    bgColor: "rgba(255, 200, 100, 0.1)",
+  },
+  paid: {
+    label: "Pago",
+    icon: "✅",
+    color: "#64FFAA",
+    bgColor: "rgba(100, 255, 170, 0.1)",
+  },
+  delivered: {
+    label: "Entregue",
+    icon: "📬",
+    color: "#6496FF",
+    bgColor: "rgba(100, 150, 255, 0.1)",
+  },
+  trash: {
+    label: "Lixeira",
+    icon: "🗑️",
+    color: "#FF6464",
+    bgColor: "rgba(255, 100, 100, 0.1)",
+  },
+};
+
 export default function Admin({ goToHome }) {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [actionLoading, setActionLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+
   const [filter, setFilter] = useState("all");
   const [search, setSearch] = useState("");
   const [expandedOrder, setExpandedOrder] = useState(null);
+  const [viewMode, setViewMode] = useState("grid"); // 'grid' ou 'list'
 
-  // tela de senha antes do painel
   const [adminAccess, setAdminAccess] = useState(false);
   const [adminPassword, setAdminPassword] = useState("");
   const [passwordError, setPasswordError] = useState("");
-  const [fileUploading, setFileUploading] = useState(false);
 
-  // troque pela sua senha real, ou use .env (recomendado)
-  const ADMIN_PASSWORD = import.meta.env.VITE_ADMIN_PASSWORD
-
-
-  const handleApprove = async (orderId) => {
-    const { error } = await supabase.rpc("approve_order", {
-      order_id: orderId,
-    });
-
-    if (error) {
-      console.log(error);
-      return;
-    }
-
-    alert("Pedido aprovado!");
-  };
+  const ADMIN_PASSWORD = import.meta.env.VITE_ADMIN_PASSWORD || "";
 
   const pageVariants = {
-    initial: { opacity: 0, scale: 0.96, y: 18 },
-    animate: {
-      opacity: 1,
-      scale: 1,
-      y: 0,
-      transition: { duration: 0.28, ease: "easeOut" },
-    },
-    exit: {
-      opacity: 0,
-      scale: 0.96,
-      y: -12,
-      transition: { duration: 0.22, ease: "easeIn" },
-    },
+    initial: { opacity: 0, y: 20 },
+    animate: { opacity: 1, y: 0, transition: { duration: 0.3, ease: "easeOut" } },
+    exit: { opacity: 0, y: -20, transition: { duration: 0.2, ease: "easeIn" } },
   };
 
-  async function fetchOrders() {
+  function normalizeText(value) {
+    return String(value || "").toLowerCase().trim();
+  }
+
+  async function fetchOrders(showLoading = false) {
+    if (showLoading) setLoading(true);
+    setErrorMessage("");
+
     const { data, error } = await supabase
       .from("orders")
       .select("*")
@@ -57,60 +68,83 @@ export default function Admin({ goToHome }) {
 
     if (error) {
       console.error(error);
-      setLoading(false);
+      setErrorMessage("Erro ao carregar pedidos.");
+      if (showLoading) setLoading(false);
       return;
     }
 
-
     setOrders(data || []);
-    setLoading(false);
+    if (showLoading) setLoading(false);
   }
 
   useEffect(() => {
-    fetchOrders();
-    const interval = setInterval(fetchOrders, 10000);
+    if (!adminAccess) return;
+
+    (async () => {
+      await fetchOrders(true);
+    })();
+
+    const interval = setInterval(() => {
+      fetchOrders(false);
+    }, 10000);
+
     return () => clearInterval(interval);
-  }, []);
+  }, [adminAccess]);
+
+  function handlePasswordSubmit(e) {
+    e.preventDefault();
+
+    if (!ADMIN_PASSWORD) {
+      setPasswordError("Senha do admin não configurada no .env");
+      return;
+    }
+
+    if (adminPassword.trim() === ADMIN_PASSWORD.trim()) {
+      setPasswordError("");
+      setAdminAccess(true);
+      return;
+    }
+
+    setPasswordError("Senha incorreta");
+  }
 
   async function updateStatus(id, newStatus) {
-    const order = orders.find((o) => o.id === id);
-    if (!order) return;
+    const currentOrder = orders.find((order) => order.id === id);
+    if (!currentOrder) return;
+
+    setActionLoading(true);
 
     const { error } = await supabase
       .from("orders")
-      .update({ status: newStatus })
+      .update({
+        previous_status: currentOrder.status || null,
+        status: newStatus,
+      })
       .eq("id", id);
+
+    setActionLoading(false);
 
     if (error) {
       alert("Erro ao atualizar status");
+      console.error(error);
       return;
     }
 
-    fetchOrders();
+    await fetchOrders();
+    setExpandedOrder(id);
   }
 
-  async function deleteOrder(id) {
-    if (
-      !confirm(
-        "Tem certeza que deseja deletar este pedido? Esta ação não pode ser desfeita."
-      )
-    ) {
-      return;
-    }
+  async function moveToTrash(id) {
+    const ok = confirm("Mover este pedido para a lixeira?");
+    if (!ok) return;
 
-    const { error } = await supabase.from("orders").delete().eq("id", id);
-
-    if (error) {
-      alert("Erro ao deletar pedido");
-      return;
-    }
-
-    setExpandedOrder(null);
-    fetchOrders();
+    await updateStatus(id, "trash");
   }
 
   async function undoStatus(order) {
     if (!order?.previous_status) return;
+
+    setActionLoading(true);
 
     const { error } = await supabase
       .from("orders")
@@ -120,29 +154,21 @@ export default function Admin({ goToHome }) {
       })
       .eq("id", order.id);
 
+    setActionLoading(false);
+
     if (error) {
       alert("Erro ao desfazer");
+      console.error(error);
       return;
     }
 
-    fetchOrders();
-  }
-
-  function handlePasswordSubmit(e) {
-    e.preventDefault();
-
-    if (adminPassword.trim() === ADMIN_PASSWORD?.trim()) {
-      setPasswordError("");
-      setAdminAccess(true);
-      return;
-    }
-
-    setPasswordError("Senha incorreta");
+    await fetchOrders();
   }
 
   function formatDate(dateString) {
     if (!dateString) return "—";
     const date = new Date(dateString);
+
     return date.toLocaleString("pt-BR", {
       timeZone: "America/Recife",
       day: "2-digit",
@@ -155,6 +181,7 @@ export default function Admin({ goToHome }) {
 
   function formatTime(dateString) {
     if (!dateString) return "—";
+
     const date = new Date(dateString);
     const now = new Date();
     const diff = now - date;
@@ -164,584 +191,522 @@ export default function Admin({ goToHome }) {
     const days = Math.floor(hours / 24);
 
     if (minutes < 1) return "Agora";
-    if (minutes < 60) return `${minutes}min atrás`;
-    if (hours < 24) return `${hours}h atrás`;
-    return `${days}d atrás`;
+    if (minutes < 60) return `${minutes}min`;
+    if (hours < 24) return `${hours}h`;
+    return `${days}d`;
   }
 
-  const filteredOrders = orders
-    .filter((order) => {
-      if (filter === "all") return true;
-      return order.status === filter;
-    })
-    .filter((order) => {
-      const searchLower = search.toLowerCase();
-      return (
-        order.order_code?.toLowerCase().includes(searchLower) ||
-        order.receiver_name?.toLowerCase().includes(searchLower) ||
-        order.sender_name?.toLowerCase().includes(searchLower)
-      );
-    });
+  const filteredOrders = useMemo(() => {
+    const searchLower = normalizeText(search);
 
-  const stats = {
-    total: orders.length,
-    pending: orders.filter((o) => o.status === "pending").length,
-    paid: orders.filter((o) => o.status === "paid").length,
-    delivered: orders.filter((o) => o.status === "delivered").length,
-  };
+    return orders
+      .filter((order) => {
+        if (filter === "all") return order.status !== "trash";
+        return order.status === filter;
+      })
+      .filter((order) => {
+        if (!searchLower) return true;
 
-  const getStatusIcon = (status) => {
-    switch (status) {
-      case "pending":
-        return "⏳";
-      case "paid":
-        return "✅";
-      case "delivered":
-        return "📬";
-      default:
-        return "📋";
-    }
-  };
+        return (
+          normalizeText(order.order_code).includes(searchLower) ||
+          normalizeText(order.receiver_name).includes(searchLower) ||
+          normalizeText(order.sender_name).includes(searchLower) ||
+          normalizeText(order.plan).includes(searchLower) ||
+          normalizeText(order.classroom).includes(searchLower)
+        );
+      });
+  }, [orders, filter, search]);
 
-  const getStatusLabel = (status) => {
-    switch (status) {
-      case "pending":
-        return "Pendente";
-      case "paid":
-        return "Pago";
-      case "delivered":
-        return "Entregue";
-      default:
-        return status;
-    }
-  };
+  const stats = useMemo(() => {
+    const activeOrders = orders.filter((o) => o.status !== "trash");
 
-  return (
-    <AnimatePresence mode="wait">
-      {/* TELA DE SENHA */}
-      {!adminAccess && (
-        <motion.div
-          key="admin-password"
-          variants={pageVariants}
-          initial="initial"
-          animate="animate"
-          exit="exit"
-          style={{
-            minHeight: "100vh",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            padding: "24px",
-            background:
-              "radial-gradient(circle at top, #ff3b3bb2 0%, #1a0b0b 55%, #070404ff 100%)",
-          }}
-        >
-          <div
-            style={{
-              width: "100%",
-              maxWidth: "420px",
-              borderRadius: "24px",
-              padding: "28px",
-              background: "rgba(255,255,255,0.08)",
-              border: "1px solid rgba(255,255,255,0.12)",
-              boxShadow: "0 18px 60px rgba(0,0,0,0.35)",
-              backdropFilter: "blur(12px)",
-            }}
-          >
-            <div
-              style={{
-                width: "72px",
-                height: "72px",
-                borderRadius: "20px",
-                display: "grid",
-                placeItems: "center",
-                margin: "0 auto 18px",
-                background: "linear-gradient(135deg, #ff4d4d 0%, #b30000 100%)",
-                fontSize: "2rem",
-              }}
-            >
-              🔒
-            </div>
+    const totalRevenue = activeOrders.reduce(
+      (sum, order) => sum + Number(order.valor || 0),
+      0
+    );
 
-            <h1
-              style={{
-                margin: "0",
-                textAlign: "center",
-                color: "#fff",
-                fontSize: "1.7rem",
-                lineHeight: "1.2",
-              }}
-            >
-              Acesso ao Admin
-            </h1>
+    return {
+      total: activeOrders.length,
+      pending: activeOrders.filter((o) => o.status === "pending").length,
+      paid: activeOrders.filter((o) => o.status === "paid").length,
+      delivered: activeOrders.filter((o) => o.status === "delivered").length,
+      trash: orders.filter((o) => o.status === "trash").length,
+      totalRevenue,
+    };
+  }, [orders]);
 
-            <p
-              style={{
-                margin: "10px 0 22px",
-                textAlign: "center",
-                color: "rgba(255,255,255,0.75)",
-                fontSize: "0.95rem",
-              }}
-            >
-              Digite a senha para abrir o painel
-            </p>
+  if (!adminAccess) {
+    return (
+      <motion.div
+        key="admin-password"
+        variants={pageVariants}
+        initial="initial"
+        animate="animate"
+        exit="exit"
+        className="admin-login-page"
+      >
+        <div className="admin-login-card">
+          <div className="login-icon-wrapper">
+            <div className="login-icon">🔐</div>
+          </div>
 
-            <form
-              onSubmit={handlePasswordSubmit}
-              style={{ display: "flex", flexDirection: "column", gap: "14px" }}
-            >
+          <h1 className="login-title">Painel Administrativo</h1>
+          <p className="login-subtitle">Digite a senha para acessar o sistema</p>
+
+          <form onSubmit={handlePasswordSubmit} className="login-form">
+            <div className="input-wrapper">
               <input
                 type="password"
                 value={adminPassword}
                 onChange={(e) => setAdminPassword(e.target.value)}
                 placeholder="Senha de acesso"
                 autoComplete="current-password"
-                style={{
-                  width: "100%",
-                  border: "1px solid rgba(255,255,255,0.14)",
-                  borderRadius: "14px",
-                  padding: "14px 16px",
-                  outline: "none",
-                  background: "rgba(255,255,255,0.08)",
-                  color: "#fff",
-                  fontSize: "1rem",
-                }}
+                className="login-input"
               />
-
-              {passwordError && (
-                <span
-                  style={{
-                    color: "#94031dff",
-                    fontSize: "0.92rem",
-                    textAlign: "center",
-                  }}
-                >
-                  {passwordError}
-                </span>
-              )}
-
-              <button
-                type="submit"
-                style={{
-                  width: "100%",
-                  border: "none",
-                  borderRadius: "14px",
-                  padding: "14px 16px",
-                  cursor: "pointer",
-                  fontWeight: "700",
-                  fontSize: "1rem",
-                  color: "#fff",
-                  background: "linear-gradient(135deg, #a80606ff 0%, rgba(255, 0, 0, 0))",
-                  boxShadow: "0 10px 24px rgba(255, 92, 92, 0.25)",
-                }}
-              >
-                Entrar
-              </button>
-
-              <button
-                type="button"
-                onClick={goToHome}
-                style={{
-                  width: "100%",
-                  border: "1px solid rgba(255,255,255,0.16)",
-                  borderRadius: "14px",
-                  padding: "14px 16px",
-                  cursor: "pointer",
-                  fontWeight: "600",
-                  fontSize: "1rem",
-                  color: "#fff",
-                  background: "transparent",
-                }}
-              >
-                Voltar para início
-              </button>
-            </form>
-          </div>
-        </motion.div>
-      )}
-
-      {/* PAINEL */}
-      {adminAccess && (
-        loading ? (
-          <motion.div
-            key="admin-loading"
-            variants={pageVariants}
-            initial="initial"
-            animate="animate"
-            exit="exit"
-          >
-            <div className="admin-loading-screen">
-              <div className="loading-spinner"></div>
-              <p>Carregando pedidos...</p>
             </div>
-          </motion.div>
+
+            {passwordError && (
+              <div className="error-message">{passwordError}</div>
+            )}
+
+            <button type="submit" className="login-submit-btn">
+              <span>Entrar no Painel</span>
+              <span className="btn-arrow">→</span>
+            </button>
+
+            <button type="button" onClick={goToHome} className="login-back-btn">
+              ← Voltar para início
+            </button>
+          </form>
+        </div>
+      </motion.div>
+    );
+  }
+
+  if (loading) {
+    return (
+      <motion.div
+        key="admin-loading"
+        variants={pageVariants}
+        initial="initial"
+        animate="animate"
+        exit="exit"
+        className="admin-loading-page"
+      >
+        <div className="loading-content">
+          <div className="loading-spinner-modern"></div>
+          <p className="loading-text">Carregando pedidos...</p>
+        </div>
+      </motion.div>
+    );
+  }
+
+  return (
+    <motion.div
+      key="admin-panel"
+      variants={pageVariants}
+      initial="initial"
+      animate="animate"
+      exit="exit"
+      className="admin-dashboard"
+    >
+      {/* Header */}
+      <header className="dashboard-header">
+        <div className="header-content-wrapper">
+          <div className="header-left">
+            <button className="back-button" onClick={goToHome}>
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                <path d="M12.5 15L7.5 10L12.5 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+              Início
+            </button>
+            <div className="header-title-group">
+              <h1 className="dashboard-title">
+                <span className="title-icon">📦</span>
+                Gerenciador de Entregas
+              </h1>
+              <p className="dashboard-subtitle">Correio Elegante 2026</p>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      {/* Stats */}
+      <section className="stats-section">
+        <div className="stats-grid">
+          <div className="stat-card-modern">
+            <div className="stat-header">
+              <span className="stat-icon-modern">📊</span>
+              <span className="stat-label-modern">Total de Pedidos</span>
+            </div>
+            <div className="stat-value-modern">{stats.total}</div>
+            <div className="stat-footer">Ativos no sistema</div>
+          </div>
+
+          <div className="stat-card-modern stat-pending">
+            <div className="stat-header">
+              <span className="stat-icon-modern">⏳</span>
+              <span className="stat-label-modern">Pendentes</span>
+            </div>
+            <div className="stat-value-modern">{stats.pending}</div>
+            <div className="stat-footer">Aguardando pagamento</div>
+          </div>
+
+          <div className="stat-card-modern stat-paid">
+            <div className="stat-header">
+              <span className="stat-icon-modern">✅</span>
+              <span className="stat-label-modern">Pagos</span>
+            </div>
+            <div className="stat-value-modern">{stats.paid}</div>
+            <div className="stat-footer">Confirmados</div>
+          </div>
+
+          <div className="stat-card-modern stat-delivered">
+            <div className="stat-header">
+              <span className="stat-icon-modern">📬</span>
+              <span className="stat-label-modern">Entregues</span>
+            </div>
+            <div className="stat-value-modern">{stats.delivered}</div>
+            <div className="stat-footer">Completados</div>
+          </div>
+
+          <div className="stat-card-modern stat-revenue">
+            <div className="stat-header">
+              <span className="stat-icon-modern">💰</span>
+              <span className="stat-label-modern">Receita Total</span>
+            </div>
+            <div className="stat-value-modern">R$ {stats.totalRevenue.toFixed(2)}</div>
+            <div className="stat-footer">Valor arrecadado</div>
+          </div>
+
+          <div className="stat-card-modern stat-trash">
+            <div className="stat-header">
+              <span className="stat-icon-modern">🗑️</span>
+              <span className="stat-label-modern">Lixeira</span>
+            </div>
+            <div className="stat-value-modern">{stats.trash}</div>
+            <div className="stat-footer">Arquivados</div>
+          </div>
+        </div>
+      </section>
+
+      {/* Controls */}
+      <section className="controls-section">
+        <div className="controls-wrapper">
+          {/* Search */}
+          <div className="search-wrapper">
+            <svg className="search-icon" width="20" height="20" viewBox="0 0 20 20" fill="none">
+              <circle cx="8.5" cy="8.5" r="5.5" stroke="currentColor" strokeWidth="2"/>
+              <path d="M12 12L16 16" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+            </svg>
+            <input
+              type="text"
+              placeholder="Buscar por código, nome, turma..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="search-input-modern"
+            />
+            {search && (
+              <button className="search-clear-btn" onClick={() => setSearch("")}>
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                  <path d="M4 4L12 12M12 4L4 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                </svg>
+              </button>
+            )}
+          </div>
+
+          {/* Filters */}
+          <div className="filters-wrapper">
+            <button
+              className={`filter-chip ${filter === "all" ? "active" : ""}`}
+              onClick={() => setFilter("all")}
+            >
+              <span className="filter-dot"></span>
+              Todos
+            </button>
+            <button
+              className={`filter-chip ${filter === "pending" ? "active" : ""}`}
+              onClick={() => setFilter("pending")}
+            >
+              <span className="filter-dot pending"></span>
+              Pendentes
+            </button>
+            <button
+              className={`filter-chip ${filter === "paid" ? "active" : ""}`}
+              onClick={() => setFilter("paid")}
+            >
+              <span className="filter-dot paid"></span>
+              Pagos
+            </button>
+            <button
+              className={`filter-chip ${filter === "delivered" ? "active" : ""}`}
+              onClick={() => setFilter("delivered")}
+            >
+              <span className="filter-dot delivered"></span>
+              Entregues
+            </button>
+            <button
+              className={`filter-chip ${filter === "trash" ? "active" : ""}`}
+              onClick={() => setFilter("trash")}
+            >
+              <span className="filter-dot trash"></span>
+              Lixeira
+            </button>
+          </div>
+        </div>
+      </section>
+
+      {/* Orders */}
+      <section className="orders-section">
+        {errorMessage && (
+          <div className="error-banner">{errorMessage}</div>
+        )}
+
+        {filteredOrders.length === 0 ? (
+          <div className="empty-state-modern">
+            <div className="empty-icon-modern">📭</div>
+            <h3 className="empty-title">Nenhum pedido encontrado</h3>
+            <p className="empty-description">
+              {search ? "Tente ajustar sua busca" : "Não há pedidos nesta categoria"}
+            </p>
+          </div>
         ) : (
-          <motion.div
-            key="admin-panel"
-            variants={pageVariants}
-            initial="initial"
-            animate="animate"
-            exit="exit"
-          >
-            <div className="admin-page">
-              {/* HEADER */}
-              <header className="admin-header">
-                <button className="back-btn" onClick={goToHome} type="button">
-                  ← Voltar para início
-                </button>
+          <div className="orders-grid-modern">
+            {filteredOrders.map((order) => (
+              <OrderCard
+                key={order.id}
+                order={order}
+                isExpanded={expandedOrder === order.id}
+                onToggleExpand={() => setExpandedOrder(expandedOrder === order.id ? null : order.id)}
+                onUpdateStatus={updateStatus}
+                onMoveToTrash={moveToTrash}
+                onUndo={undoStatus}
+                actionLoading={actionLoading}
+                formatDate={formatDate}
+                formatTime={formatTime}
+              />
+            ))}
+          </div>
+        )}
+      </section>
+    </motion.div>
+  );
+}
 
-                <div className="admin-header-content">
-                  <h1>
-                    <span className="header-icon">📦</span>
-                    Painel Administrativo
-                  </h1>
-                  <p className="header-subtitle">
-                    Gerenciamento de Pedidos • Correio Elegante 2026
-                  </p>
+// Componente de Card de Pedido
+function OrderCard({
+  order,
+  isExpanded,
+  onToggleExpand,
+  onUpdateStatus,
+  onMoveToTrash,
+  onUndo,
+  actionLoading,
+  formatDate,
+  formatTime,
+}) {
+  const status = STATUS_CONFIG[order.status] || STATUS_CONFIG.pending;
+
+  return (
+    <div className={`order-card-modern status-${order.status} ${isExpanded ? "expanded" : ""}`}>
+      {/* Header */}
+      <div className="order-card-header" onClick={onToggleExpand}>
+        <div className="order-card-top">
+          <div className="order-badge-group">
+            <span className={`status-badge status-${order.status}`}>
+              <span className="badge-icon">{status.icon}</span>
+              <span className="badge-text">{status.label}</span>
+            </span>
+            <span className="order-code-badge">#{order.order_code || "—"}</span>
+          </div>
+          <span className="order-time-badge">{formatTime(order.created_at)}</span>
+        </div>
+
+        <div className="order-quick-info">
+          <div className="info-item">
+            <span className="info-label">Para</span>
+            <span className="info-value">{order.receiver_name || "—"}</span>
+          </div>
+          <div className="info-item">
+            <span className="info-label">Plano</span>
+            <span className="info-value">{order.plan || "—"}</span>
+          </div>
+          <div className="info-item">
+            <span className="info-label">Valor</span>
+            <span className="info-value">R$ {Number(order.valor || 0).toFixed(2)}</span>
+          </div>
+        </div>
+
+        <button className="expand-toggle">
+          {isExpanded ? "Fechar" : "Ver mais"}
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style={{ transform: isExpanded ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s" }}>
+            <path d="M4 6L8 10L12 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        </button>
+      </div>
+
+      {/* Details */}
+      {isExpanded && (
+        <div className="order-card-body">
+          <div className="details-grid">
+            {/* Remetente */}
+            <div className="detail-section">
+              <h4 className="section-title">
+                <span className="section-icon">💌</span>
+                Remetente
+              </h4>
+              <div className="detail-rows">
+                <div className="detail-row">
+                  <span className="detail-key">Tipo</span>
+                  <span className="detail-value">
+                    {order.sender_type === "identificado" ? "Identificado" : "Anônimo"}
+                  </span>
                 </div>
-              </header>
-
-              {/* STATS */}
-              <section className="admin-stats">
-                <div className="stat-card">
-                  <div className="stat-icon">📊</div>
-                  <div className="stat-content">
-                    <span className="stat-value">{stats.total}</span>
-                    <span className="stat-label">Total</span>
-                  </div>
-                </div>
-
-                <div className="stat-card pending">
-                  <div className="stat-icon">⏳</div>
-                  <div className="stat-content">
-                    <span className="stat-value">{stats.pending}</span>
-                    <span className="stat-label">Pendentes</span>
-                  </div>
-                </div>
-
-                <div className="stat-card paid">
-                  <div className="stat-icon">✅</div>
-                  <div className="stat-content">
-                    <span className="stat-value">{stats.paid}</span>
-                    <span className="stat-label">Pagos</span>
-                  </div>
-                </div>
-
-                <div className="stat-card delivered">
-                  <div className="stat-icon">📬</div>
-                  <div className="stat-content">
-                    <span className="stat-value">{stats.delivered}</span>
-                    <span className="stat-label">Entregues</span>
-                  </div>
-                </div>
-              </section>
-
-              {/* CONTROLS */}
-              <section className="admin-controls">
-                <div className="search-container">
-                  <svg
-                    className="search-icon"
-                    width="20"
-                    height="20"
-                    viewBox="0 0 20 20"
-                    fill="none"
-                  >
-                    <path
-                      d="M9 17A8 8 0 1 0 9 1a8 8 0 0 0 0 16ZM18 18l-4-4"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                    />
-                  </svg>
-                  <input
-                    className="admin-search"
-                    placeholder="Pesquisar por código, nome..."
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                  />
-                  {search && (
-                    <button className="search-clear" onClick={() => setSearch("")}>
-                      ✕
-                    </button>
-                  )}
-                </div>
-
-                <div className="admin-filters">
-                  <button
-                    className={`filter-btn ${filter === "all" ? "active" : ""}`}
-                    onClick={() => setFilter("all")}
-                  >
-                    Todos
-                  </button>
-                  <button
-                    className={`filter-btn ${filter === "pending" ? "active" : ""}`}
-                    onClick={() => setFilter("pending")}
-                  >
-                    Pendentes
-                  </button>
-                  <button
-                    className={`filter-btn ${filter === "paid" ? "active" : ""}`}
-                    onClick={() => setFilter("paid")}
-                  >
-                    Pagos
-                  </button>
-                  <button
-                    className={`filter-btn ${filter === "delivered" ? "active" : ""}`}
-                    onClick={() => setFilter("delivered")}
-                  >
-                    Entregues
-                  </button>
-                </div>
-              </section>
-
-              {/* ORDERS LIST */}
-              <section className="admin-orders">
-                {filteredOrders.length === 0 ? (
-                  <div className="empty-state">
-                    <div className="empty-icon">📭</div>
-                    <h3>Nenhum pedido encontrado</h3>
-                    <p>Tente ajustar os filtros ou a pesquisa</p>
-                  </div>
-                ) : (
-                  <div className="orders-grid">
-                    {filteredOrders.map((order) => {
-                      const isExpanded = expandedOrder === order.id;
-
-                      return (
-                        <article
-                          key={order.id}
-                          className={`order-card status-${order.status} ${isExpanded ? "expanded" : ""
-                            }`}
-                        >
-                          {/* COMPACT VIEW */}
-                          <div
-                            className="order-summary"
-                            onClick={() =>
-                              setExpandedOrder(isExpanded ? null : order.id)
-                            }
-                          >
-                            <div className="order-header">
-                              <div className="order-main-info">
-                                <span className="order-status-badge">
-                                  {getStatusIcon(order.status)}
-                                  {getStatusLabel(order.status)}
-                                </span>
-                                <h3 className="order-code">#{order.order_code}</h3>
-                              </div>
-                              <span className="order-time">
-                                {formatTime(order.created_at)}
-                              </span>
-                            </div>
-
-                            <div className="order-preview">
-                              <div className="preview-item">
-                                <span className="preview-label">Para:</span>
-                                <span className="preview-value">
-                                  {order.receiver_name}
-                                </span>
-                              </div>
-                              <div className="preview-item">
-                                <span className="preview-label">Plano:</span>
-                                <span className="preview-value">{order.plan}</span>
-                              </div>
-                              <div className="preview-item">
-                                <span className="preview-label">Pgto:</span>
-                                <span className="preview-value">
-                                  {order.payment_method === "pix" ? "PIX" : "Espécie"}
-                                </span>
-                              </div>
-                            </div>
-
-                            <button className="expand-btn">
-                              {isExpanded ? "Fechar detalhes ▲" : "Ver detalhes ▼"}
-                            </button>
-                          </div>
-
-                          {/* EXPANDED VIEW */}
-                          {isExpanded && (
-                            <div className="order-details">
-                              <div className="details-divider"></div>
-
-                              <div className="details-section">
-                                <h4>
-                                  <span className="section-icon">💌</span>
-                                  Remetente
-                                </h4>
-                                <div className="detail-row">
-                                  <span className="detail-label">Tipo:</span>
-                                  <span className="detail-value">
-                                    {order.sender_type === "identificado"
-                                      ? "Identificado"
-                                      : "Anônimo"}
-                                  </span>
-                                </div>
-                                {order.sender_name && (
-                                  <div className="detail-row">
-                                    <span className="detail-label">Nome:</span>
-                                    <span className="detail-value">
-                                      {order.sender_name}
-                                    </span>
-                                  </div>
-                                )}
-                              </div>
-
-                              <div className="details-section">
-                                <h4>
-                                  <span className="section-icon">🎯</span>
-                                  Destinatário
-                                </h4>
-                                <div className="detail-row">
-                                  <span className="detail-label">Nome:</span>
-                                  <span className="detail-value">
-                                    {order.receiver_name}
-                                  </span>
-                                </div>
-                                {order.course && (
-                                  <div className="detail-row">
-                                    <span className="detail-label">Curso:</span>
-                                    <span className="detail-value">{order.course}</span>
-                                  </div>
-                                )}
-                                {order.classroom && (
-                                  <div className="detail-row">
-                                    <span className="detail-label">Turma:</span>
-                                    <span className="detail-value">
-                                      {order.classroom}
-                                    </span>
-                                  </div>
-                                )}
-                              </div>
-
-                              <div className="details-section">
-                                <h4>
-                                  <span className="section-icon">✉️</span>
-                                  Mensagem
-                                </h4>
-                                <div className="message-box">
-                                  {order.message || "Sem mensagem"}
-                                </div>
-                              </div>
-
-                              <div className="details-section">
-                                <h4>
-                                  <span className="section-icon">💳</span>
-                                  Pagamento
-                                </h4>
-                                <div className="detail-row">
-                                  <span className="detail-label">Método:</span>
-                                  <span className="detail-value">
-                                    {order.payment_method === "pix" ? "PIX" : "Espécie"}
-                                  </span>
-                                </div>
-                                <div className="detail-row">
-                                  <span className="detail-label">Data:</span>
-                                  <span className="detail-value">
-                                    {formatDate(order.created_at)}
-                                  </span>
-                                </div>
-                              </div>
-
-                              {order.payment_method === "pix" && order.proof_url && (
-                                <div className="details-section">
-                                  <h4>
-                                    <span className="section-icon">📎</span>
-                                    Comprovante
-                                  </h4>
-                                  <details className="proof-details">
-                                    <summary className="proof-summary">
-                                      Clique para ver o comprovante
-                                    </summary>
-                                    <div className="proof-content">
-                                      <img
-                                        src={order.proof_url}
-                                        alt="Comprovante"
-                                        className="proof-image"
-                                      />
-                                      <a
-                                        href={order.proof_url}
-                                        target="_blank"
-                                        rel="noreferrer"
-                                        className="proof-link"
-                                      >
-                                        Abrir em nova aba →
-                                      </a>
-                                    </div>
-                                  </details>
-                                </div>
-                              )}
-
-                              <div className="details-section">
-                                <h4>
-                                  <span className="section-icon">⚙️</span>
-                                  Ações
-                                </h4>
-                                <div className="status-actions">
-                                  <button
-                                    className={`status-btn pending ${order.status === "pending" ? "active" : ""
-                                      }`}
-                                    onClick={() => updateStatus(order.id, "pending")}
-                                  >
-                                    <span className="btn-icon">⏳</span>
-                                    Pendente
-                                  </button>
-                                  <button
-                                    className={`status-btn paid ${order.status === "paid" ? "active" : ""
-                                      }`}
-                                    onClick={() => updateStatus(order.id, "paid")}
-                                  >
-                                    <span className="btn-icon">✅</span>
-                                    Pago
-                                  </button>
-                                  <button
-                                    className={`status-btn delivered ${order.status === "delivered" ? "active" : ""
-                                      }`}
-                                    onClick={() =>
-                                      updateStatus(order.id, "delivered")
-                                    }
-                                  >
-                                    <span className="btn-icon">📬</span>
-                                    Entregue
-                                  </button>
-                                </div>
-
-                                <div className="utility-actions">
-                                  <button
-                                    className="undo-btn"
-                                    onClick={() => undoStatus(order)}
-                                    disabled={!order.previous_status}
-                                  >
-                                    <span className="btn-icon">↩️</span>
-                                    Desfazer última ação
-                                  </button>
-                                  <button
-                                    className="delete-btn"
-                                    onClick={() => deleteOrder(order.id)}
-                                  >
-                                    <span className="btn-icon">🗑️</span>
-                                    Deletar pedido
-                                  </button>
-                                </div>
-                              </div>
-
-                              {/* JSON DEBUG (Optional) */}
-                              <details className="json-details">
-                                <summary>🔍 Ver dados completos (JSON)</summary>
-                                <pre className="json-content">
-                                  {JSON.stringify(order, null, 2)}
-                                </pre>
-                              </details>
-                            </div>
-                          )}
-                        </article>
-                      );
-                    })}
+                {order.sender_name && (
+                  <div className="detail-row">
+                    <span className="detail-key">Nome</span>
+                    <span className="detail-value">{order.sender_name}</span>
                   </div>
                 )}
-              </section>
+              </div>
             </div>
-          </motion.div>
-        )
+
+            {/* Destinatário */}
+            <div className="detail-section">
+              <h4 className="section-title">
+                <span className="section-icon">🎯</span>
+                Destinatário
+              </h4>
+              <div className="detail-rows">
+                <div className="detail-row">
+                  <span className="detail-key">Nome</span>
+                  <span className="detail-value">{order.receiver_name || "—"}</span>
+                </div>
+                {order.course && (
+                  <div className="detail-row">
+                    <span className="detail-key">Curso</span>
+                    <span className="detail-value">{order.course}</span>
+                  </div>
+                )}
+                {order.classroom && (
+                  <div className="detail-row">
+                    <span className="detail-key">Turma</span>
+                    <span className="detail-value">{order.classroom}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Pagamento */}
+            <div className="detail-section">
+              <h4 className="section-title">
+                <span className="section-icon">💳</span>
+                Pagamento
+              </h4>
+              <div className="detail-rows">
+                <div className="detail-row">
+                  <span className="detail-key">Método</span>
+                  <span className="detail-value">
+                    {order.payment_method === "pix" ? "PIX" : "Espécie"}
+                  </span>
+                </div>
+                <div className="detail-row">
+                  <span className="detail-key">Data</span>
+                  <span className="detail-value">{formatDate(order.created_at)}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Mensagem */}
+          <div className="message-section">
+            <h4 className="section-title">
+              <span className="section-icon">✉️</span>
+              Mensagem
+            </h4>
+            <div className="message-content">
+              {order.message || "Sem mensagem"}
+            </div>
+          </div>
+
+          {/* Comprovante */}
+          {order.payment_method === "pix" && order.proof_url && (
+            <div className="proof-section">
+              <h4 className="section-title">
+                <span className="section-icon">📎</span>
+                Comprovante
+              </h4>
+              <details className="proof-toggle">
+                <summary className="proof-summary">Ver comprovante</summary>
+                <div className="proof-wrapper">
+                  <img src={order.proof_url} alt="Comprovante" className="proof-img" />
+                  <a href={order.proof_url} target="_blank" rel="noreferrer" className="proof-link">
+                    Abrir em nova aba →
+                  </a>
+                </div>
+              </details>
+            </div>
+          )}
+
+          {/* Actions */}
+          <div className="actions-section">
+            <h4 className="section-title">
+              <span className="section-icon">⚙️</span>
+              Ações
+            </h4>
+
+            <div className="status-buttons">
+              <button
+                className={`status-action-btn pending ${order.status === "pending" ? "active" : ""}`}
+                onClick={() => onUpdateStatus(order.id, "pending")}
+                disabled={actionLoading}
+              >
+                <span>⏳</span>
+                Pendente
+              </button>
+              <button
+                className={`status-action-btn paid ${order.status === "paid" ? "active" : ""}`}
+                onClick={() => onUpdateStatus(order.id, "paid")}
+                disabled={actionLoading}
+              >
+                <span>✅</span>
+                Pago
+              </button>
+              <button
+                className={`status-action-btn delivered ${order.status === "delivered" ? "active" : ""}`}
+                onClick={() => onUpdateStatus(order.id, "delivered")}
+                disabled={actionLoading}
+              >
+                <span>📬</span>
+                Entregue
+              </button>
+            </div>
+
+            <div className="utility-buttons">
+              <button
+                className="utility-btn undo-btn"
+                onClick={() => onUndo(order)}
+                disabled={!order.previous_status || actionLoading}
+              >
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                  <path d="M3 8H13M3 8L7 4M3 8L7 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+                Desfazer
+              </button>
+              <button
+                className="utility-btn trash-btn"
+                onClick={() => onMoveToTrash(order.id)}
+                disabled={actionLoading}
+              >
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                  <path d="M3 4H13M5 4V3C5 2.44772 5.44772 2 6 2H10C10.5523 2 11 2.44772 11 3V4M6 7V11M10 7V11M4 4H12V13C12 13.5523 11.5523 14 11 14H5C4.44772 14 4 13.5523 4 13V4Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+                Lixeira
+              </button>
+            </div>
+          </div>
+        </div>
       )}
-    </AnimatePresence>
+    </div>
   );
 }

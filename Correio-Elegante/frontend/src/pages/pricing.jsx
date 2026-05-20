@@ -799,9 +799,9 @@ useEffect(() => {
           payment_method: paymentMethod,
 
           proof_url: finalProofUrl,
-
+          
           order_code: code,
-
+          
           status: "pending",
 
           valor,
