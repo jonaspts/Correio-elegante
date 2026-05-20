@@ -201,7 +201,7 @@ export default function Home({ goToPricing = () => { }, goToAdmin = () => { } })
   }).format(totalGasto);
 
   return (
-    <div className="page">
+    <div className="pricing-page">
       <div className="binary-bg" />
 
       {/* PERFIL TOPO */}

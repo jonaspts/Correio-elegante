@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "../lib/supabase";
-import "../App.css";
+import "../Admin.css";
 
 const STATUS_CONFIG = {
   pending: {
