@@ -16,12 +16,40 @@ const LoadingOverlay = () => (
   </div>
 );
 
-const SuccessOverlay = () => (
+const SuccessOverlay = ({ orderCode, paymentMethod, onClose }) => (
   <div className="success-overlay">
     <div className="success-box">
       <div className="success-badge">✓</div>
       <h2>Pedido enviado com sucesso!</h2>
       <p>Seu correio elegante foi registrado e será entregue na data marcada</p>
+      
+      {paymentMethod === "especie" && orderCode && (
+        <div className="success-code-section">
+          <p className="success-code-label">Código do seu pedido:</p>
+          <div className="success-code-display">
+            <strong>{orderCode}</strong>
+            <button
+              type="button"
+              className="copy-success-btn"
+              onClick={() => {
+                navigator.clipboard.writeText(orderCode);
+                alert("Código copiado!");
+              }}
+            >
+              📋 Copiar
+            </button>
+          </div>
+          <p className="success-code-hint">Guarde este código para apresentar no pagamento</p>
+        </div>
+      )}
+      
+      <button 
+        type="button" 
+        className="success-close-btn"
+        onClick={onClose}
+      >
+        Concluído
+      </button>
     </div>
   </div>
 );
@@ -262,32 +290,16 @@ const PixPayment = ({ selectedPrice, fileName, onFileChange }) => (
   </div>
 );
 
-const CashPayment = ({ selectedPrice, orderCode }) => (
+const CashPayment = ({ selectedPrice }) => (
   <div className="cash-box">
     <div className="cash-icon">💵</div>
     <h4>Pagamento em dinheiro</h4>
-    {orderCode && (
-      <div className="order-code-box">
-        <p className="order-code-label">Código do seu pedido:</p>
-        <div className="order-code-display">
-          <strong>{orderCode}</strong>
-          <button
-            type="button"
-            className="copy-code-btn"
-            onClick={() => {
-              navigator.clipboard.writeText(orderCode);
-              alert("Código copiado!");
-            }}
-          >
-            📋
-          </button>
-        </div>
-        <p className="order-code-hint">Guarde este código para acompanhar seu pedido</p>
-      </div>
-    )}
     <p>
       O pagamento no valor de <strong>{selectedPrice}</strong> deverá ser entregue presencialmente
       para os representantes dos 3º Anos.
+    </p>
+    <p className="cash-info-text">
+      ℹ️ O código do pedido será exibido após a confirmação
     </p>
     <div className="info-alert">
       <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
@@ -387,7 +399,6 @@ export default function Pricing({ goToHome }) {
       price: "R$ 3,00",
       features: ["1 Carta", "1 Bombom"],
     },
-
     {
       id: "p4",
       emoji: "💌🍭🍬",
@@ -512,15 +523,21 @@ export default function Pricing({ goToHome }) {
     setSerenataMusic("");
   }, []);
 
+  const handleSuccessClose = useCallback(() => {
+    setSent(false);
+    resetForm();
+  }, [resetForm]);
+
   // ========================================
   // HANDLERS
   // ========================================
-useEffect(() => {
-  window.scrollTo({
-    top: 0,
-    behavior: "smooth",
-  });
-}, []);
+  useEffect(() => {
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
+  }, []);
+
   useEffect(() => {
     const interval = setInterval(() => {
       const stored = JSON.parse(localStorage.getItem("ce_cooldown") || "{}");
@@ -586,15 +603,14 @@ useEffect(() => {
     setClassroom("");
     setReceiverType("identificado");
   }, []);
+
   function getCooldownData() {
     return JSON.parse(localStorage.getItem("ce_cooldown") || "{}");
   }
 
   function registerSend() {
     const data = getCooldownData();
-
     const sends = data.sends || [];
-
     const recentSends = sends.filter(
       (timestamp) => Date.now() - timestamp < COOLDOWN_TIME
     );
@@ -603,7 +619,6 @@ useEffect(() => {
 
     if (recentSends.length >= MAX_SENDS) {
       const cooldownUntil = Date.now() + COOLDOWN_TIME;
-
       localStorage.setItem(
         "ce_cooldown",
         JSON.stringify({
@@ -745,12 +760,12 @@ useEffect(() => {
         p1: 1,
         p2: 2,
         p3: 3,
-        p4: 0,  // combo completo
-        p5: 0,  // serenata + carta
-        p6: 0,  // serenata + pirulito
-        p7: 0, // serenata + bombom + carta
-        p8: 0, // serenata + combo
-        p9: 0, // buquê + carta
+        p4: 0,
+        p5: 0,
+        p6: 0,
+        p7: 0,
+        p8: 0,
+        p9: 0,
       };
 
       const valor = valorMap[selected?.id] ?? 0;
@@ -770,40 +785,30 @@ useEffect(() => {
             senderType === "anonimo"
               ? null
               : senderName.trim(),
-
           sender_classroom:
             senderType === "anonimo"
               ? null
               : senderCourse
                 ? senderClassroom
                 : null,
-
           receiver_type: receiverType,
-
           receiver_name: receiverName.trim(),
-
           course:
             receiverType === "anonimo"
               ? null
               : course || null,
-
           classroom:
             receiverType === "anonimo"
               ? null
               : course
                 ? classroom
                 : null,
-
           message: cleanMessage,
           serenata_music: serenataMusic || null,
           payment_method: paymentMethod,
-
           proof_url: finalProofUrl,
-          
           order_code: code,
-          
           status: "pending",
-
           valor,
         },
       ]);
@@ -813,45 +818,13 @@ useEffect(() => {
       }
 
       registerSend();
-
       setOrderCode(code || "");
       setLastSend(now);
       setSent(true);
 
-      setTimeout(() => {
-        setSent(false);
-
-        setSelected(null);
-
-        setSenderType("anonimo");
-        setReceiverType("anonimo");
-
-        setPaymentMethod("pix");
-
-        setFileName("");
-        setProofFile(null);
-        setProofUrl("");
-
-        setSenderName("");
-        setSenderCourse("");
-        setSenderClassroom("");
-
-        setReceiverName("");
-        setMessage("");
-
-        setCourse("");
-        setClassroom("");
-
-        setOrderCode("");
-      }, 2500);
-
     } catch (err) {
       console.error(err);
-
-      alert(
-        err?.message ||
-        "Erro ao enviar pedido."
-      );
+      alert(err?.message || "Erro ao enviar pedido.");
     } finally {
       setLoading(false);
     }
@@ -1050,7 +1023,13 @@ useEffect(() => {
       <HeartBackground hearts={hearts} />
 
       {loading && <LoadingOverlay />}
-      {sent && <SuccessOverlay />}
+      {sent && (
+        <SuccessOverlay 
+          orderCode={orderCode} 
+          paymentMethod={paymentMethod}
+          onClose={handleSuccessClose}
+        />
+      )}
 
       <main className="checkout-shell">
         {/* COLUNA PRINCIPAL */}
@@ -1223,6 +1202,7 @@ useEffect(() => {
                     />
                     <span className="input-hint">{message.length}/500 caracteres</span>
                   </div>
+                  
                   {selected?.title?.toLowerCase().includes("serenata") && (
                     <div className="input-group">
                       <label htmlFor="serenata-music">Música da serenata 🎶</label>
@@ -1278,18 +1258,14 @@ useEffect(() => {
                   )}
 
                   {paymentMethod === "especie" && (
-                    <CashPayment selectedPrice={selected.price} orderCode={orderCode} />
+                    <CashPayment selectedPrice={selected.price} />
                   )}
                 </div>
 
                 <button
                   type="submit"
                   className="confirm-btn"
-                  disabled={
-                    loading ||
-                    fileUploading ||
-                    cooldownLeft > 0
-                  }
+                  disabled={loading || fileUploading || cooldownLeft > 0}
                 >
                   {loading ? (
                     <>
@@ -1304,7 +1280,6 @@ useEffect(() => {
                   ) : (
                     <>Confirmar pedido 💘</>
                   )}
-
                 </button>
               </form>
             </div>

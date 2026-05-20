@@ -38,7 +38,15 @@ export default function Manutencao({ goToHome }) {
         ))}
       </div>
 
-      <main className="checkout-shell" style={{ justifyContent: "center", alignItems: "center" }}>
+      <main
+        className="checkout-shell"
+        style={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          minHeight: "100vh"
+        }}
+      >
         <div className="maintenance-card">
           <div className="maintenance-icon">🔧</div>
           <h1>Em manutenção</h1>

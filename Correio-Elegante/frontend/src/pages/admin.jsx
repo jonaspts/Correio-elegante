@@ -63,7 +63,24 @@ export default function Admin({ goToHome }) {
 
     const { data, error } = await supabase
       .from("orders")
-      .select("*")
+      .select(`
+      id,
+      order_code,
+      receiver_name,
+      sender_name,
+      sender_type,
+      plan,
+      valor,
+      classroom,
+      course,
+      payment_method,
+      proof_url,
+      message,
+      serenata_music,
+      status,
+      previous_status,
+      created_at
+    `)
       .order("created_at", { ascending: false });
 
     if (error) {
@@ -216,7 +233,7 @@ export default function Admin({ goToHome }) {
         );
       });
   }, [orders, filter, search]);
-
+  
   const stats = useMemo(() => {
     const activeOrders = orders.filter((o) => o.status !== "trash");
 
@@ -316,7 +333,7 @@ export default function Admin({ goToHome }) {
           <div className="header-left">
             <button className="back-button" onClick={goToHome}>
               <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                <path d="M12.5 15L7.5 10L12.5 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M12.5 15L7.5 10L12.5 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
               Início
             </button>
@@ -396,8 +413,8 @@ export default function Admin({ goToHome }) {
           {/* Search */}
           <div className="search-wrapper">
             <svg className="search-icon" width="20" height="20" viewBox="0 0 20 20" fill="none">
-              <circle cx="8.5" cy="8.5" r="5.5" stroke="currentColor" strokeWidth="2"/>
-              <path d="M12 12L16 16" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+              <circle cx="8.5" cy="8.5" r="5.5" stroke="currentColor" strokeWidth="2" />
+              <path d="M12 12L16 16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
             </svg>
             <input
               type="text"
@@ -409,7 +426,7 @@ export default function Admin({ goToHome }) {
             {search && (
               <button className="search-clear-btn" onClick={() => setSearch("")}>
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                  <path d="M4 4L12 12M12 4L4 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                  <path d="M4 4L12 12M12 4L4 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
                 </svg>
               </button>
             )}
@@ -477,7 +494,12 @@ export default function Admin({ goToHome }) {
                 key={order.id}
                 order={order}
                 isExpanded={expandedOrder === order.id}
-                onToggleExpand={() => setExpandedOrder(expandedOrder === order.id ? null : order.id)}
+                onToggleExpand={() =>
+                  setExpandedOrder((prev) =>
+                    prev === order.id ? null : order.id
+                  )
+                }
+                
                 onUpdateStatus={updateStatus}
                 onMoveToTrash={moveToTrash}
                 onUndo={undoStatus}
@@ -510,7 +532,7 @@ function OrderCard({
   return (
     <div className={`order-card-modern status-${order.status} ${isExpanded ? "expanded" : ""}`}>
       {/* Header */}
-      <div className="order-card-header" onClick={onToggleExpand}>
+      <div className="order-card-header">
         <div className="order-card-top">
           <div className="order-badge-group">
             <span className={`status-badge status-${order.status}`}>
@@ -537,10 +559,16 @@ function OrderCard({
           </div>
         </div>
 
-        <button className="expand-toggle">
+        <button
+          className="expand-toggle"
+          onClick={(e) => {
+            e.stopPropagation();
+            onToggleExpand();
+          }}
+        >
           {isExpanded ? "Fechar" : "Ver mais"}
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style={{ transform: isExpanded ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s" }}>
-            <path d="M4 6L8 10L12 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            <path d="M4 6L8 10L12 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
         </button>
       </div>
@@ -628,6 +656,18 @@ function OrderCard({
               {order.message || "Sem mensagem"}
             </div>
           </div>
+          {order.serenata_music && (
+            <div className="message-section">
+              <h4 className="section-title">
+                <span className="section-icon">🎵</span>
+                Serenata
+              </h4>
+
+              <div className="message-content">
+                {order.serenata_music}
+              </div>
+            </div>
+          )}
 
           {/* Comprovante */}
           {order.payment_method === "pix" && order.proof_url && (
@@ -689,7 +729,7 @@ function OrderCard({
                 disabled={!order.previous_status || actionLoading}
               >
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                  <path d="M3 8H13M3 8L7 4M3 8L7 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M3 8H13M3 8L7 4M3 8L7 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
                 Desfazer
               </button>
@@ -699,7 +739,7 @@ function OrderCard({
                 disabled={actionLoading}
               >
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                  <path d="M3 4H13M5 4V3C5 2.44772 5.44772 2 6 2H10C10.5523 2 11 2.44772 11 3V4M6 7V11M10 7V11M4 4H12V13C12 13.5523 11.5523 14 11 14H5C4.44772 14 4 13.5523 4 13V4Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M3 4H13M5 4V3C5 2.44772 5.44772 2 6 2H10C10.5523 2 11 2.44772 11 3V4M6 7V11M10 7V11M4 4H12V13C12 13.5523 11.5523 14 11 14H5C4.44772 14 4 13.5523 4 13V4Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
                 Lixeira
               </button>

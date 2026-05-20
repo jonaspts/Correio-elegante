@@ -8,20 +8,20 @@
   width: 90%;
   margin: 0 auto;
   box-shadow: 0 20px 35px -10px rgba(0, 0, 0, 0.5);
-  border: 1px solid rgba(255, 105, 180, 0.5);
+  border: 1px solid rgba(190, 0, 0, 0.5);
 }
 
 .maintenance-icon {
   font-size: 64px;
   margin-bottom: 20px;
-  filter: drop-shadow(0 0 5px rgba(255, 105, 180, 0.5));
+  filter: drop-shadow(0 0 5px rgba(180, 0, 0, 0.5));
 }
 
 .maintenance-card h1 {
   font-size: 2rem;
   margin-bottom: 16px;
   color: #ffb6c1;
-  text-shadow: 0 0 5px rgba(199, 21, 133, 0.5);
+  text-shadow: 0 0 5px rgba(218, 18, 18, 0.637);
 }
 
 .maintenance-card p {
@@ -34,7 +34,7 @@
 .maintenance-card .back-btn {
   margin-top: 24px;
   background: rgba(255, 255, 255, 0.15);
-  border: 1px solid rgba(255, 105, 180, 0.5);
+  border: 1px solid rgba(182, 9, 9, 0.5);
   padding: 10px 24px;
   border-radius: 40px;
   cursor: pointer;
@@ -42,9 +42,18 @@
   color: white;
   transition: all 0.2s;
 }
+.checkout-shell {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;       /* ocupa a altura total da tela */
+  width: 100%;
+  padding: 20px;
+  box-sizing: border-box;
+}
 
 .maintenance-card .back-btn:hover {
   background: rgba(255, 105, 180, 0.3);
   transform: scale(1.02);
-  border-color: #ff69b4;
+  border-color: #ff3535;
 }

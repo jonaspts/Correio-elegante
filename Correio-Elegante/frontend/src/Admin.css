@@ -1139,15 +1139,18 @@ summary:focus-visible {
 * {
   -webkit-tap-highlight-color: transparent;
 }
+.order-card-modern {
+  outline: 2px solid red;
+}
 
 /* ============================================
    ANIMATIONS & POLISH
    ============================================ */
 
 @media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
+  .admin-dashboard *,
+  .admin-dashboard *::before,
+  .admin-dashboard *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
