@@ -8,6 +8,7 @@ import Admin from "./pages/admin";
 import Login from "./pages/login";
 import manutencao from "./pages/manutencao";
 
+
 export default function App() {
   const [currentPage, setCurrentPage] = useState("home");
   const [user, setUser] = useState(null);
@@ -23,6 +24,26 @@ export default function App() {
       .single();
 
     setRole(data?.role || "user");
+  }
+
+
+  async function validateSession() {
+    const { data: { session } } = await supabase.auth.getSession();
+
+    if (!session) return;
+
+    const userId = session.user.id;
+
+    const { data, error } = await supabase
+      .from("users") // ou profiles (use sua tabela real)
+      .select("id")
+      .eq("id", userId)
+      .single();
+
+    if (!data || error) {
+      await supabase.auth.signOut();
+      window.location.href = "/";
+    }
   }
 
   useEffect(() => {
@@ -47,6 +68,11 @@ export default function App() {
 
     return () => listener.subscription.unsubscribe();
   }, []);
+
+
+  useEffect(() => {
+  validateSession();
+}, []);
 
   const pageVariants = {
     initial: { opacity: 0, x: 80 },
