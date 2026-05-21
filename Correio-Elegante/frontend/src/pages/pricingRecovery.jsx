@@ -360,6 +360,7 @@ export default function Pricing({ goToHome }) {
   const [loadingProfile, setLoadingProfile] = useState(true);
   const [savingProfile, setSavingProfile] = useState(false);
   const [isGoogleUser, setIsGoogleUser] = useState(false);
+  const [addSerenata, setAddSerenata] = useState(false);
 
   // Estado do contador regressivo
   const [timeLeft, setTimeLeft] = useState({
@@ -724,12 +725,7 @@ export default function Pricing({ goToHome }) {
         p1: 1,
         p2: 2,
         p3: 3,
-        p4: 0,
-        p5: 0,
-        p6: 0,
-        p7: 0,
-        p8: 0,
-        p9: 0,
+        p4: 7,
       };
 
       const valor = valorMap[selected?.id] ?? 0;
