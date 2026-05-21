@@ -233,11 +233,14 @@ export default function Admin({ goToHome }) {
         );
       });
   }, [orders, filter, search]);
-  
+
   const stats = useMemo(() => {
     const activeOrders = orders.filter((o) => o.status !== "trash");
+    
 
-    const totalRevenue = activeOrders.reduce(
+    const paidOrders = orders.filter((o) => o.status === "paid");
+
+    const totalRevenue = paidOrders.reduce(
       (sum, order) => sum + Number(order.valor || 0),
       0
     );
@@ -245,7 +248,7 @@ export default function Admin({ goToHome }) {
     return {
       total: activeOrders.length,
       pending: activeOrders.filter((o) => o.status === "pending").length,
-      paid: activeOrders.filter((o) => o.status === "paid").length,
+      paid: paidOrders.length,
       delivered: activeOrders.filter((o) => o.status === "delivered").length,
       trash: orders.filter((o) => o.status === "trash").length,
       totalRevenue,
@@ -499,7 +502,7 @@ export default function Admin({ goToHome }) {
                     prev === order.id ? null : order.id
                   )
                 }
-                
+
                 onUpdateStatus={updateStatus}
                 onMoveToTrash={moveToTrash}
                 onUndo={undoStatus}

@@ -22,7 +22,7 @@ const SuccessOverlay = ({ orderCode, paymentMethod, onClose }) => (
       <div className="success-badge">✓</div>
       <h2>Pedido enviado com sucesso!</h2>
       <p>Seu correio elegante foi registrado e será entregue na data marcada</p>
-      
+
       {paymentMethod === "especie" && orderCode && (
         <div className="success-code-section">
           <p className="success-code-label">Código do seu pedido:</p>
@@ -42,9 +42,9 @@ const SuccessOverlay = ({ orderCode, paymentMethod, onClose }) => (
           <p className="success-code-hint">Guarde este código para apresentar no pagamento</p>
         </div>
       )}
-      
-      <button 
-        type="button" 
+
+      <button
+        type="button"
         className="success-close-btn"
         onClick={onClose}
       >
@@ -403,11 +403,11 @@ export default function Pricing({ goToHome }) {
     {
       id: "p4",
       emoji: "💌🍭🍬",
-      title:"Cartinha com mini Buquê",
-      price: "R$ 0,00",
+      title: "Cartinha com mini Buquê",
+      price: "R$ 7,00",
       features: ["1 Carta", "1 Pirulito", "1 Bombom"],
     },
-
+  ];
   const courseOptions = [
     { value: "ADM", label: "Administração" },
     { value: "DS", label: "Des. Sistemas" },
@@ -485,6 +485,7 @@ export default function Pricing({ goToHome }) {
     setCourse("");
     setClassroom("");
     setOrderCode("");
+    setAddSerenata(false);
     setSerenataMusic("");
   }, []);
 
@@ -709,6 +710,7 @@ export default function Pricing({ goToHome }) {
 
       if (paymentMethod === "pix") {
         if (!proofFile) {
+          setLoading(false);
           alert("Envie o comprovante");
           return;
         }
@@ -728,7 +730,8 @@ export default function Pricing({ goToHome }) {
         p4: 7,
       };
 
-      const valor = valorMap[selected?.id] ?? 0;
+      const valorBase = valorMap[selected?.id] ?? 0;
+      const valor = valorBase + (addSerenata ? 3 : 0);
 
       let code = null;
 
@@ -967,6 +970,12 @@ export default function Pricing({ goToHome }) {
   // ========================================
   // FORMATAÇÃO
   // ========================================
+  const valorMap = {
+    p1: 1,
+    p2: 2,
+    p3: 3,
+    p4: 7,
+  };
 
   const formattedTotalGasto = new Intl.NumberFormat("pt-BR", {
     style: "currency",
@@ -984,8 +993,8 @@ export default function Pricing({ goToHome }) {
 
       {loading && <LoadingOverlay />}
       {sent && (
-        <SuccessOverlay 
-          orderCode={orderCode} 
+        <SuccessOverlay
+          orderCode={orderCode}
           paymentMethod={paymentMethod}
           onClose={handleSuccessClose}
         />
@@ -1055,7 +1064,9 @@ export default function Pricing({ goToHome }) {
                 <div>
                   <p className="form-small">Plano Selecionado</p>
                   <h2>{selected.title}</h2>
-                  <p className="form-price">{selected.price}</p>
+                  <p className="form-price">
+                    R$ {(valorMap[selected?.id] ?? 0) + (addSerenata ? 3 : 0)},00
+                  </p>
                 </div>
               </div>
 
@@ -1149,6 +1160,16 @@ export default function Pricing({ goToHome }) {
                       <ClassroomGrid course={course} classroom={classroom} onSelect={setClassroom} />
                     </div>
                   )}
+                  <div className="input-group serenata-option">
+                    <label className="checkbox-label">
+                      <input
+                        type="checkbox"
+                        checked={addSerenata}
+                        onChange={(e) => setAddSerenata(e.target.checked)}
+                      />
+                      Adicionar Serenata 🎶 (+R$ 3,00)
+                    </label>
+                  </div>
 
                   <div className="input-group">
                     <label htmlFor="message">Sua mensagem *</label>
@@ -1162,8 +1183,8 @@ export default function Pricing({ goToHome }) {
                     />
                     <span className="input-hint">{message.length}/500 caracteres</span>
                   </div>
-                  
-                  {selected?.title?.toLowerCase().includes("serenata") && (
+
+                  {addSerenata && (
                     <div className="input-group">
                       <label htmlFor="serenata-music">Música da serenata 🎶</label>
                       <input
@@ -1209,16 +1230,16 @@ export default function Pricing({ goToHome }) {
                     </div>
                   </div>
 
-                  {paymentMethod === "pix" && (
+                  {paymentMethod === "pix" ? (
                     <PixPayment
-                      selectedPrice={selected.price}
+                      selectedPrice={`R$ ${(valorMap[selected?.id] ?? 0) + (addSerenata ? 3 : 0)},00`}
                       fileName={fileName}
                       onFileChange={handleFileChange}
                     />
-                  )}
-
-                  {paymentMethod === "especie" && (
-                    <CashPayment selectedPrice={selected.price} />
+                  ) : (
+                    <CashPayment
+                      selectedPrice={`R$ ${(valorMap[selected?.id] ?? 0) + (addSerenata ? 3 : 0)},00`}
+                    />
                   )}
                 </div>
 
