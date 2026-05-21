@@ -41,13 +41,11 @@ export default function Admin({ goToHome }) {
   const [expandedOrder, setExpandedOrder] = useState(null);
   const [viewMode, setViewMode] = useState("grid"); // 'grid' ou 'list'
 
-  const [adminLevel, setAdminLevel] = useState(null);
-  // null | "payments" | "messages"
+  const [adminAccess, setAdminAccess] = useState(false);
   const [adminPassword, setAdminPassword] = useState("");
   const [passwordError, setPasswordError] = useState("");
 
   const ADMIN_PASSWORD = import.meta.env.VITE_ADMIN_PASSWORD || "";
-  const MESSAGES_PASSWORD = import.meta.env.VITE_MESSAGES_PASSWORD || "";
 
   const pageVariants = {
     initial: { opacity: 0, y: 20 },
@@ -61,7 +59,6 @@ export default function Admin({ goToHome }) {
 
   async function fetchOrders(showLoading = false) {
     if (showLoading) setLoading(true);
-
     setErrorMessage("");
 
     const { data, error } = await supabase
@@ -89,19 +86,16 @@ export default function Admin({ goToHome }) {
     if (error) {
       console.error(error);
       setErrorMessage("Erro ao carregar pedidos.");
-      setLoading(false); // 👈 IMPORTANTE
+      if (showLoading) setLoading(false);
       return;
     }
 
-    const isVerified = (status) => status === "paid" || status === "delivered";
-
     setOrders(data || []);
-
     if (showLoading) setLoading(false);
   }
 
   useEffect(() => {
-    if (!adminLevel) return;
+    if (!adminAccess) return;
 
     (async () => {
       await fetchOrders(true);
@@ -112,7 +106,7 @@ export default function Admin({ goToHome }) {
     }, 10000);
 
     return () => clearInterval(interval);
-  }, [adminLevel]);
+  }, [adminAccess]);
 
   function handlePasswordSubmit(e) {
     e.preventDefault();
@@ -122,22 +116,13 @@ export default function Admin({ goToHome }) {
       return;
     }
 
-    const pass = adminPassword.trim();
-
-    if (pass === ADMIN_PASSWORD.trim()) {
-      setAdminLevel("payments");
+    if (adminPassword.trim() === ADMIN_PASSWORD.trim()) {
       setPasswordError("");
-      return;
-    }
-
-    if (pass === MESSAGES_PASSWORD.trim()) {
-      setAdminLevel("messages");
-      setPasswordError("");
+      setAdminAccess(true);
       return;
     }
 
     setPasswordError("Senha incorreta");
-
   }
 
   async function updateStatus(id, newStatus) {
@@ -166,181 +151,176 @@ export default function Admin({ goToHome }) {
     setExpandedOrder(id);
   }
 
-  function getStatusLabel(status) {
-    if (status === "paid") return "Verificada";
-    return STATUS_CONFIG[status]?.label || status;
+  async function moveToTrash(id) {
+    const ok = confirm("Mover este pedido para a lixeira?");
+    if (!ok) return;
+
+    await updateStatus(id, "trash");
   }
 
-async function moveToTrash(id) {
-  const ok = confirm("Mover este pedido para a lixeira?");
-  if (!ok) return;
+  async function undoStatus(order) {
+    if (!order?.previous_status) return;
 
-  await updateStatus(id, "trash");
-}
+    setActionLoading(true);
 
-async function undoStatus(order) {
-  if (!order?.previous_status) return;
+    const { error } = await supabase
+      .from("orders")
+      .update({
+        status: order.previous_status,
+        previous_status: null,
+      })
+      .eq("id", order.id);
 
-  setActionLoading(true);
+    setActionLoading(false);
 
-  const { error } = await supabase
-    .from("orders")
-    .update({
-      status: order.previous_status,
-      previous_status: null,
-    })
-    .eq("id", order.id);
+    if (error) {
+      alert("Erro ao desfazer");
+      console.error(error);
+      return;
+    }
 
-  setActionLoading(false);
-
-  if (error) {
-    alert("Erro ao desfazer");
-    console.error(error);
-    return;
+    await fetchOrders();
   }
 
-  await fetchOrders();
-}
-function formatDate(dateString) {
-  if (!dateString) return "—";
-  const date = new Date(dateString);
+  function formatDate(dateString) {
+    if (!dateString) return "—";
+    const date = new Date(dateString);
 
-  return date.toLocaleString("pt-BR", {
-    timeZone: "America/Recife",
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
-
-function formatTime(dateString) {
-  if (!dateString) return "—";
-
-  const date = new Date(dateString);
-  const now = new Date();
-  const diff = now - date;
-
-  const minutes = Math.floor(diff / 60000);
-  const hours = Math.floor(minutes / 60);
-  const days = Math.floor(hours / 24);
-
-  if (minutes < 1) return "Agora";
-  if (minutes < 60) return `${minutes}min`;
-  if (hours < 24) return `${hours}h`;
-  return `${days}d`;
-}
-
-const filteredOrders = useMemo(() => {
-  const searchLower = normalizeText(search);
-
-  return orders
-    .filter((order) => {
-      if (filter === "all") return order.status !== "trash";
-      return order.status === filter;
-    })
-    .filter((order) => {
-      if (!searchLower) return true;
-
-      return (
-        normalizeText(order.order_code).includes(searchLower) ||
-        normalizeText(order.receiver_name).includes(searchLower) ||
-        normalizeText(order.sender_name).includes(searchLower) ||
-        normalizeText(order.plan).includes(searchLower) ||
-        normalizeText(order.classroom).includes(searchLower)
-      );
+    return date.toLocaleString("pt-BR", {
+      timeZone: "America/Recife",
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
     });
-}, [orders, filter, search]);
+  }
 
-const stats = useMemo(() => {
-  const activeOrders = orders.filter((o) => o.status !== "trash");
+  function formatTime(dateString) {
+    if (!dateString) return "—";
 
+    const date = new Date(dateString);
+    const now = new Date();
+    const diff = now - date;
 
-  const paidOrders = orders.filter((o) => o.status === "paid");
+    const minutes = Math.floor(diff / 60000);
+    const hours = Math.floor(minutes / 60);
+    const days = Math.floor(hours / 24);
 
-  const totalRevenue = paidOrders.reduce(
-    (sum, order) => sum + Number(order.valor || 0),
-    0
-  );
+    if (minutes < 1) return "Agora";
+    if (minutes < 60) return `${minutes}min`;
+    if (hours < 24) return `${hours}h`;
+    return `${days}d`;
+  }
 
-  return {
-    total: activeOrders.length,
-    pending: activeOrders.filter((o) => o.status === "pending").length,
-    paid: paidOrders.length,
-    delivered: activeOrders.filter((o) => o.status === "delivered").length,
-    trash: orders.filter((o) => o.status === "trash").length,
-    totalRevenue,
-  };
-}, [orders]);
+  const filteredOrders = useMemo(() => {
+    const searchLower = normalizeText(search);
 
-if (!adminLevel) {
-  return (
-    <motion.div
-      key="admin-password"
-      variants={pageVariants}
-      initial="initial"
-      animate="animate"
-      exit="exit"
-      className="admin-login-page"
-    >
-      <div className="admin-login-card">
-        <div className="login-icon-wrapper">
-          <div className="login-icon">🔐</div>
-        </div>
+    return orders
+      .filter((order) => {
+        if (filter === "all") return order.status !== "trash";
+        return order.status === filter;
+      })
+      .filter((order) => {
+        if (!searchLower) return true;
 
+        return (
+          normalizeText(order.order_code).includes(searchLower) ||
+          normalizeText(order.receiver_name).includes(searchLower) ||
+          normalizeText(order.sender_name).includes(searchLower) ||
+          normalizeText(order.plan).includes(searchLower) ||
+          normalizeText(order.classroom).includes(searchLower)
+        );
+      });
+  }, [orders, filter, search]);
 
-        <h1 className="login-title">Painel Administrativo</h1>
-        <p className="login-subtitle">Digite a senha para acessar o sistema</p>
+  const stats = useMemo(() => {
+    const activeOrders = orders.filter((o) => o.status !== "trash");
+    
 
-        <form onSubmit={handlePasswordSubmit} className="login-form">
-          <div className="input-wrapper">
-            <input
-              type="password"
-              value={adminPassword}
-              onChange={(e) => setAdminPassword(e.target.value)}
-              placeholder="Senha de acesso"
-              autoComplete="current-password"
-              className="login-input"
-            />
+    const paidOrders = orders.filter((o) => o.status === "paid");
+
+    const totalRevenue = paidOrders.reduce(
+      (sum, order) => sum + Number(order.valor || 0),
+      0
+    );
+
+    return {
+      total: activeOrders.length,
+      pending: activeOrders.filter((o) => o.status === "pending").length,
+      paid: paidOrders.length,
+      delivered: activeOrders.filter((o) => o.status === "delivered").length,
+      trash: orders.filter((o) => o.status === "trash").length,
+      totalRevenue,
+    };
+  }, [orders]);
+
+  if (!adminAccess) {
+    return (
+      <motion.div
+        key="admin-password"
+        variants={pageVariants}
+        initial="initial"
+        animate="animate"
+        exit="exit"
+        className="admin-login-page"
+      >
+        <div className="admin-login-card">
+          <div className="login-icon-wrapper">
+            <div className="login-icon">🔐</div>
           </div>
 
-          {passwordError && (
-            <div className="error-message">{passwordError}</div>
-          )}
+          <h1 className="login-title">Painel Administrativo</h1>
+          <p className="login-subtitle">Digite a senha para acessar o sistema</p>
 
-          <button type="submit" className="login-submit-btn">
-            <span>Entrar no Painel</span>
-            <span className="btn-arrow">→</span>
-          </button>
+          <form onSubmit={handlePasswordSubmit} className="login-form">
+            <div className="input-wrapper">
+              <input
+                type="password"
+                value={adminPassword}
+                onChange={(e) => setAdminPassword(e.target.value)}
+                placeholder="Senha de acesso"
+                autoComplete="current-password"
+                className="login-input"
+              />
+            </div>
 
-          <button type="button" onClick={goToHome} className="login-back-btn">
-            ← Voltar para início
-          </button>
-        </form>
-      </div>
-    </motion.div>
-  );
-}
+            {passwordError && (
+              <div className="error-message">{passwordError}</div>
+            )}
 
-if (loading) {
-  return (
-    <motion.div
-      key="admin-loading"
-      variants={pageVariants}
-      initial="initial"
-      animate="animate"
-      exit="exit"
-      className="admin-loading-page"
-    >
-      <div className="loading-content">
-        <div className="loading-spinner-modern"></div>
-        <p className="loading-text">Carregando pedidos...</p>
-      </div>
-    </motion.div>
-  );
-}
-if (adminLevel === "payments") {
+            <button type="submit" className="login-submit-btn">
+              <span>Entrar no Painel</span>
+              <span className="btn-arrow">→</span>
+            </button>
+
+            <button type="button" onClick={goToHome} className="login-back-btn">
+              ← Voltar para início
+            </button>
+          </form>
+        </div>
+      </motion.div>
+    );
+  }
+
+  if (loading) {
+    return (
+      <motion.div
+        key="admin-loading"
+        variants={pageVariants}
+        initial="initial"
+        animate="animate"
+        exit="exit"
+        className="admin-loading-page"
+      >
+        <div className="loading-content">
+          <div className="loading-spinner-modern"></div>
+          <p className="loading-text">Carregando pedidos...</p>
+        </div>
+      </motion.div>
+    );
+  }
+
   return (
     <motion.div
       key="admin-panel"
@@ -538,286 +518,6 @@ if (adminLevel === "payments") {
   );
 }
 
-
-if (adminLevel === "messages") {
-
-  const messages = orders.filter(
-    (o) => o.status === "paid" || o.status === "delivered"
-  );
-
-  const filteredMessages = messages.filter((order) => {
-    const searchLower = normalizeText(search);
-
-    if (!searchLower) return true;
-
-    return (
-      normalizeText(order.order_code).includes(searchLower) ||
-      normalizeText(order.receiver_name).includes(searchLower) ||
-      normalizeText(order.sender_name).includes(searchLower) ||
-      normalizeText(order.plan).includes(searchLower) ||
-      normalizeText(order.classroom).includes(searchLower) ||
-      normalizeText(order.message).includes(searchLower) ||
-      normalizeText(order.serenata_music).includes(searchLower)
-    );
-  });
-
-  return (
-    <motion.div
-      key="messages-panel"
-      variants={pageVariants}
-      initial="initial"
-      animate="animate"
-      exit="exit"
-      className="admin-dashboard"
-    >
-      <header className="dashboard-header">
-        <div className="header-content-wrapper">
-          <div className="header-left">
-            <button className="back-button" onClick={goToHome}>
-              <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                <path
-                  d="M12.5 15L7.5 10L12.5 5"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-              Início
-            </button>
-            <div className="header-title-group">
-              <h1 className="dashboard-title">
-                <span className="title-icon">💌</span>
-                Painel de Mensagens
-              </h1>
-              <p className="dashboard-subtitle">
-                Somente cartas pagas / verificadas
-              </p>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      <section className="stats-section">
-        <div className="stats-grid">
-          <div className="stat-card-modern">
-            <div className="stat-header">
-              <span className="stat-icon-modern">💌</span>
-              <span className="stat-label-modern">Mensagens liberadas</span>
-            </div>
-            <div className="stat-value-modern">{messages.length}</div>
-            <div className="stat-footer">Cartas prontas para leitura</div>
-          </div>
-
-          <div className="stat-card-modern stat-paid">
-            <div className="stat-header">
-              <span className="stat-icon-modern">✅</span>
-              <span className="stat-label-modern">Verificadas</span>
-            </div>
-            <div className="stat-value-modern">
-              {messages.filter((o) => o.status === "paid").length}
-            </div>
-            <div className="stat-footer">Pagas e liberadas</div>
-          </div>
-
-          <div className="stat-card-modern stat-delivered">
-            <div className="stat-header">
-              <span className="stat-icon-modern">📬</span>
-              <span className="stat-label-modern">Entregues</span>
-            </div>
-            <div className="stat-value-modern">
-              {messages.filter((o) => o.status === "delivered").length}
-            </div>
-            <div className="stat-footer">Já concluídas</div>
-          </div>
-
-          <div className="stat-card-modern stat-trash">
-            <div className="stat-header">
-              <span className="stat-icon-modern">🗑️</span>
-              <span className="stat-label-modern">Ocultas</span>
-            </div>
-            <div className="stat-value-modern">
-              {orders.filter((o) => o.status === "trash").length}
-            </div>
-            <div className="stat-footer">Só referência</div>
-          </div>
-        </div>
-      </section>
-
-      <section className="controls-section">
-        <div className="controls-wrapper">
-          <div className="search-wrapper">
-            <svg className="search-icon" width="20" height="20" viewBox="0 0 20 20" fill="none">
-              <circle cx="8.5" cy="8.5" r="5.5" stroke="currentColor" strokeWidth="2" />
-              <path d="M12 12L16 16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-            </svg>
-            <input
-              type="text"
-              placeholder="Buscar por código, nome, mensagem, turma..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="search-input-modern"
-            />
-            {search && (
-              <button className="search-clear-btn" onClick={() => setSearch("")}>
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                  <path
-                    d="M4 4L12 12M12 4L4 12"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                  />
-                </svg>
-              </button>
-            )}
-          </div>
-
-          <div className="filters-wrapper">
-            <button
-              className={`filter-chip ${filter === "all" ? "active" : ""}`}
-              onClick={() => setFilter("all")}
-            >
-              <span className="filter-dot"></span>
-              Todas
-            </button>
-            <button
-              className={`filter-chip ${filter === "paid" ? "active" : ""}`}
-              onClick={() => setFilter("paid")}
-            >
-              <span className="filter-dot paid"></span>
-              Verificadas
-            </button>
-            <button
-              className={`filter-chip ${filter === "delivered" ? "active" : ""}`}
-              onClick={() => setFilter("delivered")}
-            >
-              <span className="filter-dot delivered"></span>
-              Entregues
-            </button>
-          </div>
-        </div>
-      </section>
-
-      <section className="orders-section">
-        {errorMessage && <div className="error-banner">{errorMessage}</div>}
-
-        {filteredMessages.length === 0 ? (
-          <div className="empty-state-modern">
-            <div className="empty-icon-modern">📭</div>
-            <h3 className="empty-title">Nenhuma mensagem encontrada</h3>
-            <p className="empty-description">
-              {search ? "Tente ajustar sua busca" : "As cartas aparecem aqui quando forem pagas"}
-            </p>
-          </div>
-        ) : (
-          <div className="orders-grid-modern">
-            {filteredMessages.map((order) => (
-              <div key={order.id} className="order-card-modern">
-                <div className="order-card-header">
-                  <span className="order-code-badge">#{order.order_code}</span>
-                  <span className={`status-badge status-${order.status}`}>
-                    {STATUS_CONFIG[order.status]?.icon}{" "}
-                    {STATUS_CONFIG[order.status]?.label}
-                  </span>
-                </div>
-
-                <div className="order-quick-info">
-                  <div className="info-item">
-                    <span className="info-label">Hora</span>
-                    <span className="info-value">{formatDate(order.created_at)}</span>
-                  </div>
-
-                  <div className="info-item">
-                    <span className="info-label">De</span>
-                    <span className="info-value">{order.sender_name || "Anônimo"}</span>
-                  </div>
-
-                  <div className="info-item">
-                    <span className="info-label">Para</span>
-                    <span className="info-value">{order.receiver_name || "—"}</span>
-                  </div>
-                </div>
-
-                <div className="message-section">
-                  <h4 className="section-title">
-                    <span className="section-icon">✉️</span>
-                    Mensagem
-                  </h4>
-                  <div className="message-content">
-                    {order.message || "Sem mensagem"}
-                  </div>
-                </div>
-
-                {order.serenata_music && (
-                  <div className="message-section">
-                    <h4 className="section-title">
-                      <span className="section-icon">🎵</span>
-                      Serenata
-                    </h4>
-                    <div className="message-content">
-                      {order.serenata_music}
-                    </div>
-                  </div>
-                )}
-
-                <div className="order-quick-info">
-                  <div className="info-item">
-                    <span className="info-label">Turma</span>
-                    <span className="info-value">{order.classroom || "—"}</span>
-                  </div>
-                  <div className="info-item">
-                    <span className="info-label">Curso</span>
-                    <span className="info-value">{order.course || "—"}</span>
-                  </div>
-                  <div className="actions-section">
-                    <h4 className="section-title">
-                      <span className="section-icon">⚙️</span>
-                      Ações
-                    </h4>
-
-                    <div className="status-buttons">
-
-                      {/* APROVAR */}
-                      <button
-                        className="status-action-btn delivered"
-                        onClick={() => updateStatus(order.id, "paid")}
-                      >
-                        <span>✔️</span>
-                        Aprovar
-                      </button>
-                      {/* ENTREGAR */}
-                      <button
-                        className="status-action-btn delivered"
-                        onClick={() => updateStatus(order.id, "delivered")}
-                      >
-                        <span>📬</span>
-                        Entregue
-                      </button>
-
-                      {/* REPROVAR */}
-                      <button
-                        className="utility-btn trash-btn"
-                        onClick={() => updateStatus(order.id, "trash")}
-                      >
-                        <span>🗑️</span>
-                        Reprovar
-                      </button>
-
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </section>
-    </motion.div>
-  );
-}
-
-
-}
-
 // Componente de Card de Pedido
 function OrderCard({
   order,
@@ -831,18 +531,11 @@ function OrderCard({
   formatTime,
 }) {
   const status = STATUS_CONFIG[order.status] || STATUS_CONFIG.pending;
-  const isVerified =
-    order.status === "paid" || order.status === "delivered";
 
   return (
     <div className={`order-card-modern status-${order.status} ${isExpanded ? "expanded" : ""}`}>
       {/* Header */}
       <div className="order-card-header">
-        <span
-          className={`verification ${isVerified ? "ok" : "no"}`}
-        >
-          {isVerified ? "✔️ Verificado" : "❌ Não verificado"}
-        </span>
         <div className="order-card-top">
           <div className="order-badge-group">
             <span className={`status-badge status-${order.status}`}>
@@ -887,6 +580,53 @@ function OrderCard({
       {isExpanded && (
         <div className="order-card-body">
           <div className="details-grid">
+            {/* Remetente */}
+            <div className="detail-section">
+              <h4 className="section-title">
+                <span className="section-icon">💌</span>
+                Remetente
+              </h4>
+              <div className="detail-rows">
+                <div className="detail-row">
+                  <span className="detail-key">Tipo</span>
+                  <span className="detail-value">
+                    {order.sender_type === "identificado" ? "Identificado" : "Anônimo"}
+                  </span>
+                </div>
+                {order.sender_name && (
+                  <div className="detail-row">
+                    <span className="detail-key">Nome</span>
+                    <span className="detail-value">{order.sender_name}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Destinatário */}
+            <div className="detail-section">
+              <h4 className="section-title">
+                <span className="section-icon">🎯</span>
+                Destinatário
+              </h4>
+              <div className="detail-rows">
+                <div className="detail-row">
+                  <span className="detail-key">Nome</span>
+                  <span className="detail-value">{order.receiver_name || "—"}</span>
+                </div>
+                {order.course && (
+                  <div className="detail-row">
+                    <span className="detail-key">Curso</span>
+                    <span className="detail-value">{order.course}</span>
+                  </div>
+                )}
+                {order.classroom && (
+                  <div className="detail-row">
+                    <span className="detail-key">Turma</span>
+                    <span className="detail-value">{order.classroom}</span>
+                  </div>
+                )}
+              </div>
+            </div>
 
             {/* Pagamento */}
             <div className="detail-section">
@@ -908,6 +648,29 @@ function OrderCard({
               </div>
             </div>
           </div>
+
+          {/* Mensagem */}
+          <div className="message-section">
+            <h4 className="section-title">
+              <span className="section-icon">✉️</span>
+              Mensagem
+            </h4>
+            <div className="message-content">
+              {order.message || "Sem mensagem"}
+            </div>
+          </div>
+          {order.serenata_music && (
+            <div className="message-section">
+              <h4 className="section-title">
+                <span className="section-icon">🎵</span>
+                Serenata
+              </h4>
+
+              <div className="message-content">
+                {order.serenata_music}
+              </div>
+            </div>
+          )}
 
           {/* Comprovante */}
           {order.payment_method === "pix" && order.proof_url && (
