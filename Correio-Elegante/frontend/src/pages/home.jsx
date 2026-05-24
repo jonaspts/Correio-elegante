@@ -486,7 +486,7 @@ export default function Home({ goToPricing = () => { }, goToAdmin = () => { } })
 
           >
             <h2 style={{ margin: 0, fontSize: "1.6rem", fontWeight: "800" }}>
-              Antes de continuar
+              IMPORTANTE!
             </h2>
 
             <p style={{ marginTop: 10, fontSize: "14px", opacity: 0.8 }}>
