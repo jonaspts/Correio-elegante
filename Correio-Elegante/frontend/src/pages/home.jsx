@@ -497,7 +497,7 @@ export default function Home({ goToPricing = () => { }, goToAdmin = () => { } })
             <div style={{ display: "flex", flexDirection: "column", gap: "12px", marginTop: 16 }}>
 
               <input
-                placeholder="Nome"
+                placeholder="Nome (Apenas admins têm acesso a esse nome)"
                 value={nome}
                 onChange={(e) => setNome(e.target.value)}
                 style={{
@@ -558,7 +558,7 @@ export default function Home({ goToPricing = () => { }, goToAdmin = () => { } })
 
 
               <input
-                placeholder="Telefone"
+                placeholder="Telefone (Apenas admins tem acesso à esse número)"
                 value={telefone}
                 onChange={(e) => setTelefone(e.target.value)}
                 style={{
