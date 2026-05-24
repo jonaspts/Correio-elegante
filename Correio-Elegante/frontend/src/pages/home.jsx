@@ -492,7 +492,7 @@ export default function Home({ goToPricing = () => { }, goToAdmin = () => { } })
             <p style={{ marginTop: 10, fontSize: "14px", opacity: 0.8 }}>
               Complete suas informações para usar o sistema.
               Estás informações ficam apenas com os admistradores do evento
-              e são essenciais para O PREMIO do evento.
+              e são essenciais para concorrer a CESTA ESPECIAL.
             </p>
 
             <div style={{ display: "flex", flexDirection: "column", gap: "12px", marginTop: 16 }}>
