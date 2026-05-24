@@ -2380,6 +2380,54 @@ body {
 /* ========================================
    TITLE
    ======================================== */
+   .payment-options {
+  display: flex;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.payment-options label {
+  flex: 1;
+  cursor: pointer;
+  padding: 14px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.05);
+  color: #fff;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.25s ease;
+  backdrop-filter: blur(10px);
+  position: relative;
+  overflow: hidden;
+}
+
+/* efeito hover */
+.payment-options label:hover {
+  transform: translateY(-2px);
+  border-color: rgba(255, 50, 50, 0.5);
+  background: rgba(255, 50, 50, 0.08);
+}
+
+/* radio escondido */
+.payment-options input {
+  display: none;
+}
+
+/* estado selecionado */
+.payment-options input:checked + span {
+  color: #fff;
+}
+
+.payment-options label:has(input:checked) {
+  border-color: #ff2d2d;
+  background: linear-gradient(135deg, rgba(255, 45, 45, 0.25), rgba(179, 0, 0, 0.15));
+  box-shadow: 0 0 18px rgba(255, 45, 45, 0.25);
+  transform: scale(1.02);
+}
 
 .title {
   font-size: 28px;

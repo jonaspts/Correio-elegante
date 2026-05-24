@@ -21,6 +21,16 @@ export default function Home({ goToPricing = () => { }, goToAdmin = () => { } })
   const [totalGasto, setTotalGasto] = useState(0);
 
   const [showProfilePanel, setShowProfilePanel] = useState(false);
+  const [senderCourse, setSenderCourse] = useState("");
+
+  const courseOptions = [
+    { value: "ADM", label: "Administração" },
+    { value: "DS", label: "Des. Sistemas" },
+  ];
+
+  const classrooms = ["1A", "1B", "2A", "2B", "3A", "3B"];
+
+
 
   useEffect(() => {
     function spawnHeart() {
@@ -49,67 +59,64 @@ export default function Home({ goToPricing = () => { }, goToAdmin = () => { } })
     let active = true;
 
     async function loadProfile() {
-      setLoadingProfile(true);
 
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
+      try {
+        setLoadingProfile(true);
 
-      if (!active) return;
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
 
-      if (!user) {
-        setLoadingProfile(false);
-        return;
-      }
+        if (!active) return;
 
-      const provider = user.app_metadata?.provider;
-      const googleUser = provider === "google";
-      setIsGoogleUser(googleUser);
+        if (!user) {
+          setShowInfoPopup(false);
+          return;
+        }
 
-      const { data: profileData, error } = await supabase
-        .from("profiles")
-        .select(
-          "id, email, phone, nome, turma, onboarding_completed, cartinhas_compradas"
-        )
-        .eq("id", user.id)
-        .maybeSingle();
+        const provider = user.app_metadata?.provider;
+        const googleUser = provider === "google";
+        setIsGoogleUser(googleUser);
 
-      if (!active) return;
+        const { data: profileData, error } = await supabase
+          .from("profiles")
+          .select("id, email, phone, nome, turma, onboarding_completed, cartinhas_compradas")
+          .eq("id", user.id)
+          .maybeSingle();
 
-      if (error) {
-        alert("Erro ao carregar perfil: " + error.message);
-        setLoadingProfile(false);
-        return;
-      }
+        if (!active) return;
 
-      const savedPhone = profileData?.phone || "";
-      const savedNome = profileData?.nome || "";
-      const savedTurma = profileData?.turma || "";
+        if (error) {
+          console.error("Erro ao carregar perfil:", error);
+          return;
+        }
 
-      setProfileId(user.id);
-      setProfileEmail(user.email || "");
-      setPhoneFromProfile(savedPhone);
+        const savedPhone = profileData?.phone || "";
+        const savedNome = profileData?.nome || "";
+        const savedTurma = profileData?.turma || "";
 
-      setNome(savedNome);
-      setTurma(savedTurma);
-
-      setCartinhasCompradas(profileData?.cartinhas_compradas ?? 0);
-
-      if (googleUser) {
+        setProfileId(user.id);
+        setProfileEmail(user.email || "");
+        setPhoneFromProfile(savedPhone);
+        setNome(savedNome);
+        setTurma(savedTurma);
+        setCartinhasCompradas(profileData?.cartinhas_compradas ?? 0);
         setTelefone(savedPhone || "");
-      } else {
-        setTelefone(savedPhone || "");
+
+        const shouldShowPopup =
+          !profileData ||
+          !profileData.onboarding_completed ||
+          !savedNome ||
+          !savedTurma ||
+          (googleUser && !savedPhone);
+
+        setShowInfoPopup(shouldShowPopup);
+
+      } catch (err) {
+        console.error("Erro inesperado ao carregar perfil:", err);
+      } finally {
+        if (active) setLoadingProfile(false); // 🔥 ESSENCIAL
       }
-
-      const shouldShowPopup =
-        !profileData ||
-        !profileData.onboarding_completed ||
-        !savedNome ||
-        !savedTurma ||
-        (googleUser && !savedPhone);
-
-      setShowInfoPopup(shouldShowPopup);
-      setLoadingProfile(false);
     }
 
     loadProfile();
@@ -455,27 +462,28 @@ export default function Home({ goToPricing = () => { }, goToAdmin = () => { } })
           style={{
             position: "fixed",
             inset: 0,
-            zIndex: 9999,
+            zIndex: 99999,
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            background: "rgba(0, 0, 0, 0.72)",
-            backdropFilter: "blur(10px)",
+            background: "rgba(0, 0, 0, 0.15)",
+            backdropFilter: "blur(3px)",
             padding: "20px",
           }}
+
         >
           <div
             style={{
               width: "100%",
               maxWidth: "460px",
               borderRadius: "20px",
-              background:
-                "radial-gradient(circle at top left, rgba(255, 60, 60, 0.14), transparent 60%), linear-gradient(145deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.04))",
+              background: "linear-gradient(145deg, rgba(20, 8, 8, 0.98), rgba(40, 10, 10, 0.96))",
               border: "1px solid rgba(255, 255, 255, 0.12)",
-              boxShadow: "0 24px 80px rgba(0, 0, 0, 0.5)",
+              boxShadow: "0 24px 80px rgba(0, 0, 0, 0.55)",
               padding: "28px",
               color: "#fff",
             }}
+
           >
             <h2 style={{ margin: 0, fontSize: "1.6rem", fontWeight: "800" }}>
               Antes de continuar
@@ -484,7 +492,7 @@ export default function Home({ goToPricing = () => { }, goToAdmin = () => { } })
             <p style={{ marginTop: 10, fontSize: "14px", opacity: 0.8 }}>
               Complete suas informações para usar o sistema.
               Estás informações ficam apenas com os admistradores do evento
-              para melhor controle.
+              e são essenciais para O PREMIO do evento.
             </p>
 
             <div style={{ display: "flex", flexDirection: "column", gap: "12px", marginTop: 16 }}>
@@ -503,19 +511,52 @@ export default function Home({ goToPricing = () => { }, goToAdmin = () => { } })
                 }}
               />
 
-              <input
-                placeholder="Turma (ex: 3A-DS)"
-                value={turma}
-                onChange={(e) => setTurma(e.target.value)}
-                style={{
-                  padding: "14px",
-                  borderRadius: "12px",
-                  border: "1px solid rgba(255,255,255,0.12)",
-                  background: "rgba(255,255,255,0.05)",
-                  color: "#fff",
-                  outline: "none",
-                }}
-              />
+              <div style={{ display: "grid", gap: "8px" }}>
+                <label>Curso</label>
+
+                <div className="payment-options">
+                  {courseOptions.map((c) => (
+                    <label key={c.value}>
+                      <input
+                        type="radio"
+                        checked={senderCourse === c.value}
+                        onChange={() => setSenderCourse(c.value)}
+                      />
+                      {c.label}
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              {senderCourse && (
+                <div style={{ marginTop: "10px" }}>
+                  <label>Turma</label>
+
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "8px" }}>
+                    {classrooms.map((c) => {
+                      const value = `${c}-${senderCourse}`;
+
+                      return (
+                        <button
+                          key={value}
+                          type="button"
+                          onClick={() => setTurma(value)}
+                          style={{
+                            padding: "10px",
+                            borderRadius: "10px",
+                            border: turma === value ? "2px solid red" : "1px solid gray",
+                            background: "rgba(255,255,255,0.05)",
+                            color: "#fff",
+                          }}
+                        >
+                          {value}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
 
               <input
                 placeholder="Telefone"
