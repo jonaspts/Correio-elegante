@@ -5,6 +5,19 @@ import "../App.css";
 // ========================================
 // COMPONENTES AUXILIARES
 // ========================================
+function formatPhone(value = "") {
+  let v = value.replace(/\D/g, "").slice(0, 11);
+
+  if (v.length <= 10) {
+    v = v.replace(/(\d{2})(\d)/, "($1) $2");
+    v = v.replace(/(\d{4})(\d)/, "$1-$2");
+  } else {
+    v = v.replace(/(\d{2})(\d)/, "($1) $2");
+    v = v.replace(/(\d{5})(\d)/, "$1-$2");
+  }
+
+  return v;
+}
 
 const LoadingOverlay = () => (
   <div className="loading-overlay">
@@ -325,7 +338,6 @@ export default function Pricing({ goToHome }) {
   const [selected, setSelected] = useState(null);
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
-  const [lastSend, setLastSend] = useState(0);
   const [fileUploading, setFileUploading] = useState(false);
 
   // Estados do formulário
@@ -343,7 +355,6 @@ export default function Pricing({ goToHome }) {
   const [fileName, setFileName] = useState("");
   const [proofFile, setProofFile] = useState(null);
   const [proofUrl, setProofUrl] = useState("");
-  const [cooldownLeft, setCooldownLeft] = useState(0);
   const [serenataMusic, setSerenataMusic] = useState("");
 
   // Estados do perfil
@@ -371,23 +382,8 @@ export default function Pricing({ goToHome }) {
   });
 
   const formRef = useRef(null);
-  const MAX_SENDS = 2;
-  const COOLDOWN_TIME = 7 * 60 * 1000;
 
-/*------------------------------------------------*/
-  function formatPhone(value = "") {
-  let v = value.replace(/\D/g, "").slice(0, 11);
-
-  if (v.length <= 10) {
-    v = v.replace(/(\d{2})(\d)/, "($1) $2");
-    v = v.replace(/(\d{4})(\d)/, "$1-$2");
-  } else {
-    v = v.replace(/(\d{2})(\d)/, "($1) $2");
-    v = v.replace(/(\d{5})(\d)/, "$1-$2");
-  }
-
-  return v;
-}
+  /*------------------------------------------------*/
 
   // ========================================
   // DADOS ESTÁTICOS
@@ -523,27 +519,6 @@ export default function Pricing({ goToHome }) {
     });
   }, []);
 
-  useEffect(() => {
-    const interval = setInterval(() => {
-      const stored = JSON.parse(localStorage.getItem("ce_cooldown") || "{}");
-
-      if (!stored.cooldownUntil) {
-        setCooldownLeft(0);
-        return;
-      }
-
-      const remaining = stored.cooldownUntil - Date.now();
-
-      if (remaining <= 0) {
-        localStorage.removeItem("ce_cooldown");
-        setCooldownLeft(0);
-      } else {
-        setCooldownLeft(Math.ceil(remaining / 1000));
-      }
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, []);
 
   const handlePlanSelect = useCallback((plan) => {
     setSelected(plan);
@@ -589,79 +564,14 @@ export default function Pricing({ goToHome }) {
     setReceiverType("identificado");
   }, []);
 
-  function getCooldownData() {
-    return JSON.parse(localStorage.getItem("ce_cooldown") || "{}");
-  }
 
-  function registerSend() {
-    const data = getCooldownData();
-    const sends = data.sends || [];
-    const recentSends = sends.filter(
-      (timestamp) => Date.now() - timestamp < COOLDOWN_TIME
-    );
-
-    recentSends.push(Date.now());
-
-    if (recentSends.length >= MAX_SENDS) {
-      const cooldownUntil = Date.now() + COOLDOWN_TIME;
-      localStorage.setItem(
-        "ce_cooldown",
-        JSON.stringify({
-          sends: [],
-          cooldownUntil,
-        })
-      );
-
-      return {
-        cooldown: true,
-        cooldownUntil,
-      };
-    }
-
-    localStorage.setItem(
-      "ce_cooldown",
-      JSON.stringify({
-        sends: recentSends,
-        cooldownUntil: null,
-      })
-    );
-
-    return {
-      cooldown: false,
-    };
-  }
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     if (loading || fileUploading || savingProfile) return;
 
-    const cooldownData = getCooldownData();
 
-    if (
-      cooldownData.cooldownUntil &&
-      Date.now() < cooldownData.cooldownUntil
-    ) {
-      const remaining = Math.ceil(
-        (cooldownData.cooldownUntil - Date.now()) / 1000
-      );
-
-      const minutes = Math.floor(remaining / 60);
-      const seconds = remaining % 60;
-
-      alert(
-        `Você atingiu o limite de envios.\nAguarde ${minutes}m ${seconds}s para enviar novamente.`
-      );
-
-      return;
-    }
-
-    const now = Date.now();
-
-    if (now - lastSend < 5000) {
-      alert("Aguarde alguns segundos antes de enviar novamente");
-      return;
-    }
 
     if (!selected) {
       alert("Escolha um plano");
@@ -724,6 +634,27 @@ export default function Pricing({ goToHome }) {
       if (!user) {
         alert("Você precisa estar logado.");
         setLoading(false);
+        return;
+      }
+      const { data: profileRow, error: profileError } = await supabase
+        .from("profiles")
+        .select("send_count, cooldown_until")
+        .eq("id", user.id)
+        .maybeSingle();
+
+      if (profileError) {
+        throw profileError;
+      }
+
+      const now = new Date();
+
+      if (profileRow?.cooldown_until && new Date(profileRow.cooldown_until) > now) {
+        const diffMs = new Date(profileRow.cooldown_until).getTime() - now.getTime();
+        const totalSeconds = Math.ceil(diffMs / 1000);
+        const minutes = Math.floor(totalSeconds / 60);
+        const seconds = totalSeconds % 60;
+
+        alert(`Você atingiu o limite de envios.\nAguarde ${minutes}m ${seconds}s para enviar novamente.`);
         return;
       }
 
@@ -798,10 +729,28 @@ export default function Pricing({ goToHome }) {
       if (error) {
         throw error;
       }
+      const currentSendCount = Number(profileRow?.send_count ?? 0) + 1;
+      const nextCooldownUntil =
+        currentSendCount >= 2
+          ? new Date(Date.now() + 7 * 60 * 1000)
+          : null;
 
-      registerSend();
+      const { error: profileUpdateError } = await supabase
+        .from("profiles")
+        .update({
+          send_count: nextCooldownUntil ? 0 : currentSendCount,
+          cooldown_until: nextCooldownUntil,
+          last_send_at: new Date().toISOString(),
+        })
+        .eq("id", user.id);
+
+      if (profileUpdateError) {
+        throw profileUpdateError;
+      }
+
+
       setOrderCode(code || "");
-      setLastSend(now);
+
       setSent(true);
 
     } catch (err) {
@@ -1265,17 +1214,12 @@ export default function Pricing({ goToHome }) {
                 <button
                   type="submit"
                   className="confirm-btn"
-                  disabled={loading || fileUploading || cooldownLeft > 0}
+                  disabled={loading || fileUploading}
                 >
                   {loading ? (
                     <>
                       <span className="btn-spinner"></span>
                       Processando...
-                    </>
-                  ) : cooldownLeft > 0 ? (
-                    <>
-                      Aguarde {Math.floor(cooldownLeft / 60)}:
-                      {String(cooldownLeft % 60).padStart(2, "0")}
                     </>
                   ) : (
                     <>Confirmar pedido 💘</>
