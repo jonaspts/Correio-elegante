@@ -115,7 +115,7 @@ export default function Home({ goToPricing = () => { }, goToAdmin = () => { } })
         setNome(savedNome);
         setTurma(savedTurma);
         setCartinhasCompradas(profileData?.cartinhas_compradas ?? 0);
-        setTelefone(savedPhone || "");
+        setTelefone(formatPhone(savedPhone || ""));
 
         const shouldShowPopup =
           !profileData ||

@@ -887,7 +887,7 @@ export default function Pricing({ goToHome }) {
       setNome(savedNome);
       setTurma(savedTurma);
       setCartinhasCompradas(profileData?.cartinhas_compradas ?? 0);
-      setTelefone(savedPhone || "");
+      setTelefone(formatPhone(savedPhone || ""));
 
       const shouldShowPopup =
         !profileData ||
