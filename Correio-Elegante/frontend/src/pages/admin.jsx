@@ -454,7 +454,7 @@ export default function Admin({ goToHome }) {
                 <span className="stat-label-modern">Pendentes</span>
               </div>
               <div className="stat-value-modern">{stats.pending}</div>
-              <div className="stat-footer">Aguardando pagamento</div>
+              <div className="stat-footer">Aguardando Verificação de pagamento</div>
             </div>
 
             <div className="stat-card-modern stat-paid">
@@ -680,7 +680,7 @@ export default function Admin({ goToHome }) {
                 <span className="stat-label-modern">Mensagens liberadas</span>
               </div>
               <div className="stat-value-modern">{messages.length}</div>
-              <div className="stat-footer">Cartas prontas para leitura</div>
+              <div className="stat-footer">Cartas prontas para verificação</div>
             </div>
 
             <div className="stat-card-modern stat-paid">
@@ -708,12 +708,12 @@ export default function Admin({ goToHome }) {
             <div className="stat-card-modern stat-trash">
               <div className="stat-header">
                 <span className="stat-icon-modern">🗑️</span>
-                <span className="stat-label-modern">Ocultas</span>
+                <span className="stat-label-modern">Lixeira</span>
               </div>
               <div className="stat-value-modern">
                 {messages.filter((o) => o.message_status === "trash").length}
               </div>
-              <div className="stat-footer">Só referência</div>
+              <div className="stat-footer">Cartas verificadas e descartadas</div>
             </div>
 
             <div className="stat-card-modern stat-revenue">
