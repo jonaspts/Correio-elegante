@@ -715,6 +715,15 @@ export default function Admin({ goToHome }) {
               </div>
               <div className="stat-footer">Só referência</div>
             </div>
+
+            <div className="stat-card-modern stat-revenue">
+              <div className="stat-header">
+                <span className="stat-icon-modern">💰</span>
+                <span className="stat-label-modern">Receita Total</span>
+              </div>
+              <div className="stat-value-modern">R$ {stats.totalRevenue.toFixed(2)}</div>
+              <div className="stat-footer">Valor arrecadado</div>
+            </div>
           </div>
         </section>
 

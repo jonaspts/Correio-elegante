@@ -336,7 +336,7 @@ const CooldownOverlay = ({ minutes, seconds, onClose }) => {
         <h2>Limite de envios atingido</h2>
 
         <p>
-          Você só pode enviar <strong>2 mensagens a cada 7 minutos</strong>
+          Você só pode enviar <strong>2 mensagens a cada 10 minutos</strong>
           <br />
           Aguarde <strong>{minutes}m {seconds}s</strong> para enviar novamente.
         </p>
