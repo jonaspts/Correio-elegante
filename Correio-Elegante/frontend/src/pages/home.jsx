@@ -515,13 +515,13 @@ export default function Home({ goToPricing = () => { }, goToAdmin = () => { } })
 
                 <div className="payment-options">
                   {courseOptions.map((c) => (
-                    <label key={c.value}>
+                    <label>
                       <input
                         type="radio"
                         checked={senderCourse === c.value}
                         onChange={() => setSenderCourse(c.value)}
                       />
-                      {c.label}
+                      <span>{c.label}</span>
                     </label>
                   ))}
                 </div>
