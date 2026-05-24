@@ -561,17 +561,24 @@ export default function Home({ goToPricing = () => { }, goToAdmin = () => { } })
                 placeholder="Telefone"
                 value={telefone}
                 inputMode="numeric"
-                pattern="[0-9]*"
                 onChange={(e) => {
-                  const onlyNumbers = e.target.value.replace(/\D/g, "");
-                  setTelefone(onlyNumbers);
+                  let v = e.target.value.replace(/\D/g, ""); // só números
 
-                }}
-                onPaste={(e) => {
-                  const text = e.clipboardData.getData("text");
-                  if (/\D/.test(text)) {
-                    e.preventDefault();
+                  // limita tamanho
+                  v = v.slice(0, 11);
+
+                  // aplica máscara
+                  if (v.length <= 10) {
+                    // fixo: (00) 0000-0000
+                    v = v.replace(/(\d{2})(\d)/, "($1) $2");
+                    v = v.replace(/(\d{4})(\d)/, "$1-$2");
+                  } else {
+                    // celular: (00) 00000-0000
+                    v = v.replace(/(\d{2})(\d)/, "($1) $2");
+                    v = v.replace(/(\d{5})(\d)/, "$1-$2");
                   }
+
+                  setTelefone(v);
                 }}
                 style={{
                   padding: "14px",
