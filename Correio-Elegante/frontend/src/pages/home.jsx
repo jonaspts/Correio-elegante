@@ -30,6 +30,20 @@ export default function Home({ goToPricing = () => { }, goToAdmin = () => { } })
 
   const classrooms = ["1A", "1B", "2A", "2B", "3A", "3B"];
 
+  function formatPhone(value = "") {
+  let v = value.replace(/\D/g, "").slice(0, 11);
+
+  if (v.length <= 10) {
+    v = v.replace(/(\d{2})(\d)/, "($1) $2");
+    v = v.replace(/(\d{4})(\d)/, "$1-$2");
+  } else {
+    v = v.replace(/(\d{2})(\d)/, "($1) $2");
+    v = v.replace(/(\d{5})(\d)/, "$1-$2");
+  }
+
+  return v;
+}
+
 
 
   useEffect(() => {
@@ -301,7 +315,7 @@ export default function Home({ goToPricing = () => { }, goToAdmin = () => { } })
                 <div>
                   <div style={{ fontSize: "12px", opacity: 0.6 }}>Telefone</div>
                   <div style={{ fontSize: "14px", fontWeight: 600 }}>
-                    {phoneFromProfile || telefone || "Não informado"}
+                    {formatPhone(phoneFromProfile || telefone) || "Não informado"}
                   </div>
                 </div>
 

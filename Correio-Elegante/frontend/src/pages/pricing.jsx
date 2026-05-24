@@ -142,7 +142,7 @@ const ProfilePanel = ({
             </div>
             <div className="profile-item">
               <div className="profile-label">Telefone</div>
-              <div className="profile-value">{phoneFromProfile || telefone || "Não informado"}</div>
+              <div className="profile-value">{formatPhone(phoneFromProfile || telefone) || "Não informado"}</div>
             </div>
             <div className="profile-item">
               <div className="profile-label">Email</div>
@@ -373,6 +373,21 @@ export default function Pricing({ goToHome }) {
   const formRef = useRef(null);
   const MAX_SENDS = 2;
   const COOLDOWN_TIME = 7 * 60 * 1000;
+
+/*------------------------------------------------*/
+  function formatPhone(value = "") {
+  let v = value.replace(/\D/g, "").slice(0, 11);
+
+  if (v.length <= 10) {
+    v = v.replace(/(\d{2})(\d)/, "($1) $2");
+    v = v.replace(/(\d{4})(\d)/, "$1-$2");
+  } else {
+    v = v.replace(/(\d{2})(\d)/, "($1) $2");
+    v = v.replace(/(\d{5})(\d)/, "$1-$2");
+  }
+
+  return v;
+}
 
   // ========================================
   // DADOS ESTÁTICOS

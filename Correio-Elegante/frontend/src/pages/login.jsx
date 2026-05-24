@@ -15,6 +15,20 @@ export default function Login() {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
   }
 
+  function formatPhone(value) {
+    let v = value.replace(/\D/g, "").slice(0, 11);
+
+    if (v.length <= 10) {
+      v = v.replace(/(\d{2})(\d)/, "($1) $2");
+      v = v.replace(/(\d{4})(\d)/, "$1-$2");
+    } else {
+      v = v.replace(/(\d{2})(\d)/, "($1) $2");
+      v = v.replace(/(\d{5})(\d)/, "$1-$2");
+    }
+
+    return v;
+  }
+
   async function handleLogin(e) {
     e.preventDefault();
 
@@ -69,11 +83,13 @@ export default function Login() {
     const user = data?.user;
 
     if (user) {
-      await supabase.from("profiles").insert([
+      const cleanPhone = phone.replace(/\D/g, "");
+
+      await supabase.from("profiles").upsert([
         {
           id: user.id,
           email: email.trim(),
-          phone: phone.trim(),
+          phone: cleanPhone || null,
         },
       ]);
     }
@@ -82,7 +98,7 @@ export default function Login() {
     setMode("login");
     setLoading(false);
   }
-  
+
   useEffect(() => {
     function spawnHeart() {
       const id = Math.random().toString(36).substr(2, 9);
@@ -169,7 +185,10 @@ export default function Login() {
             <input
               placeholder="Telefone"
               value={phone}
-              onChange={(e) => setPhone(e.target.value)}
+              inputMode="numeric"
+              onChange={(e) => {
+                setPhone(formatPhone(e.target.value));
+              }}
             />
 
             <button onClick={handleRegister} disabled={loading}>
