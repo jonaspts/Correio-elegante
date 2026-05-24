@@ -623,6 +623,11 @@ export default function Pricing({ goToHome }) {
       return;
     }
 
+    if (!course) {
+      alert("Selecione o curso do destinatário");
+      return;
+    }
+
     if (senderType === "identificado") {
       if (!senderName.trim()) {
         alert("Digite seu nome completo");
@@ -633,15 +638,15 @@ export default function Pricing({ goToHome }) {
         alert("Selecione a turma do remetente");
         return;
       }
-    }
 
-    if (receiverType === "identificado" && !course) {
-      alert("Selecione o curso");
-      return;
+      if (!senderCourse && senderClassroom) {
+        alert("Selecione o curso do remetente");
+        return;
+      }
     }
 
     if (receiverType === "identificado" && course && !classroom) {
-      alert("Selecione a turma");
+      alert("Selecione a truma do");
       return;
     }
 

@@ -10,9 +10,38 @@ const STATUS_CONFIG = {
     color: "#FFC864",
     bgColor: "rgba(255, 200, 100, 0.1)",
   },
+
   paid: {
     label: "Pago",
     icon: "✅",
+    color: "#64FFAA",
+    bgColor: "rgba(100, 255, 170, 0.1)",
+  },
+
+  delivered: {
+    label: "Entregue",
+    icon: "📬",
+    color: "#6496FF",
+    bgColor: "rgba(100, 150, 255, 0.1)",
+  },
+
+  trash: {
+    label: "Lixeira",
+    icon: "🗑️",
+    color: "#FF6464",
+    bgColor: "rgba(255, 100, 100, 0.1)",
+  },
+};
+const MESSAGE_STATUS_CONFIG = {
+  unverified: {
+    label: "Não verificado",
+    icon: "❌",
+    color: "#FFC864",
+    bgColor: "rgba(255, 200, 100, 0.1)",
+  },
+  verified: {
+    label: "Verificado",
+    icon: "✔️",
     color: "#64FFAA",
     bgColor: "rgba(100, 255, 170, 0.1)",
   },
@@ -81,6 +110,7 @@ export default function Admin({ goToHome }) {
       message,
       serenata_music,
       status,
+      message_status,
       previous_status,
       created_at
     `)
@@ -146,12 +176,23 @@ export default function Admin({ goToHome }) {
 
     setActionLoading(true);
 
+    const updateData = {
+      previous_status: currentOrder.status || null,
+      status: newStatus,
+    };
+
+    // 🔥 SINCRONIZA COM MENSAGENS
+    if (newStatus === "delivered") {
+      updateData.message_status = "delivered";
+    }
+
+    if (newStatus === "paid" && !currentOrder.message_status) {
+      updateData.message_status = "unverified";
+    }
+
     const { error } = await supabase
       .from("orders")
-      .update({
-        previous_status: currentOrder.status || null,
-        status: newStatus,
-      })
+      .update(updateData)
       .eq("id", id);
 
     setActionLoading(false);
@@ -166,654 +207,700 @@ export default function Admin({ goToHome }) {
     setExpandedOrder(id);
   }
 
-  function getStatusLabel(status) {
-    if (status === "paid") return "Verificada";
-    return STATUS_CONFIG[status]?.label || status;
+  async function updateMessageStatus(id, newStatus) {
+    setActionLoading(true);
+
+    const updateData = {
+      message_status: newStatus,
+    };
+
+    // 🔥 sincroniza com painel de pedidos
+    if (newStatus === "delivered") {
+      updateData.status = "delivered";
+    }
+
+    const { error } = await supabase
+      .from("orders")
+      .update(updateData)
+      .eq("id", id);
+
+    setActionLoading(false);
+
+    if (error) {
+      alert("Erro ao atualizar mensagem");
+      console.error(error);
+      return;
+    }
+
+    await fetchOrders();
   }
 
-async function moveToTrash(id) {
-  const ok = confirm("Mover este pedido para a lixeira?");
-  if (!ok) return;
+  async function moveToTrash(id) {
+    const ok = confirm("Mover este pedido para a lixeira?");
+    if (!ok) return;
 
-  await updateStatus(id, "trash");
-}
-
-async function undoStatus(order) {
-  if (!order?.previous_status) return;
-
-  setActionLoading(true);
-
-  const { error } = await supabase
-    .from("orders")
-    .update({
-      status: order.previous_status,
-      previous_status: null,
-    })
-    .eq("id", order.id);
-
-  setActionLoading(false);
-
-  if (error) {
-    alert("Erro ao desfazer");
-    console.error(error);
-    return;
+    await updateStatus(id, "trash");
   }
 
-  await fetchOrders();
-}
-function formatDate(dateString) {
-  if (!dateString) return "—";
-  const date = new Date(dateString);
+  async function undoStatus(order) {
+    if (!order?.previous_status) return;
 
-  return date.toLocaleString("pt-BR", {
-    timeZone: "America/Recife",
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
+    setActionLoading(true);
 
-function formatTime(dateString) {
-  if (!dateString) return "—";
+    const { error } = await supabase
+      .from("orders")
+      .update({
+        status: order.previous_status,
+        previous_status: null,
+      })
+      .eq("id", order.id);
 
-  const date = new Date(dateString);
-  const now = new Date();
-  const diff = now - date;
+    setActionLoading(false);
 
-  const minutes = Math.floor(diff / 60000);
-  const hours = Math.floor(minutes / 60);
-  const days = Math.floor(hours / 24);
+    if (error) {
+      alert("Erro ao desfazer");
+      console.error(error);
+      return;
+    }
 
-  if (minutes < 1) return "Agora";
-  if (minutes < 60) return `${minutes}min`;
-  if (hours < 24) return `${hours}h`;
-  return `${days}d`;
-}
+    await fetchOrders();
+  }
+  function formatDate(dateString) {
+    if (!dateString) return "—";
+    const date = new Date(dateString);
 
-const filteredOrders = useMemo(() => {
-  const searchLower = normalizeText(search);
-
-  return orders
-    .filter((order) => {
-      if (filter === "all") return order.status !== "trash";
-      return order.status === filter;
-    })
-    .filter((order) => {
-      if (!searchLower) return true;
-
-      return (
-        normalizeText(order.order_code).includes(searchLower) ||
-        normalizeText(order.receiver_name).includes(searchLower) ||
-        normalizeText(order.sender_name).includes(searchLower) ||
-        normalizeText(order.plan).includes(searchLower) ||
-        normalizeText(order.classroom).includes(searchLower)
-      );
+    return date.toLocaleString("pt-BR", {
+      timeZone: "America/Recife",
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
     });
-}, [orders, filter, search]);
+  }
 
-const stats = useMemo(() => {
-  const activeOrders = orders.filter((o) => o.status !== "trash");
+  function formatTime(dateString) {
+    if (!dateString) return "—";
 
+    const date = new Date(dateString);
+    const now = new Date();
+    const diff = now - date;
 
-  const paidOrders = orders.filter((o) => o.status === "paid");
+    const minutes = Math.floor(diff / 60000);
+    const hours = Math.floor(minutes / 60);
+    const days = Math.floor(hours / 24);
 
-  const totalRevenue = paidOrders.reduce(
-    (sum, order) => sum + Number(order.valor || 0),
-    0
-  );
+    if (minutes < 1) return "Agora";
+    if (minutes < 60) return `${minutes}min`;
+    if (hours < 24) return `${hours}h`;
+    return `${days}d`;
+  }
 
-  return {
-    total: activeOrders.length,
-    pending: activeOrders.filter((o) => o.status === "pending").length,
-    paid: paidOrders.length,
-    delivered: activeOrders.filter((o) => o.status === "delivered").length,
-    trash: orders.filter((o) => o.status === "trash").length,
-    totalRevenue,
-  };
-}, [orders]);
-
-if (!adminLevel) {
-  return (
-    <motion.div
-      key="admin-password"
-      variants={pageVariants}
-      initial="initial"
-      animate="animate"
-      exit="exit"
-      className="admin-login-page"
-    >
-      <div className="admin-login-card">
-        <div className="login-icon-wrapper">
-          <div className="login-icon">🔐</div>
-        </div>
-
-
-        <h1 className="login-title">Painel Administrativo</h1>
-        <p className="login-subtitle">Digite a senha para acessar o sistema</p>
-
-        <form onSubmit={handlePasswordSubmit} className="login-form">
-          <div className="input-wrapper">
-            <input
-              type="password"
-              value={adminPassword}
-              onChange={(e) => setAdminPassword(e.target.value)}
-              placeholder="Senha de acesso"
-              autoComplete="current-password"
-              className="login-input"
-            />
-          </div>
-
-          {passwordError && (
-            <div className="error-message">{passwordError}</div>
-          )}
-
-          <button type="submit" className="login-submit-btn">
-            <span>Entrar no Painel</span>
-            <span className="btn-arrow">→</span>
-          </button>
-
-          <button type="button" onClick={goToHome} className="login-back-btn">
-            ← Voltar para início
-          </button>
-        </form>
-      </div>
-    </motion.div>
-  );
-}
-
-if (loading) {
-  return (
-    <motion.div
-      key="admin-loading"
-      variants={pageVariants}
-      initial="initial"
-      animate="animate"
-      exit="exit"
-      className="admin-loading-page"
-    >
-      <div className="loading-content">
-        <div className="loading-spinner-modern"></div>
-        <p className="loading-text">Carregando pedidos...</p>
-      </div>
-    </motion.div>
-  );
-}
-if (adminLevel === "payments") {
-  return (
-    <motion.div
-      key="admin-panel"
-      variants={pageVariants}
-      initial="initial"
-      animate="animate"
-      exit="exit"
-      className="admin-dashboard"
-    >
-      {/* Header */}
-      <header className="dashboard-header">
-        <div className="header-content-wrapper">
-          <div className="header-left">
-            <button className="back-button" onClick={goToHome}>
-              <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                <path d="M12.5 15L7.5 10L12.5 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-              Início
-            </button>
-            <div className="header-title-group">
-              <h1 className="dashboard-title">
-                <span className="title-icon">📦</span>
-                Gerenciador de Entregas
-              </h1>
-              <p className="dashboard-subtitle">Correio Elegante 2026</p>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      {/* Stats */}
-      <section className="stats-section">
-        <div className="stats-grid">
-          <div className="stat-card-modern">
-            <div className="stat-header">
-              <span className="stat-icon-modern">📊</span>
-              <span className="stat-label-modern">Total de Pedidos</span>
-            </div>
-            <div className="stat-value-modern">{stats.total}</div>
-            <div className="stat-footer">Ativos no sistema</div>
-          </div>
-
-          <div className="stat-card-modern stat-pending">
-            <div className="stat-header">
-              <span className="stat-icon-modern">⏳</span>
-              <span className="stat-label-modern">Pendentes</span>
-            </div>
-            <div className="stat-value-modern">{stats.pending}</div>
-            <div className="stat-footer">Aguardando pagamento</div>
-          </div>
-
-          <div className="stat-card-modern stat-paid">
-            <div className="stat-header">
-              <span className="stat-icon-modern">✅</span>
-              <span className="stat-label-modern">Pagos</span>
-            </div>
-            <div className="stat-value-modern">{stats.paid}</div>
-            <div className="stat-footer">Confirmados</div>
-          </div>
-
-          <div className="stat-card-modern stat-delivered">
-            <div className="stat-header">
-              <span className="stat-icon-modern">📬</span>
-              <span className="stat-label-modern">Entregues</span>
-            </div>
-            <div className="stat-value-modern">{stats.delivered}</div>
-            <div className="stat-footer">Completados</div>
-          </div>
-
-          <div className="stat-card-modern stat-revenue">
-            <div className="stat-header">
-              <span className="stat-icon-modern">💰</span>
-              <span className="stat-label-modern">Receita Total</span>
-            </div>
-            <div className="stat-value-modern">R$ {stats.totalRevenue.toFixed(2)}</div>
-            <div className="stat-footer">Valor arrecadado</div>
-          </div>
-
-          <div className="stat-card-modern stat-trash">
-            <div className="stat-header">
-              <span className="stat-icon-modern">🗑️</span>
-              <span className="stat-label-modern">Lixeira</span>
-            </div>
-            <div className="stat-value-modern">{stats.trash}</div>
-            <div className="stat-footer">Arquivados</div>
-          </div>
-        </div>
-      </section>
-
-      {/* Controls */}
-      <section className="controls-section">
-        <div className="controls-wrapper">
-          {/* Search */}
-          <div className="search-wrapper">
-            <svg className="search-icon" width="20" height="20" viewBox="0 0 20 20" fill="none">
-              <circle cx="8.5" cy="8.5" r="5.5" stroke="currentColor" strokeWidth="2" />
-              <path d="M12 12L16 16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-            </svg>
-            <input
-              type="text"
-              placeholder="Buscar por código, nome, turma..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="search-input-modern"
-            />
-            {search && (
-              <button className="search-clear-btn" onClick={() => setSearch("")}>
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                  <path d="M4 4L12 12M12 4L4 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-                </svg>
-              </button>
-            )}
-          </div>
-
-          {/* Filters */}
-          <div className="filters-wrapper">
-            <button
-              className={`filter-chip ${filter === "all" ? "active" : ""}`}
-              onClick={() => setFilter("all")}
-            >
-              <span className="filter-dot"></span>
-              Todos
-            </button>
-            <button
-              className={`filter-chip ${filter === "pending" ? "active" : ""}`}
-              onClick={() => setFilter("pending")}
-            >
-              <span className="filter-dot pending"></span>
-              Pendentes
-            </button>
-            <button
-              className={`filter-chip ${filter === "paid" ? "active" : ""}`}
-              onClick={() => setFilter("paid")}
-            >
-              <span className="filter-dot paid"></span>
-              Pagos
-            </button>
-            <button
-              className={`filter-chip ${filter === "delivered" ? "active" : ""}`}
-              onClick={() => setFilter("delivered")}
-            >
-              <span className="filter-dot delivered"></span>
-              Entregues
-            </button>
-            <button
-              className={`filter-chip ${filter === "trash" ? "active" : ""}`}
-              onClick={() => setFilter("trash")}
-            >
-              <span className="filter-dot trash"></span>
-              Lixeira
-            </button>
-          </div>
-        </div>
-      </section>
-
-      {/* Orders */}
-      <section className="orders-section">
-        {errorMessage && (
-          <div className="error-banner">{errorMessage}</div>
-        )}
-
-        {filteredOrders.length === 0 ? (
-          <div className="empty-state-modern">
-            <div className="empty-icon-modern">📭</div>
-            <h3 className="empty-title">Nenhum pedido encontrado</h3>
-            <p className="empty-description">
-              {search ? "Tente ajustar sua busca" : "Não há pedidos nesta categoria"}
-            </p>
-          </div>
-        ) : (
-          <div className="orders-grid-modern">
-            {filteredOrders.map((order) => (
-              <OrderCard
-                key={order.id}
-                order={order}
-                isExpanded={expandedOrder === order.id}
-                onToggleExpand={() =>
-                  setExpandedOrder((prev) =>
-                    prev === order.id ? null : order.id
-                  )
-                }
-
-                onUpdateStatus={updateStatus}
-                onMoveToTrash={moveToTrash}
-                onUndo={undoStatus}
-                actionLoading={actionLoading}
-                formatDate={formatDate}
-                formatTime={formatTime}
-              />
-            ))}
-          </div>
-        )}
-      </section>
-    </motion.div>
-  );
-}
-
-
-if (adminLevel === "messages") {
-
-  const messages = orders.filter(
-    (o) => o.status === "paid" || o.status === "delivered"
-  );
-
-  const filteredMessages = messages.filter((order) => {
+  const filteredOrders = useMemo(() => {
     const searchLower = normalizeText(search);
 
-    if (!searchLower) return true;
+    return orders
+      .filter((order) => {
+        if (filter === "all") return order.status !== "trash";
+        return order.status === filter;
+      })
+      .filter((order) => {
+        if (!searchLower) return true;
 
-    return (
-      normalizeText(order.order_code).includes(searchLower) ||
-      normalizeText(order.receiver_name).includes(searchLower) ||
-      normalizeText(order.sender_name).includes(searchLower) ||
-      normalizeText(order.plan).includes(searchLower) ||
-      normalizeText(order.classroom).includes(searchLower) ||
-      normalizeText(order.message).includes(searchLower) ||
-      normalizeText(order.serenata_music).includes(searchLower)
+        return (
+          normalizeText(order.order_code).includes(searchLower) ||
+          normalizeText(order.receiver_name).includes(searchLower) ||
+          normalizeText(order.sender_name).includes(searchLower) ||
+          normalizeText(order.plan).includes(searchLower) ||
+          normalizeText(order.classroom).includes(searchLower)
+        );
+      });
+  }, [orders, filter, search]);
+
+  const stats = useMemo(() => {
+    const activeOrders = orders.filter((o) => o.status !== "trash");
+
+
+    const paidOrders = orders.filter((o) => o.status === "paid");
+
+
+    const totalRevenue = paidOrders.reduce(
+      (sum, order) => sum + Number(order.valor || 0),
+      0
     );
-  });
 
-  return (
-    <motion.div
-      key="messages-panel"
-      variants={pageVariants}
-      initial="initial"
-      animate="animate"
-      exit="exit"
-      className="admin-dashboard"
-    >
-      <header className="dashboard-header">
-        <div className="header-content-wrapper">
-          <div className="header-left">
-            <button className="back-button" onClick={goToHome}>
-              <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                <path
-                  d="M12.5 15L7.5 10L12.5 5"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-              Início
+    return {
+      total: activeOrders.length,
+      pending: activeOrders.filter((o) => o.status === "pending").length,
+      paid: paidOrders.length,
+      delivered: activeOrders.filter((o) => o.status === "delivered").length,
+      trash: orders.filter((o) => o.status === "trash").length,
+      totalRevenue,
+    };
+  }, [orders]);
+
+  if (!adminLevel) {
+    return (
+      <motion.div
+        key="admin-password"
+        variants={pageVariants}
+        initial="initial"
+        animate="animate"
+        exit="exit"
+        className="admin-login-page"
+      >
+        <div className="admin-login-card">
+          <div className="login-icon-wrapper">
+            <div className="login-icon">🔐</div>
+          </div>
+
+
+          <h1 className="login-title">Painel Administrativo</h1>
+          <p className="login-subtitle">Digite a senha para acessar o sistema</p>
+
+          <form onSubmit={handlePasswordSubmit} className="login-form">
+            <div className="input-wrapper">
+              <input
+                type="password"
+                value={adminPassword}
+                onChange={(e) => setAdminPassword(e.target.value)}
+                placeholder="Senha de acesso"
+                autoComplete="current-password"
+                className="login-input"
+              />
+            </div>
+
+            {passwordError && (
+              <div className="error-message">{passwordError}</div>
+            )}
+
+            <button type="submit" className="login-submit-btn">
+              <span>Entrar no Painel</span>
+              <span className="btn-arrow">→</span>
             </button>
-            <div className="header-title-group">
-              <h1 className="dashboard-title">
-                <span className="title-icon">💌</span>
-                Painel de Mensagens
-              </h1>
-              <p className="dashboard-subtitle">
-                Somente cartas pagas / verificadas
+
+            <button type="button" onClick={goToHome} className="login-back-btn">
+              ← Voltar para início
+            </button>
+          </form>
+        </div>
+      </motion.div>
+    );
+  }
+
+  if (loading) {
+    return (
+      <motion.div
+        key="admin-loading"
+        variants={pageVariants}
+        initial="initial"
+        animate="animate"
+        exit="exit"
+        className="admin-loading-page"
+      >
+        <div className="loading-content">
+          <div className="loading-spinner-modern"></div>
+          <p className="loading-text">Carregando pedidos...</p>
+        </div>
+      </motion.div>
+    );
+  }
+  if (adminLevel === "payments") {
+    return (
+      <motion.div
+        key="admin-panel"
+        variants={pageVariants}
+        initial="initial"
+        animate="animate"
+        exit="exit"
+        className="admin-dashboard"
+      >
+        {/* Header */}
+        <header className="dashboard-header">
+          <div className="header-content-wrapper">
+            <div className="header-left">
+              <button className="back-button" onClick={goToHome}>
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                  <path d="M12.5 15L7.5 10L12.5 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+                Início
+              </button>
+              <div className="header-title-group">
+                <h1 className="dashboard-title">
+                  <span className="title-icon">📦</span>
+                  Gerenciador de Entregas
+                </h1>
+                <p className="dashboard-subtitle">Correio Elegante 2026</p>
+              </div>
+            </div>
+          </div>
+        </header>
+
+        {/* Stats */}
+        <section className="stats-section">
+          <div className="stats-grid">
+            <div className="stat-card-modern">
+              <div className="stat-header">
+                <span className="stat-icon-modern">📊</span>
+                <span className="stat-label-modern">Total de Pedidos</span>
+              </div>
+              <div className="stat-value-modern">{stats.total}</div>
+              <div className="stat-footer">Ativos no sistema</div>
+            </div>
+
+            <div className="stat-card-modern stat-pending">
+              <div className="stat-header">
+                <span className="stat-icon-modern">⏳</span>
+                <span className="stat-label-modern">Pendentes</span>
+              </div>
+              <div className="stat-value-modern">{stats.pending}</div>
+              <div className="stat-footer">Aguardando pagamento</div>
+            </div>
+
+            <div className="stat-card-modern stat-paid">
+              <div className="stat-header">
+                <span className="stat-icon-modern">✅</span>
+                <span className="stat-label-modern">Pagos</span>
+              </div>
+              <div className="stat-value-modern">{stats.paid}</div>
+              <div className="stat-footer">Confirmados</div>
+            </div>
+
+            <div className="stat-card-modern stat-delivered">
+              <div className="stat-header">
+                <span className="stat-icon-modern">📬</span>
+                <span className="stat-label-modern">Entregues</span>
+              </div>
+              <div className="stat-value-modern">{stats.delivered}</div>
+              <div className="stat-footer">Completados</div>
+            </div>
+
+            <div className="stat-card-modern stat-revenue">
+              <div className="stat-header">
+                <span className="stat-icon-modern">💰</span>
+                <span className="stat-label-modern">Receita Total</span>
+              </div>
+              <div className="stat-value-modern">R$ {stats.totalRevenue.toFixed(2)}</div>
+              <div className="stat-footer">Valor arrecadado</div>
+            </div>
+
+            <div className="stat-card-modern stat-trash">
+              <div className="stat-header">
+                <span className="stat-icon-modern">🗑️</span>
+                <span className="stat-label-modern">Lixeira</span>
+              </div>
+              <div className="stat-value-modern">{stats.trash}</div>
+              <div className="stat-footer">Arquivados</div>
+            </div>
+          </div>
+        </section>
+
+        {/* Controls */}
+        <section className="controls-section">
+          <div className="controls-wrapper">
+            {/* Search */}
+            <div className="search-wrapper">
+              <svg className="search-icon" width="20" height="20" viewBox="0 0 20 20" fill="none">
+                <circle cx="8.5" cy="8.5" r="5.5" stroke="currentColor" strokeWidth="2" />
+                <path d="M12 12L16 16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+              </svg>
+              <input
+                type="text"
+                placeholder="Buscar por código, nome, turma..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="search-input-modern"
+              />
+              {search && (
+                <button className="search-clear-btn" onClick={() => setSearch("")}>
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                    <path d="M4 4L12 12M12 4L4 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                  </svg>
+                </button>
+              )}
+            </div>
+
+            {/* Filters */}
+            <div className="filters-wrapper">
+              <button
+                className={`filter-chip ${filter === "all" ? "active" : ""}`}
+                onClick={() => setFilter("all")}
+              >
+                <span className="filter-dot"></span>
+                Todos
+              </button>
+              <button
+                className={`filter-chip ${filter === "pending" ? "active" : ""}`}
+                onClick={() => setFilter("pending")}
+              >
+                <span className="filter-dot pending"></span>
+                Pendentes
+              </button>
+              <button
+                className={`filter-chip ${filter === "paid" ? "active" : ""}`}
+                onClick={() => setFilter("paid")}
+              >
+                <span className="filter-dot paid"></span>
+                Pagos
+              </button>
+              <button
+                className={`filter-chip ${filter === "delivered" ? "active" : ""}`}
+                onClick={() => setFilter("delivered")}
+              >
+                <span className="filter-dot delivered"></span>
+                Entregues
+              </button>
+              <button
+                className={`filter-chip ${filter === "trash" ? "active" : ""}`}
+                onClick={() => setFilter("trash")}
+              >
+                <span className="filter-dot trash"></span>
+                Lixeira
+              </button>
+            </div>
+          </div>
+        </section>
+
+        {/* Orders */}
+        <section className="orders-section">
+          {errorMessage && (
+            <div className="error-banner">{errorMessage}</div>
+          )}
+
+          {filteredOrders.length === 0 ? (
+            <div className="empty-state-modern">
+              <div className="empty-icon-modern">📭</div>
+              <h3 className="empty-title">Nenhum pedido encontrado</h3>
+              <p className="empty-description">
+                {search ? "Tente ajustar sua busca" : "Não há pedidos nesta categoria"}
               </p>
             </div>
-          </div>
-        </div>
-      </header>
+          ) : (
+            <div className="orders-grid-modern">
+              {filteredOrders.map((order) => (
+                <OrderCard
+                  key={order.id}
+                  order={order}
+                  isExpanded={expandedOrder === order.id}
+                  onToggleExpand={() =>
+                    setExpandedOrder((prev) =>
+                      prev === order.id ? null : order.id
+                    )
+                  }
 
-      <section className="stats-section">
-        <div className="stats-grid">
-          <div className="stat-card-modern">
-            <div className="stat-header">
-              <span className="stat-icon-modern">💌</span>
-              <span className="stat-label-modern">Mensagens liberadas</span>
+                  onUpdateStatus={updateStatus}
+                  onMoveToTrash={moveToTrash}
+                  onUndo={undoStatus}
+                  actionLoading={actionLoading}
+                  formatDate={formatDate}
+                  formatTime={formatTime}
+                />
+              ))}
             </div>
-            <div className="stat-value-modern">{messages.length}</div>
-            <div className="stat-footer">Cartas prontas para leitura</div>
-          </div>
+          )}
+        </section>
+      </motion.div>
+    );
+  }
 
-          <div className="stat-card-modern stat-paid">
-            <div className="stat-header">
-              <span className="stat-icon-modern">✅</span>
-              <span className="stat-label-modern">Verificadas</span>
-            </div>
-            <div className="stat-value-modern">
-              {messages.filter((o) => o.status === "paid").length}
-            </div>
-            <div className="stat-footer">Pagas e liberadas</div>
-          </div>
 
-          <div className="stat-card-modern stat-delivered">
-            <div className="stat-header">
-              <span className="stat-icon-modern">📬</span>
-              <span className="stat-label-modern">Entregues</span>
-            </div>
-            <div className="stat-value-modern">
-              {messages.filter((o) => o.status === "delivered").length}
-            </div>
-            <div className="stat-footer">Já concluídas</div>
-          </div>
+  if (adminLevel === "messages") {
 
-          <div className="stat-card-modern stat-trash">
-            <div className="stat-header">
-              <span className="stat-icon-modern">🗑️</span>
-              <span className="stat-label-modern">Ocultas</span>
-            </div>
-            <div className="stat-value-modern">
-              {orders.filter((o) => o.status === "trash").length}
-            </div>
-            <div className="stat-footer">Só referência</div>
-          </div>
-        </div>
-      </section>
+    const messages = orders.filter(
+      (o) =>
+        o.status === "paid" ||
+        o.status === "delivered" ||
+        o.status === "trash"
+    );
 
-      <section className="controls-section">
-        <div className="controls-wrapper">
-          <div className="search-wrapper">
-            <svg className="search-icon" width="20" height="20" viewBox="0 0 20 20" fill="none">
-              <circle cx="8.5" cy="8.5" r="5.5" stroke="currentColor" strokeWidth="2" />
-              <path d="M12 12L16 16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-            </svg>
-            <input
-              type="text"
-              placeholder="Buscar por código, nome, mensagem, turma..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="search-input-modern"
-            />
-            {search && (
-              <button className="search-clear-btn" onClick={() => setSearch("")}>
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+    const filteredMessages = messages
+      .filter((order) => {
+        if (filter === "all") return order.message_status !== "trash";
+
+        return order.message_status === filter;
+      })
+      .filter((order) => {
+        const searchLower = normalizeText(search);
+
+        if (!searchLower) return true;
+
+        return (
+          normalizeText(order.order_code).includes(searchLower) ||
+          normalizeText(order.receiver_name).includes(searchLower) ||
+          normalizeText(order.sender_name).includes(searchLower) ||
+          normalizeText(order.plan).includes(searchLower) ||
+          normalizeText(order.classroom).includes(searchLower) ||
+          normalizeText(order.message).includes(searchLower) ||
+          normalizeText(order.serenata_music).includes(searchLower)
+        );
+      });
+
+    return (
+      <motion.div
+        key="messages-panel"
+        variants={pageVariants}
+        initial="initial"
+        animate="animate"
+        exit="exit"
+        className="admin-dashboard"
+      >
+        <header className="dashboard-header">
+          <div className="header-content-wrapper">
+            <div className="header-left">
+              <button className="back-button" onClick={goToHome}>
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
                   <path
-                    d="M4 4L12 12M12 4L4 12"
+                    d="M12.5 15L7.5 10L12.5 5"
                     stroke="currentColor"
                     strokeWidth="2"
                     strokeLinecap="round"
+                    strokeLinejoin="round"
                   />
                 </svg>
+                Início
               </button>
-            )}
+              <div className="header-title-group">
+                <h1 className="dashboard-title">
+                  <span className="title-icon">💌</span>
+                  Painel de Mensagens
+                </h1>
+                <p className="dashboard-subtitle">
+                  Somente cartas pagas / verificadas
+                </p>
+              </div>
+            </div>
           </div>
+        </header>
 
-          <div className="filters-wrapper">
-            <button
-              className={`filter-chip ${filter === "all" ? "active" : ""}`}
-              onClick={() => setFilter("all")}
-            >
-              <span className="filter-dot"></span>
-              Todas
-            </button>
-            <button
-              className={`filter-chip ${filter === "paid" ? "active" : ""}`}
-              onClick={() => setFilter("paid")}
-            >
-              <span className="filter-dot paid"></span>
-              Verificadas
-            </button>
-            <button
-              className={`filter-chip ${filter === "delivered" ? "active" : ""}`}
-              onClick={() => setFilter("delivered")}
-            >
-              <span className="filter-dot delivered"></span>
-              Entregues
-            </button>
+        <section className="stats-section">
+          <div className="stats-grid">
+            <div className="stat-card-modern">
+              <div className="stat-header">
+                <span className="stat-icon-modern">💌</span>
+                <span className="stat-label-modern">Mensagens liberadas</span>
+              </div>
+              <div className="stat-value-modern">{messages.length}</div>
+              <div className="stat-footer">Cartas prontas para leitura</div>
+            </div>
+
+            <div className="stat-card-modern stat-paid">
+              <div className="stat-header">
+                <span className="stat-icon-modern">✅</span>
+                <span className="stat-label-modern">Verificadas</span>
+              </div>
+              <div className="stat-value-modern">
+                {messages.filter((o) => o.message_status === "verified").length}
+              </div>
+              <div className="stat-footer">Pagas e liberadas</div>
+            </div>
+
+            <div className="stat-card-modern stat-delivered">
+              <div className="stat-header">
+                <span className="stat-icon-modern">📬</span>
+                <span className="stat-label-modern">Entregues</span>
+              </div>
+              <div className="stat-value-modern">
+                {messages.filter((o) => o.message_status === "delivered").length}
+              </div>
+              <div className="stat-footer">Já concluídas</div>
+            </div>
+
+            <div className="stat-card-modern stat-trash">
+              <div className="stat-header">
+                <span className="stat-icon-modern">🗑️</span>
+                <span className="stat-label-modern">Ocultas</span>
+              </div>
+              <div className="stat-value-modern">
+                {messages.filter((o) => o.message_status === "trash").length}
+              </div>
+              <div className="stat-footer">Só referência</div>
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      <section className="orders-section">
-        {errorMessage && <div className="error-banner">{errorMessage}</div>}
+        <section className="controls-section">
+          <div className="controls-wrapper">
+            <div className="search-wrapper">
+              <svg className="search-icon" width="20" height="20" viewBox="0 0 20 20" fill="none">
+                <circle cx="8.5" cy="8.5" r="5.5" stroke="currentColor" strokeWidth="2" />
+                <path d="M12 12L16 16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+              </svg>
+              <input
+                type="text"
+                placeholder="Buscar por código, nome, mensagem, turma..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="search-input-modern"
+              />
+              {search && (
+                <button className="search-clear-btn" onClick={() => setSearch("")}>
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                    <path
+                      d="M4 4L12 12M12 4L4 12"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                    />
+                  </svg>
+                </button>
+              )}
+            </div>
 
-        {filteredMessages.length === 0 ? (
-          <div className="empty-state-modern">
-            <div className="empty-icon-modern">📭</div>
-            <h3 className="empty-title">Nenhuma mensagem encontrada</h3>
-            <p className="empty-description">
-              {search ? "Tente ajustar sua busca" : "As cartas aparecem aqui quando forem pagas"}
-            </p>
+            <div className="filters-wrapper">
+              <button
+                className={`filter-chip ${filter === "all" ? "active" : ""}`}
+                onClick={() => setFilter("all")}
+              >
+                <span className="filter-dot"></span>
+                Todas
+              </button>
+              <button
+                className={`filter-chip ${filter === "unverified" ? "active" : ""}`}
+                onClick={() => setFilter("unverified")}
+              >
+                <span className="filter-dot pending"></span>
+                Não verificadas
+              </button>
+              <button
+                className={`filter-chip ${filter === "verified" ? "active" : ""}`}
+                onClick={() => setFilter("verified")}
+              >
+                <span className="filter-dot paid"></span>
+                Verificadas
+              </button>
+              <button
+                className={`filter-chip ${filter === "delivered" ? "active" : ""}`}
+                onClick={() => setFilter("delivered")}
+              >
+                <span className="filter-dot delivered"></span>
+                Entregues
+              </button>
+              <button
+                className={`filter-chip ${filter === "trash" ? "active" : ""}`}
+                onClick={() => setFilter("trash")}
+              >
+                <span className="filter-dot trash"></span>
+                Lixeira
+              </button>
+            </div>
           </div>
-        ) : (
-          <div className="orders-grid-modern">
-            {filteredMessages.map((order) => (
-              <div key={order.id} className="order-card-modern">
-                <div className="order-card-header">
-                  <span className="order-code-badge">#{order.order_code}</span>
-                  <span className={`status-badge status-${order.status}`}>
-                    {STATUS_CONFIG[order.status]?.icon}{" "}
-                    {STATUS_CONFIG[order.status]?.label}
-                  </span>
-                </div>
+        </section>
 
-                <div className="order-quick-info">
-                  <div className="info-item">
-                    <span className="info-label">Hora</span>
-                    <span className="info-value">{formatDate(order.created_at)}</span>
+        <section className="orders-section">
+          {errorMessage && <div className="error-banner">{errorMessage}</div>}
+
+          {filteredMessages.length === 0 ? (
+            <div className="empty-state-modern">
+              <div className="empty-icon-modern">📭</div>
+              <h3 className="empty-title">Nenhuma mensagem encontrada</h3>
+              <p className="empty-description">
+                {search ? "Tente ajustar sua busca" : "As cartas aparecem aqui quando forem pagas"}
+              </p>
+            </div>
+          ) : (
+            <div className="orders-grid-modern">
+              {filteredMessages.map((order) => (
+                <div key={order.id} className="order-card-modern">
+                  <div className="order-card-header">
+                    <span className={`status-badge status-${order.message_status}`}>
+                      {MESSAGE_STATUS_CONFIG[order.message_status]?.icon}{" "}
+                      {MESSAGE_STATUS_CONFIG[order.message_status]?.label}
+                    </span>
                   </div>
 
-                  <div className="info-item">
-                    <span className="info-label">De</span>
-                    <span className="info-value">{order.sender_name || "Anônimo"}</span>
+                  <div className="order-quick-info">
+                    <div className="info-item">
+                      <span className="info-label">Hora</span>
+                      <span className="info-value">{formatDate(order.created_at)}</span>
+                    </div>
+
+                    <div className="info-item">
+                      <span className="info-label">De</span>
+                      <span className="info-value">{order.sender_name || "Anônimo"}</span>
+                    </div>
+
+                    <div className="info-item">
+                      <span className="info-label">Para</span>
+                      <span className="info-value">{order.receiver_name || "—"}</span>
+                    </div>
                   </div>
 
-                  <div className="info-item">
-                    <span className="info-label">Para</span>
-                    <span className="info-value">{order.receiver_name || "—"}</span>
-                  </div>
-                </div>
-
-                <div className="message-section">
-                  <h4 className="section-title">
-                    <span className="section-icon">✉️</span>
-                    Mensagem
-                  </h4>
-                  <div className="message-content">
-                    {order.message || "Sem mensagem"}
-                  </div>
-                </div>
-
-                {order.serenata_music && (
                   <div className="message-section">
                     <h4 className="section-title">
-                      <span className="section-icon">🎵</span>
-                      Serenata
+                      <span className="section-icon">✉️</span>
+                      Mensagem
                     </h4>
                     <div className="message-content">
-                      {order.serenata_music}
+                      {order.message || "Sem mensagem"}
                     </div>
                   </div>
-                )}
 
-                <div className="order-quick-info">
-                  <div className="info-item">
-                    <span className="info-label">Turma</span>
-                    <span className="info-value">{order.classroom || "—"}</span>
-                  </div>
-                  <div className="info-item">
-                    <span className="info-label">Curso</span>
-                    <span className="info-value">{order.course || "—"}</span>
-                  </div>
-                  <div className="actions-section">
-                    <h4 className="section-title">
-                      <span className="section-icon">⚙️</span>
-                      Ações
-                    </h4>
+                  {order.serenata_music && (
+                    <div className="message-section">
+                      <h4 className="section-title">
+                        <span className="section-icon">🎵</span>
+                        Serenata
+                      </h4>
+                      <div className="message-content">
+                        {order.serenata_music}
+                      </div>
+                    </div>
+                  )}
 
-                    <div className="status-buttons">
+                  <div className="order-quick-info">
+                    <div className="info-item">
+                      <span className="info-label">Turma</span>
+                      <span className="info-value">{order.classroom || "—"}</span>
+                    </div>
+                    <div className="info-item">
+                      <span className="info-label">Curso</span>
+                      <span className="info-value">{order.course || "—"}</span>
+                    </div>
+                    <div className="actions-section">
+                      <h4 className="section-title">
+                        <span className="section-icon">⚙️</span>
+                        Ações
+                      </h4>
 
-                      {/* APROVAR */}
-                      <button
-                        className="status-action-btn delivered"
-                        onClick={() => updateStatus(order.id, "paid")}
-                      >
-                        <span>✔️</span>
-                        Aprovar
-                      </button>
-                      {/* ENTREGAR */}
-                      <button
-                        className="status-action-btn delivered"
-                        onClick={() => updateStatus(order.id, "delivered")}
-                      >
-                        <span>📬</span>
-                        Entregue
-                      </button>
+                      <div className="status-buttons">
 
-                      {/* REPROVAR */}
-                      <button
-                        className="utility-btn trash-btn"
-                        onClick={() => updateStatus(order.id, "trash")}
-                      >
-                        <span>🗑️</span>
-                        Reprovar
-                      </button>
+                        {/* APROVAR */}
+                        <button
+                          className="status-action-btn delivered"
+                          onClick={() => updateMessageStatus(order.id, "verified")}
+                        >
+                          <span>✔️</span>
+                          Aprovar
+                        </button>
+                        {/* ENTREGAR */}
+                        <button
+                          className="status-action-btn delivered"
+                          onClick={() => updateMessageStatus(order.id, "delivered")}
+                        >
+                          <span>📬</span>
+                          Entregue
+                        </button>
 
+                        {/* REPROVAR */}
+                        <button
+                          className="utility-btn trash-btn"
+                          onClick={() => updateMessageStatus(order.id, "trash")}
+                        >
+                          <span>🗑️</span>
+                          Reprovar
+                        </button>
+
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </section>
-    </motion.div>
-  );
-}
+              ))}
+            </div>
+          )}
+        </section>
+      </motion.div>
+    );
+  }
 
 
 }
@@ -831,7 +918,7 @@ function OrderCard({
   formatTime,
 }) {
   const status = STATUS_CONFIG[order.status] || STATUS_CONFIG.pending;
-  const isVerified =
+  const isPaid =
     order.status === "paid" || order.status === "delivered";
 
   return (
@@ -839,9 +926,9 @@ function OrderCard({
       {/* Header */}
       <div className="order-card-header">
         <span
-          className={`verification ${isVerified ? "ok" : "no"}`}
+          className={`verification ${isPaid ? "ok" : "no"}`}
         >
-          {isVerified ? "✔️ Verificado" : "❌ Não verificado"}
+          {isPaid ? "✅ Pago confirmado" : "❌ Pagamento pendente"}
         </span>
         <div className="order-card-top">
           <div className="order-badge-group">
@@ -855,10 +942,6 @@ function OrderCard({
         </div>
 
         <div className="order-quick-info">
-          <div className="info-item">
-            <span className="info-label">Para</span>
-            <span className="info-value">{order.receiver_name || "—"}</span>
-          </div>
           <div className="info-item">
             <span className="info-label">Plano</span>
             <span className="info-value">{order.plan || "—"}</span>
@@ -951,14 +1034,6 @@ function OrderCard({
               >
                 <span>✅</span>
                 Pago
-              </button>
-              <button
-                className={`status-action-btn delivered ${order.status === "delivered" ? "active" : ""}`}
-                onClick={() => onUpdateStatus(order.id, "delivered")}
-                disabled={actionLoading}
-              >
-                <span>📬</span>
-                Entregue
               </button>
             </div>
 
