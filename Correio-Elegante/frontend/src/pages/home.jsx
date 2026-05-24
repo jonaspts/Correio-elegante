@@ -565,6 +565,13 @@ export default function Home({ goToPricing = () => { }, goToAdmin = () => { } })
                 onChange={(e) => {
                   const onlyNumbers = e.target.value.replace(/\D/g, "");
                   setTelefone(onlyNumbers);
+
+                }}
+                onPaste={(e) => {
+                  const text = e.clipboardData.getData("text");
+                  if (/\D/.test(text)) {
+                    e.preventDefault();
+                  }
                 }}
                 style={{
                   padding: "14px",
