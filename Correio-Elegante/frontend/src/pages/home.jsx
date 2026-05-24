@@ -558,9 +558,14 @@ export default function Home({ goToPricing = () => { }, goToAdmin = () => { } })
 
 
               <input
-                placeholder="Telefone (Apenas admins tem acesso à esse número)"
+                placeholder="Telefone"
                 value={telefone}
-                onChange={(e) => setTelefone(e.target.value)}
+                inputMode="numeric"
+                pattern="[0-9]*"
+                onChange={(e) => {
+                  const onlyNumbers = e.target.value.replace(/\D/g, "");
+                  setTelefone(onlyNumbers);
+                }}
                 style={{
                   padding: "14px",
                   borderRadius: "12px",
