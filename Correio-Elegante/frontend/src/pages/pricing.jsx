@@ -327,6 +327,30 @@ const CashPayment = ({ selectedPrice }) => (
     </div>
   </div>
 );
+const CooldownOverlay = ({ minutes, seconds, onClose }) => {
+  return (
+    <div className="success-overlay">
+      <div className="success-box">
+        <div className="success-badge">⏳</div>
+
+        <h2>Limite de envios atingido.</h2>
+
+        <p>
+          você só pode enviar <strong>2 mensagens a cada 7 minutos</strong><br/>
+          Aguarde <strong>{minutes}m {seconds}s</strong> para enviar novamente.
+        </p>
+
+        <button
+          type="button"
+          className="success-close-btn"
+          onClick={onClose}
+        >
+          Entendi
+        </button>
+      </div>
+    </div>
+  );
+};
 
 // ========================================
 // COMPONENTE PRINCIPAL
@@ -372,6 +396,7 @@ export default function Pricing({ goToHome }) {
   const [savingProfile, setSavingProfile] = useState(false);
   const [isGoogleUser, setIsGoogleUser] = useState(false);
   const [addSerenata, setAddSerenata] = useState(false);
+  const [cooldownInfo, setCooldownInfo] = useState(null);
 
   // Estado do contador regressivo
   const [timeLeft, setTimeLeft] = useState({
@@ -654,7 +679,10 @@ export default function Pricing({ goToHome }) {
         const minutes = Math.floor(totalSeconds / 60);
         const seconds = totalSeconds % 60;
 
-        alert(`Você atingiu o limite de envios.\nAguarde ${minutes}m ${seconds}s para enviar novamente.`);
+        setCooldownInfo({
+          minutes,
+          seconds,
+        });
         return;
       }
 
@@ -965,6 +993,14 @@ export default function Pricing({ goToHome }) {
           orderCode={orderCode}
           paymentMethod={paymentMethod}
           onClose={handleSuccessClose}
+        />
+      )}
+
+      {cooldownInfo && (
+        <CooldownOverlay
+          minutes={cooldownInfo.minutes}
+          seconds={cooldownInfo.seconds}
+          onClose={() => setCooldownInfo(null)}
         />
       )}
 
