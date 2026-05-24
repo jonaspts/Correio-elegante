@@ -333,18 +333,15 @@ const CooldownOverlay = ({ minutes, seconds, onClose }) => {
       <div className="success-box">
         <div className="success-badge">⏳</div>
 
-        <h2>Limite de envios atingido.</h2>
+        <h2>Limite de envios atingido</h2>
 
         <p>
-          você só pode enviar <strong>2 mensagens a cada 7 minutos</strong><br/>
+          Você só pode enviar <strong>2 mensagens a cada 7 minutos</strong>
+          <br />
           Aguarde <strong>{minutes}m {seconds}s</strong> para enviar novamente.
         </p>
 
-        <button
-          type="button"
-          className="success-close-btn"
-          onClick={onClose}
-        >
+        <button type="button" className="success-close-btn" onClick={onClose}>
           Entendi
         </button>
       </div>
@@ -488,7 +485,8 @@ export default function Pricing({ goToHome }) {
 
     try {
       setFileUploading(true);
-      const fileName = `${Date.now()}-${file.name}`;
+      const safeName = file.name.replace(/\s/g, "_");
+      const fileName = `${Date.now()}-${safeName}`;
 
       const { error } = await supabase.storage
         .from("proofs")
@@ -672,17 +670,30 @@ export default function Pricing({ goToHome }) {
       }
 
       const now = new Date();
+      const cooldownDate = profileRow?.cooldown_until
+        ? new Date(profileRow.cooldown_until)
+        : null;
 
-      if (profileRow?.cooldown_until && new Date(profileRow.cooldown_until) > now) {
-        const diffMs = new Date(profileRow.cooldown_until).getTime() - now.getTime();
+      const isCooldownValid =
+        cooldownDate && !isNaN(cooldownDate.getTime());
+      if (cooldownDate && cooldownDate.getTime() <= now.getTime()) {
+        await supabase
+          .from("profiles")
+          .update({
+            cooldown_until: null,
+            send_count: 0
+          })
+          .eq("id", user.id);
+      }
+
+      if (isCooldownValid && cooldownDate.getTime() > now.getTime()) {
+        const diffMs = cooldownDate.getTime() - now.getTime();
         const totalSeconds = Math.ceil(diffMs / 1000);
         const minutes = Math.floor(totalSeconds / 60);
         const seconds = totalSeconds % 60;
 
-        setCooldownInfo({
-          minutes,
-          seconds,
-        });
+        setCooldownInfo({ minutes, seconds });
+        setLoading(false);
         return;
       }
 
@@ -697,6 +708,7 @@ export default function Pricing({ goToHome }) {
 
         if (!finalProofUrl) {
           alert("Erro no upload do comprovante");
+          setLoading(false);
           return;
         }
       }
@@ -757,16 +769,18 @@ export default function Pricing({ goToHome }) {
       if (error) {
         throw error;
       }
-      const currentSendCount = Number(profileRow?.send_count ?? 0) + 1;
-      const nextCooldownUntil =
-        currentSendCount >= 2
-          ? new Date(Date.now() + 7 * 60 * 1000)
-          : null;
+      let newSendCount = Number(profileRow?.send_count ?? 0) + 1;
+      let nextCooldownUntil = profileRow?.cooldown_until;
+
+      if (newSendCount >= 2) {
+        nextCooldownUntil = new Date(Date.now() + 10 * 60 * 1000).toISOString();
+        newSendCount = 0;
+      }
 
       const { error: profileUpdateError } = await supabase
         .from("profiles")
         .update({
-          send_count: nextCooldownUntil ? 0 : currentSendCount,
+          send_count: newSendCount,
           cooldown_until: nextCooldownUntil,
           last_send_at: new Date().toISOString(),
         })
