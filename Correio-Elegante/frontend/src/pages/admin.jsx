@@ -143,6 +143,37 @@ export default function Admin({ goToHome }) {
 
     return () => clearInterval(interval);
   }, [adminLevel]);
+  const activeOrders = useMemo(() => {
+    return orders.filter((o) => o.status !== "trash");
+  }, [orders]);
+
+  const paymentStats = useMemo(() => {
+    const paidOrders = orders.filter((o) => o.status === "paid");
+
+    return {
+      total: activeOrders.length,
+      pending: activeOrders.filter((o) => o.status === "pending").length,
+      paid: paidOrders.length,
+      delivered: activeOrders.filter((o) => o.status === "delivered").length,
+      trash: orders.filter((o) => o.status === "trash").length,
+      totalRevenue: activeOrders
+        .filter((o) => o.message_status === "verified")
+        .reduce((sum, o) => sum + Number(o.valor || 0), 0),
+    };
+  }, [orders, activeOrders]);
+
+  const messageStats = useMemo(() => {
+    const active = orders.filter((o) => o.status !== "trash");
+
+    return {
+      total: active.length,
+      pending: active.filter((o) => o.status === "pending").length,
+      paid: active.filter((o) => o.status === "paid").length,
+      delivered: active.filter((o) => o.status === "delivered").length,
+      trash: orders.filter((o) => o.status === "trash").length,
+      totalRevenue: active.reduce((sum, o) => sum + Number(o.valor || 0), 0),
+    };
+  }, [orders]);
 
   function handlePasswordSubmit(e) {
     e.preventDefault();
@@ -214,8 +245,17 @@ export default function Admin({ goToHome }) {
       message_status: newStatus,
     };
 
-    // 🔥 sincroniza com painel de pedidos
+    if (newStatus === "trash") {
+      updateData.status = "trash"; // <- IMPORTANTE
+    }
+
+    if (newStatus === "verified") {
+      updateData.message_status = "verified";
+      // não mexe em status aqui
+    }
+
     if (newStatus === "delivered") {
+      updateData.message_status = "delivered";
       updateData.status = "delivered";
     }
 
@@ -324,10 +364,9 @@ export default function Admin({ goToHome }) {
     const paidOrders = orders.filter((o) => o.status === "paid");
 
 
-    const totalRevenue = paidOrders.reduce(
-      (sum, order) => sum + Number(order.valor || 0),
-      0
-    );
+    const totalRevenue = activeOrders
+      .filter((o) => o.message_status === "verified")
+      .reduce((sum, order) => sum + Number(order.valor || 0), 0);
 
     return {
       total: activeOrders.length,
