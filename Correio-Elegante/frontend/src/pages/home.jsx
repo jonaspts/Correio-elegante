@@ -44,15 +44,16 @@ export default function Home({ goToPricing = () => { }, goToAdmin = () => { } })
 
     return v;
   }
+
   useEffect(() => {
     let channel;
+    let userId;
 
-    async function setupListener() {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
+    const init = async () => {
+      const { data } = await supabase.auth.getUser();
+      userId = data?.user?.id;
 
-      if (!user) return;
+      if (!userId) return;
 
       channel = supabase
         .channel("orders-channel")
@@ -66,23 +67,20 @@ export default function Home({ goToPricing = () => { }, goToAdmin = () => { } })
           (payload) => {
             const order = payload.new;
 
-            // só mostra pro próprio usuário
-            if (order.user_id !== user.id) return;
+            if (order.user_id !== userId) return;
+            if (order.status !== "trash") return;
 
-            if (order.status === "trash") {
-              setPopup({
-                open: true,
-                reasons: order.rejection_reasons || [],
-                note: order.rejection_note || "",
-              });
-            }
+            setPopup({
+              open: true,
+              reasons: order.rejection_reasons || [],
+              note: order.rejection_note || "",
+            });
           }
         )
         .subscribe();
-    }
+    };
 
-    setupListener();
-    
+    init();
 
     return () => {
       if (channel) supabase.removeChannel(channel);
