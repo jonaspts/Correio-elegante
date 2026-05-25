@@ -82,6 +82,7 @@ export default function Home({ goToPricing = () => { }, goToAdmin = () => { } })
     }
 
     setupListener();
+    
 
     return () => {
       if (channel) supabase.removeChannel(channel);
