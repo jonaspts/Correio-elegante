@@ -648,8 +648,7 @@ export default function Admin({ goToHome }) {
     const messages = orders.filter(
       (o) =>
         o.status === "paid" ||
-        o.status === "delivered" ||
-        o.status === "trash"
+        o.status === "delivered"
     );
 
     const filteredMessages = messages
