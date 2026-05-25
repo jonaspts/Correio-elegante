@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef, useCallback } from "react";
+import { getDeviceId } from "../lib/device";
 import { supabase } from "../lib/supabase";
 import "../App.css";
 
@@ -768,6 +769,7 @@ export default function Pricing({ goToHome }) {
           order_code: code,
           status: "pending",
           valor,
+          device_id: getDeviceId(),
         },
       ]);
 

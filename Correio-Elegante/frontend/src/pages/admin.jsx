@@ -3,6 +3,16 @@ import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "../lib/supabase";
 import "../Admin.css";
 
+const REJECTION_REASONS = [
+  { id: "offensive", label: "Conteúdo ofensivo", severe: true },
+  { id: "harassment", label: "Assédio / bullying", severe: true },
+  { id: "threat", label: "Ameaça", severe: true },
+
+  { id: "spam", label: "Spam", severe: false },
+  { id: "joke", label: "Brincadeira inadequada", severe: false },
+  { id: "irrelevant", label: "Conteúdo fora do contexto", severe: false },
+];
+
 const STATUS_CONFIG = {
   pending: {
     label: "Pendente",
@@ -75,6 +85,11 @@ export default function Admin({ goToHome }) {
   const [adminPassword, setAdminPassword] = useState("");
   const [passwordError, setPasswordError] = useState("");
 
+  const [rejectModalOpen, setRejectModalOpen] = useState(false);
+  const [selectedOrder, setSelectedOrder] = useState(null);
+  const [selectedReasons, setSelectedReasons] = useState([]);
+  const [adminNote, setAdminNote] = useState("");
+
   const ADMIN_PASSWORD = import.meta.env.VITE_ADMIN_PASSWORD || "";
   const MESSAGES_PASSWORD = import.meta.env.VITE_MESSAGES_PASSWORD || "";
 
@@ -83,6 +98,60 @@ export default function Admin({ goToHome }) {
     animate: { opacity: 1, y: 0, transition: { duration: 0.3, ease: "easeOut" } },
     exit: { opacity: 0, y: -20, transition: { duration: 0.2, ease: "easeIn" } },
   };
+
+
+  async function confirmRejection() {
+    if (!selectedOrder) return;
+
+    setActionLoading(true);
+
+    const hasSevereReason = selectedReasons.some((id) =>
+      REJECTION_REASONS.find((r) => r.id === id)?.severe
+    );
+
+    const { error } = await supabase
+      .from("orders")
+      .update({
+        status: "trash",
+        message_status: "trash",
+        rejection_reasons: selectedReasons,
+        rejection_note: adminNote,
+        rejection_severity: hasSevereReason ? "severe" : "normal",
+        user_notified: false,
+      })
+      .eq("id", selectedOrder.id);
+
+    setActionLoading(false);
+
+    if (error) {
+      alert("Erro ao reprovar mensagem");
+      console.error(error);
+      return;
+    }
+
+    // 🔥 BAN POR DISPOSITIVO SE FOR GRAVE
+    if (hasSevereReason && selectedOrder.device_id) {
+      await supabase.from("device_bans").insert({
+        device_id: selectedOrder.device_id,
+        reason: selectedReasons.join(", "),
+      });
+    }
+    
+    await supabase.from("notifications").insert({
+      user_id: selectedOrder.user_id, // ou sender_id
+      title: "Sua carta foi reprovada",
+      message: `Motivo: ${selectedReasons
+        .map(id => REJECTION_REASONS.find(r => r.id === id)?.label)
+        .join(", ")}${adminNote ? ` | Obs: ${adminNote}` : ""}`,
+      type: hasSevereReason ? "ban" : "rejection",
+    });
+
+    setRejectModalOpen(false);
+    setSelectedOrder(null);
+
+    await fetchOrders();
+  }
+
 
   function normalizeText(value) {
     return String(value || "").toLowerCase().trim();
@@ -919,6 +988,7 @@ export default function Admin({ goToHome }) {
                           <span>✔️</span>
                           Aprovar
                         </button>
+
                         {/* ENTREGAR */}
                         <button
                           className="status-action-btn delivered"
@@ -931,7 +1001,12 @@ export default function Admin({ goToHome }) {
                         {/* REPROVAR */}
                         <button
                           className="utility-btn trash-btn"
-                          onClick={() => updateMessageStatus(order.id, "trash")}
+                          onClick={() => {
+                            setSelectedOrder(order);
+                            setSelectedReasons([]);
+                            setAdminNote("");
+                            setRejectModalOpen(true);
+                          }}
                         >
                           <span>🗑️</span>
                           Reprovar
@@ -945,6 +1020,68 @@ export default function Admin({ goToHome }) {
             </div>
           )}
         </section>
+        <AnimatePresence>
+          {rejectModalOpen && (
+            <motion.div
+              className="modal-overlay"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+            >
+              <motion.div
+                className="modal-content"
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.9, opacity: 0 }}
+              >
+                <h2>Reprovar mensagem</h2>
+
+                <div className="reasons-list">
+                  {REJECTION_REASONS.map((reason) => (
+                    <label key={reason.id} className="reason-item">
+                      <input
+                        type="checkbox"
+                        checked={selectedReasons.includes(reason.id)}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setSelectedReasons([...selectedReasons, reason.id]);
+                          } else {
+                            setSelectedReasons(
+                              selectedReasons.filter((r) => r !== reason.id)
+                            );
+                          }
+                        }}
+                      />
+                      {reason.label}
+                      {reason.severe && <span style={{ color: "red" }}> (grave)</span>}
+                    </label>
+                  ))}
+                </div>
+
+                <textarea
+                  placeholder="Observação do admin"
+                  value={adminNote}
+                  onChange={(e) => setAdminNote(e.target.value)}
+                />
+
+                <button
+                  className="confirm-btn"
+                  onClick={confirmRejection}
+                  disabled={actionLoading}
+                >
+                  Confirmar reprovação
+                </button>
+
+                <button
+                  className="cancel-btn"
+                  onClick={() => setRejectModalOpen(false)}
+                >
+                  Cancelar
+                </button>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </motion.div>
     );
   }

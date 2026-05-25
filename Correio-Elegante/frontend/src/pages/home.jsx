@@ -22,6 +22,7 @@ export default function Home({ goToPricing = () => { }, goToAdmin = () => { } })
 
   const [showProfilePanel, setShowProfilePanel] = useState(false);
   const [senderCourse, setSenderCourse] = useState("");
+  const [popup, setPopup] = useState(null);
 
   const courseOptions = [
     { value: "ADM", label: "Administração" },
@@ -31,18 +32,61 @@ export default function Home({ goToPricing = () => { }, goToAdmin = () => { } })
   const classrooms = ["1A", "1B", "2A", "2B", "3A", "3B"];
 
   function formatPhone(value = "") {
-  let v = value.replace(/\D/g, "").slice(0, 11);
+    let v = value.replace(/\D/g, "").slice(0, 11);
 
-  if (v.length <= 10) {
-    v = v.replace(/(\d{2})(\d)/, "($1) $2");
-    v = v.replace(/(\d{4})(\d)/, "$1-$2");
-  } else {
-    v = v.replace(/(\d{2})(\d)/, "($1) $2");
-    v = v.replace(/(\d{5})(\d)/, "$1-$2");
+    if (v.length <= 10) {
+      v = v.replace(/(\d{2})(\d)/, "($1) $2");
+      v = v.replace(/(\d{4})(\d)/, "$1-$2");
+    } else {
+      v = v.replace(/(\d{2})(\d)/, "($1) $2");
+      v = v.replace(/(\d{5})(\d)/, "$1-$2");
+    }
+
+    return v;
   }
+  useEffect(() => {
+    let channel;
 
-  return v;
-}
+    async function setupListener() {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user) return;
+
+      channel = supabase
+        .channel("orders-channel")
+        .on(
+          "postgres_changes",
+          {
+            event: "UPDATE",
+            schema: "public",
+            table: "orders",
+          },
+          (payload) => {
+            const order = payload.new;
+
+            // só mostra pro próprio usuário
+            if (order.user_id !== user.id) return;
+
+            if (order.status === "trash") {
+              setPopup({
+                open: true,
+                reasons: order.rejection_reasons || [],
+                note: order.rejection_note || "",
+              });
+            }
+          }
+        )
+        .subscribe();
+    }
+
+    setupListener();
+
+    return () => {
+      if (channel) supabase.removeChannel(channel);
+    };
+  }, []);
 
 
 
@@ -141,7 +185,7 @@ export default function Home({ goToPricing = () => { }, goToAdmin = () => { } })
   }, []);
 
   useEffect(() => {
-    
+
     let active = true;
 
     async function loadTotalGasto() {
@@ -621,6 +665,27 @@ export default function Home({ goToPricing = () => { }, goToAdmin = () => { } })
                 {savingProfile ? "Salvando..." : "Continuar"}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {popup?.open && (
+        <div className="popup-overlay">
+          <div className="popup-box">
+            <h2>❌ Sua carta foi rejeitada</h2>
+
+            <p>Motivos:</p>
+            <ul>
+              {popup.reasons.map((r, i) => (
+                <li key={i}>{r}</li>
+              ))}
+            </ul>
+
+            {popup.note && <p>{popup.note}</p>}
+
+            <button onClick={() => setPopup(null)}>
+              Entendi
+            </button>
           </div>
         </div>
       )}
