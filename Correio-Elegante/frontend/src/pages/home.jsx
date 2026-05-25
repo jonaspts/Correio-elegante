@@ -141,6 +141,7 @@ export default function Home({ goToPricing = () => { }, goToAdmin = () => { } })
   }, []);
 
   useEffect(() => {
+    
     let active = true;
 
     async function loadTotalGasto() {
