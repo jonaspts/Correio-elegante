@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef, useCallback } from "react";
-import { getDeviceId } from "../lib/device";
+import { getDeviceId } from "../App";
 import { supabase } from "../lib/supabase";
 import "../App.css";
 
