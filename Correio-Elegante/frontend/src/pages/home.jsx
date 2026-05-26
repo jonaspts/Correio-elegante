@@ -22,8 +22,28 @@ export default function Home({ goToPricing = () => { }, goToAdmin = () => { } })
 
   const [showProfilePanel, setShowProfilePanel] = useState(false);
   const [senderCourse, setSenderCourse] = useState("");
-  const [rejectionQueue, setRejectionQueue] = useState([]);
-  const popup = rejectionQueue[0];
+  const [popupOrder, setPopupOrder] = useState(null);
+
+  const checkTrashOrder = async (userId) => {
+    const { data, error } = await supabase
+      .from("orders")
+      .select("id, rejection_reasons, rejection_note, status, message_status, user_notified")
+      .eq("user_id", userId)
+      .eq("user_notified", false)
+      .or("status.eq.trash,message_status.eq.trash")
+      .order("created_at", { ascending: true })
+      .limit(1)
+      .maybeSingle();
+
+    if (error) {
+      console.error("Erro ao carregar pedido trash:", error);
+      return;
+    }
+
+    if (data) {
+      setPopupOrder(data);
+    }
+  };
 
 
   const courseOptions = [
@@ -47,54 +67,23 @@ export default function Home({ goToPricing = () => { }, goToAdmin = () => { } })
     return v;
   }
 
-  useEffect(() => {
-    let channel;
 
-    const init = async () => {
-      const { data } = await supabase.auth.getUser();
-      const userId = data?.user?.id;
-      if (!userId) return;
 
-      channel = supabase.channel(`orders-channel-${crypto.randomUUID()}`);
+  const handleCloseTrashPopup = async () => {
+    if (!popupOrder) return;
 
-      channel.on(
-        "postgres_changes",
-        {
-          event: "UPDATE",
-          schema: "public",
-          table: "orders",
-        },
-        (payload) => {
-            console.log("CHEGOU EVENTO:", payload.new);
+    const { error } = await supabase
+      .from("orders")
+      .update({ user_notified: true })
+      .eq("id", popupOrder.id);
 
-          const order = payload.new;
+    if (error) {
+      console.error("Erro ao marcar como notificado:", error);
+      return;
+    }
 
-          if (order.user_id !== userId) return;
-
-          if (
-            order.status !== "trash" &&
-            order.message_status !== "trash"
-          ) return;
-
-          setRejectionQueue((prev) => [
-            ...prev,
-            {
-              reasons: order.rejection_reasons || [],
-              note: order.rejection_note || "",
-            },
-          ]);
-        }
-      );
-
-      await channel.subscribe();
-    };
-
-    init();
-
-    return () => {
-      if (channel) supabase.removeChannel(channel);
-    };
-  }, []);
+    setPopupOrder(null);
+  };
 
 
   useEffect(() => {
@@ -122,6 +111,7 @@ export default function Home({ goToPricing = () => { }, goToAdmin = () => { } })
 
   useEffect(() => {
     let active = true;
+    let trashIntervalId;
 
     async function loadProfile() {
 
@@ -176,6 +166,12 @@ export default function Home({ goToPricing = () => { }, goToAdmin = () => { } })
           (googleUser && !savedPhone);
 
         setShowInfoPopup(shouldShowPopup);
+        await checkTrashOrder(user.id);
+
+        trashIntervalId = setInterval(() => {
+          checkTrashOrder(user.id);
+        }, 3000);
+
 
       } catch (err) {
         console.error("Erro inesperado ao carregar perfil:", err);
@@ -188,6 +184,7 @@ export default function Home({ goToPricing = () => { }, goToAdmin = () => { } })
 
     return () => {
       active = false;
+      if (trashIntervalId) clearInterval(trashIntervalId);
     };
   }, []);
 
@@ -676,26 +673,21 @@ export default function Home({ goToPricing = () => { }, goToAdmin = () => { } })
         </div>
       )}
 
-      {popup?.open && (
+      {popupOrder && (
         <div className="popup-overlay">
           <div className="popup-box">
             <h2>❌ Sua carta foi rejeitada</h2>
 
             <p>Motivos:</p>
             <ul>
-              {popup.reasons.map((r, i) => (
+              {(popupOrder.rejection_reasons || []).map((r, i) => (
                 <li key={i}>{r}</li>
               ))}
             </ul>
 
-            {popup.note && <p>{popup.note}</p>}
+            {popupOrder.rejection_note && <p>{popupOrder.rejection_note}</p>}
 
-            <button
-              onClick={() => {
-                setPopup(null);
-                setRejectionQueue((prev) => prev.slice(1));
-              }}
-            >
+            <button onClick={handleCloseTrashPopup}>
               Entendi
             </button>
           </div>
