@@ -22,7 +22,9 @@ export default function Home({ goToPricing = () => { }, goToAdmin = () => { } })
 
   const [showProfilePanel, setShowProfilePanel] = useState(false);
   const [senderCourse, setSenderCourse] = useState("");
-  const [popup, setPopup] = useState(null);
+  const [rejectionQueue, setRejectionQueue] = useState([]);
+  const popup = rejectionQueue[0];
+
 
   const courseOptions = [
     { value: "ADM", label: "Administração" },
@@ -47,37 +49,44 @@ export default function Home({ goToPricing = () => { }, goToAdmin = () => { } })
 
   useEffect(() => {
     let channel;
-    let userId;
 
     const init = async () => {
       const { data } = await supabase.auth.getUser();
-      userId = data?.user?.id;
-
+      const userId = data?.user?.id;
       if (!userId) return;
 
-      channel = supabase
-        .channel("orders-channel")
-        .on(
-          "postgres_changes",
-          {
-            event: "UPDATE",
-            schema: "public",
-            table: "orders",
-          },
-          (payload) => {
-            const order = payload.new;
+      channel = supabase.channel(`orders-channel-${crypto.randomUUID()}`);
 
-            if (order.user_id !== userId) return;
-            if (order.status !== "trash") return;
+      channel.on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "orders",
+        },
+        (payload) => {
+            console.log("CHEGOU EVENTO:", payload.new);
 
-            setPopup({
-              open: true,
+          const order = payload.new;
+
+          if (order.user_id !== userId) return;
+
+          if (
+            order.status !== "trash" &&
+            order.message_status !== "trash"
+          ) return;
+
+          setRejectionQueue((prev) => [
+            ...prev,
+            {
               reasons: order.rejection_reasons || [],
               note: order.rejection_note || "",
-            });
-          }
-        )
-        .subscribe();
+            },
+          ]);
+        }
+      );
+
+      await channel.subscribe();
     };
 
     init();
@@ -86,7 +95,6 @@ export default function Home({ goToPricing = () => { }, goToAdmin = () => { } })
       if (channel) supabase.removeChannel(channel);
     };
   }, []);
-
 
 
   useEffect(() => {
@@ -682,7 +690,12 @@ export default function Home({ goToPricing = () => { }, goToAdmin = () => { } })
 
             {popup.note && <p>{popup.note}</p>}
 
-            <button onClick={() => setPopup(null)}>
+            <button
+              onClick={() => {
+                setPopup(null);
+                setRejectionQueue((prev) => prev.slice(1));
+              }}
+            >
               Entendi
             </button>
           </div>
