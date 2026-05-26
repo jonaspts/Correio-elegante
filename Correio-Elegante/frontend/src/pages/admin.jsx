@@ -4,6 +4,7 @@ import { supabase } from "../lib/supabase";
 import "../Admin.css";
 
 const REJECTION_REASONS = [
+  { id: "fake_proof", label: "Comprovante suspeito/falso", severe: true },
   { id: "offensive", label: "Conteúdo ofensivo", severe: true },
   { id: "harassment", label: "Assédio / bullying", severe: true },
   { id: "threat", label: "Ameaça", severe: true },
@@ -136,7 +137,7 @@ export default function Admin({ goToHome }) {
         reason: selectedReasons.join(", "),
       });
     }
-    
+
     await supabase.from("notifications").insert({
       user_id: selectedOrder.user_id, // ou sender_id
       title: "Sua carta foi reprovada",
@@ -165,24 +166,28 @@ export default function Admin({ goToHome }) {
     const { data, error } = await supabase
       .from("orders")
       .select(`
-      id,
-      order_code,
-      receiver_name,
-      sender_name,
-      sender_type,
-      plan,
-      valor,
-      classroom,
-      course,
-      payment_method,
-      proof_url,
-      message,
-      serenata_music,
-      status,
-      message_status,
-      previous_status,
-      created_at
-    `)
+        id,
+        order_code,
+        receiver_name,
+        sender_name,
+        sender_type,
+        plan,
+        valor,
+        classroom,
+        course,
+        payment_method,
+        proof_url,
+        message,
+        serenata_music,
+        status,
+        message_status,
+        previous_status,
+        rejection_reasons,
+        rejection_note,
+        rejection_severity,
+        user_notified,
+        created_at
+      `)
       .order("created_at", { ascending: false });
 
     if (error) {
@@ -350,6 +355,12 @@ export default function Admin({ goToHome }) {
 
     await updateStatus(id, "trash");
   }
+  function openRejectModal(order) {
+    setSelectedOrder(order);
+    setSelectedReasons([]);
+    setAdminNote("");
+    setRejectModalOpen(true);
+  }
 
   async function undoStatus(order) {
     if (!order?.previous_status) return;
@@ -374,6 +385,34 @@ export default function Admin({ goToHome }) {
 
     await fetchOrders();
   }
+  async function restoreFromTrash(order) {
+    setActionLoading(true);
+
+    const { error } = await supabase
+      .from("orders")
+      .update({
+        status: order.previous_status || "pending",
+        message_status: order.message_status === "trash" ? "unverified" : order.message_status,
+        previous_status: null,
+        rejection_reasons: null,
+        rejection_note: null,
+        rejection_severity: null,
+        user_notified: false,
+      })
+      .eq("id", order.id);
+
+    setActionLoading(false);
+
+    if (error) {
+      alert("Erro ao restaurar");
+      console.error(error);
+      return;
+    }
+
+    await fetchOrders();
+  }
+
+
   function formatDate(dateString) {
     if (!dateString) return "—";
     const date = new Date(dateString);
@@ -695,10 +734,10 @@ export default function Admin({ goToHome }) {
                       prev === order.id ? null : order.id
                     )
                   }
-
                   onUpdateStatus={updateStatus}
-                  onMoveToTrash={moveToTrash}
+                  onMoveToTrash={openRejectModal}
                   onUndo={undoStatus}
+                  onRestoreFromTrash={restoreFromTrash}
                   actionLoading={actionLoading}
                   formatDate={formatDate}
                   formatTime={formatTime}
@@ -707,6 +746,68 @@ export default function Admin({ goToHome }) {
             </div>
           )}
         </section>
+        <AnimatePresence>
+          {rejectModalOpen && (
+            <motion.div
+              className="modal-overlay"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+            >
+              <motion.div
+                className="modal-content"
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.9, opacity: 0 }}
+              >
+                <h2>Reprovar mensagem</h2>
+
+                <div className="reasons-list">
+                  {REJECTION_REASONS.map((reason) => (
+                    <label key={reason.id} className="reason-item">
+                      <input
+                        type="checkbox"
+                        checked={selectedReasons.includes(reason.id)}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setSelectedReasons([...selectedReasons, reason.id]);
+                          } else {
+                            setSelectedReasons(
+                              selectedReasons.filter((r) => r !== reason.id)
+                            );
+                          }
+                        }}
+                      />
+                      {reason.label}
+                      {reason.severe && <span style={{ color: "red" }}> (grave)</span>}
+                    </label>
+                  ))}
+                </div>
+
+                <textarea
+                  placeholder="Observação do admin"
+                  value={adminNote}
+                  onChange={(e) => setAdminNote(e.target.value)}
+                />
+
+                <button
+                  className="confirm-btn"
+                  onClick={confirmRejection}
+                  disabled={actionLoading}
+                >
+                  Confirmar reprovação
+                </button>
+
+                <button
+                  className="cancel-btn"
+                  onClick={() => setRejectModalOpen(false)}
+                >
+                  Cancelar
+                </button>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </motion.div>
     );
   }
@@ -1097,6 +1198,7 @@ function OrderCard({
   onUpdateStatus,
   onMoveToTrash,
   onUndo,
+  onRestoreFromTrash,
   actionLoading,
   formatDate,
   formatTime,
@@ -1194,6 +1296,45 @@ function OrderCard({
               </details>
             </div>
           )}
+          {(order.status === "trash" || order.message_status === "trash") && (
+            <div className="detail-section trash-reasons-section">
+              <h4 className="section-title">
+                <span className="section-icon">🗑️</span>
+                Motivos da lixeira
+              </h4>
+
+              <div className="trash-reasons-list">
+                {(order.rejection_reasons || []).length > 0 ? (
+                  order.rejection_reasons.map((reason, index) => (
+                    <span key={index} className="trash-reason-chip">
+                      {reason}
+                    </span>
+                  ))
+                ) : (
+                  <span className="trash-reason-empty">Nenhum motivo informado</span>
+                )}
+              </div>
+
+              {order.rejection_note && (
+                <div className="trash-note-box">
+                  <strong>Observação:</strong>
+                  <p>{order.rejection_note}</p>
+                </div>
+              )}
+
+              {order.rejection_severity && (
+                <div className="trash-severity">
+                  Severidade: <strong>{order.rejection_severity}</strong>
+                </div>
+              )}
+
+              {order.user_notified !== undefined && (
+                <div className="trash-notified">
+                  Notificado ao usuário: <strong>{order.user_notified ? "Sim" : "Não"}</strong>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Actions */}
           <div className="actions-section">
@@ -1211,6 +1352,7 @@ function OrderCard({
                 <span>⏳</span>
                 Pendente
               </button>
+
               <button
                 className={`status-action-btn paid ${order.status === "paid" ? "active" : ""}`}
                 onClick={() => onUpdateStatus(order.id, "paid")}
@@ -1222,26 +1364,50 @@ function OrderCard({
             </div>
 
             <div className="utility-buttons">
+
               <button
                 className="utility-btn undo-btn"
                 onClick={() => onUndo(order)}
                 disabled={!order.previous_status || actionLoading}
               >
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                  <path d="M3 8H13M3 8L7 4M3 8L7 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                  <path
+                    d="M3 8H13M3 8L7 4M3 8L7 12"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
                 </svg>
                 Desfazer
               </button>
-              <button
-                className="utility-btn trash-btn"
-                onClick={() => onMoveToTrash(order.id)}
-                disabled={actionLoading}
-              >
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                  <path d="M3 4H13M5 4V3C5 2.44772 5.44772 2 6 2H10C10.5523 2 11 2.44772 11 3V4M6 7V11M10 7V11M4 4H12V13C12 13.5523 11.5523 14 11 14H5C4.44772 14 4 13.5523 4 13V4Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-                Lixeira
-              </button>
+
+              {order.status === "trash" ? (
+                <button
+                  className="utility-btn restore-btn"
+                  onClick={() => onRestoreFromTrash(order)}
+                  disabled={actionLoading}
+                >
+                  ♻ Restaurar
+                </button>
+              ) : (
+                <button
+                  className="utility-btn trash-btn"
+                  onClick={() => onMoveToTrash(order)}
+                  disabled={actionLoading}
+                >
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                    <path
+                      d="M3 4H13M5 4V3C5 2.44772 5.44772 2 6 2H10C10.5523 2 11 2.44772 11 3V4M6 7V11M10 7V11M4 4H12V13C12 13.5523 11.5523 14 11 14H5C4.44772 14 4 13.5523 4 13V4Z"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                  Lixeira
+                </button>
+              )}
             </div>
           </div>
         </div>

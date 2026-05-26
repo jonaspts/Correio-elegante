@@ -1240,3 +1240,65 @@ summary:focus-visible {
     opacity: 1;
   }
 }
+/*==================================================*/
+.utility-btn.undo-btn {
+  background: rgba(100, 255, 170, 0.12);
+  color: #64ffaa;
+  border: 1px solid rgba(100, 255, 170, 0.25);
+}
+
+.utility-btn.undo-btn:hover {
+  background: rgba(100, 255, 170, 0.18);
+}
+.order-card-modern.status-trash {
+  opacity: 0.85;
+  border: 1px solid rgba(255, 100, 100, 0.25);
+}
+/*==================================================*/
+.trash-reasons-section {
+  margin-top: 12px;
+  padding: 14px;
+  border-radius: 14px;
+  background: rgba(255, 100, 100, 0.08);
+  border: 1px solid rgba(255, 100, 100, 0.18);
+}
+
+.trash-reasons-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.trash-reason-chip {
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(255, 100, 100, 0.16);
+  color: #ffb3b3;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.trash-reason-empty {
+  font-size: 13px;
+  opacity: 0.75;
+}
+
+.trash-note-box {
+  margin-top: 12px;
+  padding: 12px;
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.18);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.trash-note-box p {
+  margin: 6px 0 0;
+}
+
+.trash-severity,
+.trash-notified {
+  margin-top: 10px;
+  font-size: 13px;
+  opacity: 0.9;
+}
