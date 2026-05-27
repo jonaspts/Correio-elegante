@@ -451,7 +451,7 @@ export default function Home({ goToPricing = () => { }, goToAdmin = () => { } })
         <section className="features-section">
           <div className="section-header">
             <span className="section-tag">Como funciona</span>
-            <h2 className="section-title">Não fique com dúvidas</h2>
+            <h2 className="landing-section-title">Não fique com dúvidas</h2>
           </div>
 
           <div className="features-grid">
@@ -478,7 +478,8 @@ export default function Home({ goToPricing = () => { }, goToAdmin = () => { } })
         <section className="steps-section">
           <div className="section-header">
             <span className="section-tag">Como participar</span>
-            <h2 className="section-title">Como enviar sua mensagem</h2>
+            <h2 className="landing-section-title">Como enviar sua mensagem</h2>
+
           </div>
 
           <div className="steps-grid">
