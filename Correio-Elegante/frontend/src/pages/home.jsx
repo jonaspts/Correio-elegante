@@ -443,7 +443,7 @@ export default function Home({ goToPricing = () => { }, goToAdmin = () => { } })
               Conteúdos ofensivos ou fora das regras serão bloqueados
               para manter um ambiente seguro e respeitoso. <br /> <br />
               • Pedidos feitos com falsos comprovantes resultarão em punições. <br />
-              Em casos mais graves no banimento permanente do disposito do usuário.
+              Em casos mais graves, haverá o banimento permanente do dispositivo do usuário.
             </p>
           </div>
         </section>
