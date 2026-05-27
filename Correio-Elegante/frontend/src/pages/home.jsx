@@ -442,8 +442,8 @@ export default function Home({ goToPricing = () => { }, goToAdmin = () => { } })
               • Todas as mensagens passam por análise antes da entrega.
               Conteúdos ofensivos ou fora das regras serão bloqueados
               para manter um ambiente seguro e respeitoso. <br /> <br />
-              • Pedidos feitos com falsos comprovantes resultarão em punições,
-              em casos mais graves no banimento permanente do disposito do usuário
+              • Pedidos feitos com falsos comprovantes resultarão em punições. <br />
+              Em casos mais graves no banimento permanente do disposito do usuário.
             </p>
           </div>
         </section>
