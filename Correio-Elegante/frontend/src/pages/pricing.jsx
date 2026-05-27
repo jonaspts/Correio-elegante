@@ -631,7 +631,7 @@ export default function Pricing({ goToHome }) {
 
     if (senderType === "identificado") {
       if (!senderName.trim()) {
-        alert("Digite seu nome completo");
+        alert("Digite seu nome (ou apelido)");
         return;
       }
 
@@ -1099,7 +1099,7 @@ export default function Pricing({ goToHome }) {
                 {/* SEÇÃO: Quem envia */}
                 <div className="form-section">
                   <h3>
-                    <span className="section-icon">💌</span> Informações de quem envia
+                    <span className="section-icon">💌</span> Informações do Remetente (quem envia)
                   </h3>
 
                   <div className="input-group">
