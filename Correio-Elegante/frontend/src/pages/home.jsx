@@ -439,9 +439,11 @@ export default function Home({ goToPricing = () => { }, goToAdmin = () => { } })
           <div className="info-card info-card-warning">
             <h2 className="info-title">⚠️ Importante</h2>
             <p className="info-text">
-              Todas as mensagens passam por análise antes da entrega.
+              • Todas as mensagens passam por análise antes da entrega.
               Conteúdos ofensivos ou fora das regras serão bloqueados
-              para manter um ambiente seguro e respeitoso.
+              para manter um ambiente seguro e respeitoso. <br /> <br />
+              • Pedidos feitos com falsos comprovantes resultarão em punições,
+              em casos mais graves no banimento permanente do disposito do usuário
             </p>
           </div>
         </section>
@@ -501,7 +503,7 @@ export default function Home({ goToPricing = () => { }, goToAdmin = () => { } })
             <article className="step-card">
               <div className="step-number">04</div>
               <h3 className="step-title">Entrega final</h3>
-              <p className="step-text">As mensagens são entregues no evento.</p>
+              <p className="step-text">O envio das mensagens ocorrerá pontualmente na data escolhida."</p>
             </article>
           </div>
         </section>

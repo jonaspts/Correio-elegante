@@ -1011,7 +1011,7 @@ export default function Admin({ goToHome }) {
               <div className="empty-icon-modern">📭</div>
               <h3 className="empty-title">Nenhuma mensagem encontrada</h3>
               <p className="empty-description">
-                {search ? "Tente ajustar sua busca" : "As cartas aparecem aqui quando forem pagas"}
+                {search ? "Tente ajustar sua busca" : "As cartas aparecem aqui quando forem reorganizadas"}
               </p>
             </div>
           ) : (
