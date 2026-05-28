@@ -1324,3 +1324,18 @@ summary:focus-visible {
   flex-shrink: 0;
   white-space: nowrap;
 }
+
+.password-wrapper {
+  position: relative;
+}
+
+.eye-icon {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 18px;
+}

@@ -91,6 +91,7 @@ export default function Admin({ goToHome }) {
   const [selectedReasons, setSelectedReasons] = useState([]);
   const [adminNote, setAdminNote] = useState("");
 
+  const [showPassword, setShowPassword] = useState(false);
   const ADMIN_PASSWORD = import.meta.env.VITE_ADMIN_PASSWORD || "";
   const MESSAGES_PASSWORD = import.meta.env.VITE_MESSAGES_PASSWORD || "";
 
@@ -506,15 +507,23 @@ export default function Admin({ goToHome }) {
           <p className="login-subtitle">Digite a senha para acessar o sistema</p>
 
           <form onSubmit={handlePasswordSubmit} className="login-form">
-            <div className="input-wrapper">
+            <div className="input-wrapper password-wrapper">
               <input
-                type="password"
+                type={showPassword ? "text" : "password"}
                 value={adminPassword}
                 onChange={(e) => setAdminPassword(e.target.value)}
                 placeholder="Senha de acesso"
                 autoComplete="current-password"
                 className="login-input"
               />
+
+              <button
+                type="button"
+                className="eye-icon"
+                onClick={() => setShowPassword((prev) => !prev)}
+              >
+                {showPassword ? "🙈" : "👁️"}
+              </button>
             </div>
 
             {passwordError && (
