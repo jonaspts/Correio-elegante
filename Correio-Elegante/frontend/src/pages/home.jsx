@@ -557,7 +557,7 @@ export default function Home({ goToPricing = () => { }, goToAdmin = () => { } })
 
             <p style={{ marginTop: 10, fontSize: "14px", opacity: 0.8 }}>
               Preencha suas informações para utilizar o sistema. Esses dados são confidenciais,
-              acessíveis apenas aos administradores do evento, e essenciais para concorrer à CESTA ESPECIAL.
+              acessíveis apenas aos administradores do evento. <strong>Nenhum dado aqui colocado será usado fora do Correio Elegante.</strong>
             </p>
 
             <div style={{ display: "flex", flexDirection: "column", gap: "12px", marginTop: 16 }}>
