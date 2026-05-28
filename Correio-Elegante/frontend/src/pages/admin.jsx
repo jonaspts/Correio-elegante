@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "../lib/supabase";
+import { Eye, EyeOff } from "lucide-react";
 import "../Admin.css";
 
 const REJECTION_REASONS = [
@@ -507,22 +508,26 @@ export default function Admin({ goToHome }) {
           <p className="login-subtitle">Digite a senha para acessar o sistema</p>
 
           <form onSubmit={handlePasswordSubmit} className="login-form">
-            <div className="input-wrapper password-wrapper">
+            <div className="input-wrapper glass-password">
               <input
                 type={showPassword ? "text" : "password"}
                 value={adminPassword}
                 onChange={(e) => setAdminPassword(e.target.value)}
                 placeholder="Senha de acesso"
                 autoComplete="current-password"
-                className="login-input"
+                className="login-input glass-input"
               />
 
               <button
                 type="button"
-                className="eye-icon"
+                className="eye-btn"
                 onClick={() => setShowPassword((prev) => !prev)}
               >
-                {showPassword ? "🙈" : "👁️"}
+                {showPassword ? (
+                  <EyeOff className="eye-icon active" />
+                ) : (
+                  <Eye className="eye-icon" />
+                )}
               </button>
             </div>
 

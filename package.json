@@ -3,6 +3,7 @@
     "@tsparticles/react": "^3.0.0",
     "@tsparticles/slim": "^3.9.1",
     "googleapis": "^171.4.0",
+    "lucide-react": "^1.16.0",
     "tsparticles": "^3.9.1"
   }
 }

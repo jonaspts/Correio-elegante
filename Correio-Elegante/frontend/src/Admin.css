@@ -1325,17 +1325,104 @@ summary:focus-visible {
   white-space: nowrap;
 }
 
-.password-wrapper {
+/* =========================
+   GLASS INPUT CONTAINER
+   ========================= */
+.glass-password {
   position: relative;
+  width: 100%;
+  margin-top: 10px;
 }
 
-.eye-icon {
+/* =========================
+   INPUT GLASS STYLE
+   ========================= */
+.glass-input {
+  width: 100%;
+  padding: 14px 44px 14px 14px;
+  border-radius: 14px;
+
+  background: rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+
+  border: 1px solid rgba(255, 255, 255, 0.12);
+
+  color: #fff;
+  font-size: 15px;
+  letter-spacing: 0.5px;
+
+  transition: all 0.25s ease;
+  outline: none;
+}
+
+/* foco com glow moderno */
+.glass-input:focus {
+  border-color: rgba(100, 150, 255, 0.6);
+  box-shadow: 0 0 0 3px rgba(100, 150, 255, 0.15);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+/* placeholder mais elegante */
+.glass-input::placeholder {
+  color: rgba(255, 255, 255, 0.4);
+}
+
+/* =========================
+   BOTÃO DO OLHO
+   ========================= */
+.eye-btn {
   position: absolute;
   right: 12px;
   top: 50%;
   transform: translateY(-50%);
-  background: transparent;
-  border: none;
+
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
   cursor: pointer;
-  font-size: 18px;
+
+  transition: all 0.2s ease;
+}
+
+/* hover premium */
+.eye-btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+  transform: translateY(-50%) scale(1.05);
+}
+
+/* ícone */
+.eye-icon {
+  width: 18px;
+  height: 18px;
+  color: rgba(255, 255, 255, 0.7);
+  transition: all 0.2s ease;
+}
+
+/* quando ativo */
+.eye-icon.active {
+  color: #64aaff;
+  filter: drop-shadow(0 0 6px rgba(100, 170, 255, 0.6));
+}
+
+/* =========================
+   GLASS CARD (opcional extra)
+   ========================= */
+.admin-login-card {
+  background: rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 18px;
+
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
 }
