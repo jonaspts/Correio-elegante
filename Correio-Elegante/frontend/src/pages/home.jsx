@@ -750,6 +750,11 @@ export default function Home({ goToPricing = () => { }, goToAdmin = () => { } })
 
             <div className="orders-header">
               <h2>📦 Meus pedidos</h2>
+              <h6>OBS:
+                <br />
+                -pedidos pendentes = não analisados ainda
+                <br />
+                -o total gasto e as cartinhas são adicionado após a verificação final das cartinhas.</h6>
               <button onClick={() => setShowOrdersPopup(false)}>✖</button>
             </div>
 
