@@ -754,7 +754,7 @@ export default function Home({ goToPricing = () => { }, goToAdmin = () => { } })
                 <br />
                 -pedidos pendentes = não analisados ainda
                 <br />
-                -o total gasto e as cartinhas são adicionado após a verificação final das cartinhas.</h6>
+                -o total gasto e as cartinhas são adicionados após a verificação final das cartinhas.</h6>
               <button onClick={() => setShowOrdersPopup(false)}>✖</button>
             </div>
 
