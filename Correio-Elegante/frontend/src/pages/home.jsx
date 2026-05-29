@@ -556,7 +556,7 @@ export default function Home({ goToPricing = () => { }, goToAdmin = () => { } })
             </h2>
 
             <p style={{ marginTop: 10, fontSize: "14px", opacity: 0.8 }}>
-              Preencha suas informações para utilizar o sistema. Esses dados são confidenciais,
+              Preencha <strong>SUAS INFORMAÇÕES</strong> para utilizar o sistema. Esses dados são confidenciais,
               acessíveis apenas aos administradores do evento. <strong>Nenhum dado aqui colocado será usado fora do Correio Elegante.</strong>
             </p>
 
