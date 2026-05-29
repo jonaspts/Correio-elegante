@@ -24,6 +24,11 @@ export default function Home({ goToPricing = () => { }, goToAdmin = () => { } })
   const [senderCourse, setSenderCourse] = useState("");
   const [popupOrder, setPopupOrder] = useState(null);
 
+  const [orders, setOrders] = useState([]);
+  const [showOrdersPopup, setShowOrdersPopup] = useState(false);
+  const [loadingOrders, setLoadingOrders] = useState(false);
+  const [selectedOrder, setSelectedOrder] = useState(null);
+
   const checkTrashOrder = async (userId) => {
     const { data, error } = await supabase
       .from("orders")
@@ -67,6 +72,45 @@ export default function Home({ goToPricing = () => { }, goToAdmin = () => { } })
     return v;
   }
 
+  async function loadOrders() {
+    setLoadingOrders(true);
+
+    const { data: { user } } = await supabase.auth.getUser();
+
+    const { data, error } = await supabase
+      .from("orders")
+      .select(`
+  id,
+  order_code,
+  plan,
+  status,
+  created_at,
+  message,
+  sender_type,
+  sender_name,
+  sender_classroom,
+  receiver_type,
+  receiver_name,
+  course,
+  classroom,
+  payment_method,
+  valor,
+  serenata_music
+`)
+      .eq("user_id", user.id)
+      .neq("status", "trash")
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.error(error);
+      setLoadingOrders(false);
+      return;
+    }
+
+    setOrders(data || []);
+    setShowOrdersPopup(true);
+    setLoadingOrders(false);
+  }
 
 
   const handleCloseTrashPopup = async () => {
@@ -374,6 +418,9 @@ export default function Home({ goToPricing = () => { }, goToAdmin = () => { } })
                     {profileEmail || "Não informado"}
                   </div>
                 </div>
+                <button className="orders-btn" onClick={loadOrders}>
+                  📦 Meus pedidos
+                </button>
               </div>
             </div>
           )}
@@ -697,6 +744,86 @@ export default function Home({ goToPricing = () => { }, goToAdmin = () => { } })
         </div>
       )}
 
+      {showOrdersPopup && (
+        <div className="orders-overlay" onClick={() => setShowOrdersPopup(false)}>
+          <div className="orders-modal" onClick={(e) => e.stopPropagation()}>
+
+            <div className="orders-header">
+              <h2>📦 Meus pedidos</h2>
+              <button onClick={() => setShowOrdersPopup(false)}>✖</button>
+            </div>
+
+            <div className="orders-body">
+
+              {loadingOrders ? (
+                <p>Carregando...</p>
+              ) : orders.length === 0 ? (
+                <p style={{ opacity: 0.6 }}>Nenhum pedido encontrado</p>
+              ) : (
+                orders.map((o) => {
+                  const code = o.order_code ?? (o.id?.slice(0, 6) || "SEM-ID");
+
+                  return (
+                    <div key={o.id} className="order-card">
+                      <div className="order-title">{o.plan}</div>
+                      <div className="order-code">#{code}</div>
+
+                      <div className={`order-status status-${o.status}`}>
+                        {o.status}
+                      </div>
+
+                      <button
+                        className="order-details-btn"
+                        onClick={() => setSelectedOrder(o)}
+                      >
+                        Ver detalhes
+                      </button>
+                    </div>
+                  );
+                })
+              )}
+
+            </div>
+          </div>
+        </div>
+      )}
+      {selectedOrder && (
+        <div className="orders-overlay" onClick={() => setSelectedOrder(null)}>
+          <div className="orders-modal" onClick={(e) => e.stopPropagation()}>
+
+            <div className="orders-header">
+              <h2>📜 Detalhes da carta</h2>
+              <button onClick={() => setSelectedOrder(null)}>✖</button>
+            </div>
+
+            <div className="orders-body">
+
+              <p><strong>Plano:</strong> {selectedOrder.plan}</p>
+              <p><strong>Mensagem:</strong> {selectedOrder.message}</p>
+
+              <p><strong>Remetente:</strong>
+                {selectedOrder.sender_type === "anonimo"
+                  ? "Anônimo"
+                  : selectedOrder.sender_name}
+              </p>
+
+              <p><strong>Turma remetente:</strong> {selectedOrder.sender_classroom || "—"}</p>
+
+              <p><strong>Destinatário:</strong> {selectedOrder.receiver_name}</p>
+
+              <p><strong>Curso:</strong> {selectedOrder.course || "—"}</p>
+              <p><strong>Turma destino:</strong> {selectedOrder.classroom || "—"}</p>
+
+              <p><strong>Pagamento:</strong> {selectedOrder.payment_method}</p>
+
+              <p><strong>Serenata:</strong> {selectedOrder.serenata_music || "Não adicionada"}</p>
+
+              <p><strong>Valor:</strong> R$ {selectedOrder.valor}</p>
+
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
