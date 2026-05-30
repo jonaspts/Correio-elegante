@@ -34,7 +34,6 @@ export default function Home({ goToPricing = () => { }, goToAdmin = () => { } })
   const [userId, setUserId] = useState("");
   const [openAdmin, setOpenAdmin] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
-  const ADMIN_ID = "f96b415b-1140-4125-82f9-c6edaf7cac14";
 
   useEffect(() => {
     async function getUser() {
