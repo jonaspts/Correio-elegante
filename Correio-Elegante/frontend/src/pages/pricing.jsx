@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import { getDeviceId } from "../lib/device";
 import { supabase } from "../lib/supabase";
+import ProfilePanel from "../Components/ProfilePanel";
 import "../App.css";
 
 // ========================================
@@ -109,65 +110,6 @@ const CountdownTimer = ({ timeLeft }) => (
   </div>
 );
 
-const ProfilePanel = ({
-  profileId,
-  loadingProfile,
-  nome,
-  turma,
-  profileEmail,
-  cartinhasCompradas,
-  formattedTotalGasto,
-  phoneFromProfile,
-  telefone,
-  showProfilePanel,
-  setShowProfilePanel,
-}) => {
-  if (!profileId || loadingProfile) return null;
-
-  return (
-    <div className="profile-wrapper">
-      <div onClick={() => setShowProfilePanel((prev) => !prev)} className="profile-header">
-        <div>
-          <div className="profile-name">{nome ? `Olá, ${nome}` : profileEmail}</div>
-          <div className="profile-subtitle">
-            {turma ? `Turma: ${turma}` : "Toque para ver seu perfil"}
-          </div>
-        </div>
-        <div className="profile-toggle">{showProfilePanel ? "▲" : "▼"}</div>
-      </div>
-      {showProfilePanel && (
-        <div className="profile-panel">
-          <div className="profile-grid">
-            <div className="profile-item">
-              <div className="profile-label">Nome</div>
-              <div className="profile-value">{nome || "Não informado"}</div>
-            </div>
-            <div className="profile-item">
-              <div className="profile-label">Turma</div>
-              <div className="profile-value">{turma || "Não informado"}</div>
-            </div>
-            <div className="profile-item">
-              <div className="profile-label">Cartinhas compradas</div>
-              <div className="profile-value">{cartinhasCompradas}</div>
-            </div>
-            <div className="profile-item">
-              <div className="profile-label">Total gasto</div>
-              <div className="profile-value">{formattedTotalGasto}</div>
-            </div>
-            <div className="profile-item">
-              <div className="profile-label">Telefone</div>
-              <div className="profile-value">{formatPhone(phoneFromProfile || telefone) || "Não informado"}</div>
-            </div>
-            <div className="profile-item">
-              <div className="profile-label">Email</div>
-              <div className="profile-value">{profileEmail || "Não informado"}</div>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-};
 
 const PlanCard = ({ plan, selected, loading, onSelect }) => {
   const isSelected = selected?.id === plan.id;
@@ -361,6 +303,7 @@ export default function Pricing({ goToHome }) {
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
   const [fileUploading, setFileUploading] = useState(false);
+  const [savingProfile, setSavingProfile] = useState(false);
 
   // Estados do formulário
   const [senderType, setSenderType] = useState("anonimo");
@@ -376,23 +319,9 @@ export default function Pricing({ goToHome }) {
   const [orderCode, setOrderCode] = useState("");
   const [fileName, setFileName] = useState("");
   const [proofFile, setProofFile] = useState(null);
-  const [proofUrl, setProofUrl] = useState("");
   const [serenataMusic, setSerenataMusic] = useState("");
 
   // Estados do perfil
-  const [nome, setNome] = useState("");
-  const [turma, setTurma] = useState("");
-  const [telefone, setTelefone] = useState("");
-  const [cartinhasCompradas, setCartinhasCompradas] = useState(0);
-  const [totalGasto, setTotalGasto] = useState(0);
-  const [showProfilePanel, setShowProfilePanel] = useState(false);
-  const [profileId, setProfileId] = useState("");
-  const [profileEmail, setProfileEmail] = useState("");
-  const [phoneFromProfile, setPhoneFromProfile] = useState("");
-  const [showInfoPopup, setShowInfoPopup] = useState(false);
-  const [loadingProfile, setLoadingProfile] = useState(true);
-  const [savingProfile, setSavingProfile] = useState(false);
-  const [isGoogleUser, setIsGoogleUser] = useState(false);
   const [addSerenata, setAddSerenata] = useState(false);
   const [cooldownInfo, setCooldownInfo] = useState(null);
 
@@ -841,108 +770,8 @@ export default function Pricing({ goToHome }) {
     return () => clearInterval(interval);
   }, []);
 
-  // Carregar perfil
-  useEffect(() => {
-    let active = true;
 
-    async function loadProfile() {
-      setLoadingProfile(true);
 
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-
-      if (!active || !user) {
-        setLoadingProfile(false);
-        return;
-      }
-
-      const provider = user.app_metadata?.provider;
-      const googleUser = provider === "google";
-      setIsGoogleUser(googleUser);
-
-      const { data: profileData, error } = await supabase
-        .from("profiles")
-        .select("id, email, phone, nome, turma, onboarding_completed, cartinhas_compradas")
-        .eq("id", user.id)
-        .maybeSingle();
-
-      if (!active) return;
-
-      if (error) {
-        alert("Erro ao carregar perfil: " + error.message);
-        setLoadingProfile(false);
-        return;
-      }
-
-      const savedPhone = profileData?.phone || "";
-      const savedNome = profileData?.nome || "";
-      const savedTurma = profileData?.turma || "";
-
-      setProfileId(user.id);
-      setProfileEmail(user.email || "");
-      setPhoneFromProfile(savedPhone);
-      setNome(savedNome);
-      setTurma(savedTurma);
-      setCartinhasCompradas(profileData?.cartinhas_compradas ?? 0);
-      setTelefone(formatPhone(savedPhone || ""));
-
-      const shouldShowPopup =
-        !profileData ||
-        !profileData.onboarding_completed ||
-        !savedNome ||
-        !savedTurma ||
-        (googleUser && !savedPhone);
-
-      setShowInfoPopup(shouldShowPopup);
-      setLoadingProfile(false);
-    }
-
-    loadProfile();
-
-    return () => {
-      active = false;
-    };
-  }, []);
-
-  // Carregar total gasto
-  useEffect(() => {
-    let active = true;
-
-    async function loadTotalGasto() {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-
-      if (!active || !user) return;
-
-      const { data, error } = await supabase
-        .from("orders")
-        .select("valor")
-        .eq("user_id", user.id)
-        .eq("status", "paid");
-
-      if (!active) return;
-
-      if (error) {
-        console.log("Erro ao carregar total gasto:", error.message);
-        return;
-      }
-
-      const total = (data || []).reduce((acc, item) => {
-        const value = Number(item.valor) || 0;
-        return acc + value;
-      }, 0);
-
-      setTotalGasto(total);
-    }
-
-    loadTotalGasto();
-
-    return () => {
-      active = false;
-    };
-  }, []);
 
   // Animação de corações
   useEffect(() => {
@@ -994,10 +823,7 @@ export default function Pricing({ goToHome }) {
     p4: 7,
   };
 
-  const formattedTotalGasto = new Intl.NumberFormat("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-  }).format(totalGasto);
+
 
   // ========================================
   // RENDER
@@ -1032,19 +858,7 @@ export default function Pricing({ goToHome }) {
             ← Voltar para início
           </button>
 
-          <ProfilePanel
-            profileId={profileId}
-            loadingProfile={loadingProfile}
-            nome={nome}
-            turma={turma}
-            profileEmail={profileEmail}
-            cartinhasCompradas={cartinhasCompradas}
-            formattedTotalGasto={formattedTotalGasto}
-            phoneFromProfile={phoneFromProfile}
-            telefone={telefone}
-            showProfilePanel={showProfilePanel}
-            setShowProfilePanel={setShowProfilePanel}
-          />
+          <ProfilePanel/>
 
           <CountdownTimer timeLeft={timeLeft} />
 
