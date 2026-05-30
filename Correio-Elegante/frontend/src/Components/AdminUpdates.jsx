@@ -5,47 +5,50 @@ export default function AdminUpdates() {
     const [title, setTitle] = useState("");
     const [message, setMessage] = useState("");
     const [type, setType] = useState("update");
-    const [targetType, setTargetType] = useState("global"); // global | individual
-    const [userId, setUserId] = useState(""); // usado só no individual
+    const [targetType, setTargetType] = useState("global");
+    const [userId, setUserId] = useState("");
     const [loading, setLoading] = useState(false);
 
     async function handlePublish(e) {
         e.preventDefault();
+
+        const cleanTitle = title.trim();
+        const cleanMessage = message.trim();
+
+        if (!cleanTitle || !cleanMessage) {
+            alert("Preencha título e mensagem.");
+            return;
+        }
+
+        if (targetType === "individual" && !userId.trim()) {
+            alert("Informe o User ID.");
+            return;
+        }
+
         setLoading(true);
 
         const payload = {
-            title: title.trim(),
-            message: message.trim(),
+            title: cleanTitle,
+            message: cleanMessage,
             type,
             is_global: targetType === "global",
             read: false,
+            user_id: targetType === "individual" ? userId.trim() : null,
         };
 
-        if (targetType === "individual") {
-            if (!userId.trim()) {
-                alert("Preencha o User ID para notificação individual.");
-                setLoading(false);
-                return;
-            }
-
-            payload.user_id = userId.trim();
-            payload.is_global = false;
-        } else {
-            payload.user_id = null;
-            payload.is_global = true;
-        }
-
-        const { error } = await supabase.from("notifications").insert([payload]);
+        const { error } = await supabase
+            .from("notifications")
+            .insert([payload]);
 
         setLoading(false);
 
         if (error) {
-            alert("Erro ao publicar update");
             console.error(error);
+            alert("Erro ao publicar update");
             return;
         }
 
-        alert("Update publicado com sucesso 🚀");
+        alert("Update publicado 🚀");
 
         setTitle("");
         setMessage("");
@@ -55,32 +58,25 @@ export default function AdminUpdates() {
     }
 
     return (
-        <div style={styles.container}>
+        <div style={{ padding: 20, maxWidth: 600, color: "#fff" }}>
             <h1>Admin - Updates</h1>
 
-            <form onSubmit={handlePublish} style={styles.form}>
+            <form onSubmit={handlePublish} style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+
                 <input
-                    placeholder="Título do update"
+                    placeholder="Título"
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
-                    style={styles.input}
-                    required
                 />
 
                 <textarea
-                    placeholder="Mensagem (tipo blog / changelog)"
+                    placeholder="Mensagem"
                     value={message}
                     onChange={(e) => setMessage(e.target.value)}
-                    style={styles.textarea}
                     rows={6}
-                    required
                 />
 
-                <select
-                    value={type}
-                    onChange={(e) => setType(e.target.value)}
-                    style={styles.input}
-                >
+                <select value={type} onChange={(e) => setType(e.target.value)}>
                     <option value="update">Update</option>
                     <option value="feature">Feature</option>
                     <option value="fix">Fix</option>
@@ -90,24 +86,21 @@ export default function AdminUpdates() {
                 <select
                     value={targetType}
                     onChange={(e) => setTargetType(e.target.value)}
-                    style={styles.input}
                 >
-                    <option value="global">Global (todos recebem)</option>
-                    <option value="individual">Individual (um usuário)</option>
+                    <option value="global">Global (todos)</option>
+                    <option value="individual">Individual (1 usuário)</option>
                 </select>
 
                 {targetType === "individual" && (
                     <input
-                        placeholder="User ID do usuário"
+                        placeholder="User ID"
                         value={userId}
                         onChange={(e) => setUserId(e.target.value)}
-                        style={styles.input}
-                        required
                     />
                 )}
 
-                <button type="submit" disabled={loading} style={styles.button}>
-                    {loading ? "Publicando..." : "Publicar Update"}
+                <button disabled={loading}>
+                    {loading ? "Publicando..." : "Publicar"}
                 </button>
             </form>
         </div>
