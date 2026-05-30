@@ -479,11 +479,7 @@ export default function Home({ goToPricing = () => { }, goToAdmin = () => { } })
                     {profileEmail || "Não informado"}
                   </div>
                 </div>
-                <button
-                  className="orders-btn"
-                  type="button"
-                  onClick={onLoadOrders}
-                >
+                <button className="orders-btn" onClick={loadOrders}>
                   📦 Meus pedidos
                 </button>
                 <button
