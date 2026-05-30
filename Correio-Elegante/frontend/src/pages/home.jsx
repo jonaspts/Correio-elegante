@@ -828,12 +828,15 @@ export default function Home({ goToPricing = () => { }, goToAdmin = () => { } })
           <div className="orders-modal" onClick={(e) => e.stopPropagation()}>
 
             <div className="orders-header">
-              <h2>📦 Meus pedidos</h2>
-              <h6>OBS:
-                <br />
-                -pedidos pendentes = não analisados ainda
-                <br />
-                -o total gasto e as cartinhas são adicionados após a verificação final das cartinhas.</h6>
+              <div>
+                <h2>📦 Meus pedidos</h2>
+
+                <p style={{ fontSize: "12px", opacity: 0.7, marginTop: "6px", lineHeight: "1.4" }}>
+                  • Pedidos pendentes ainda não foram analisados<br />
+                  • O total gasto e as cartinhas são contabilizados após a verificação final
+                </p>
+              </div>
+
               <button onClick={() => setShowOrdersPopup(false)}>✖</button>
             </div>
 
