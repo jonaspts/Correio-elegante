@@ -874,7 +874,7 @@ export default function Home({ goToPricing = () => { }, goToAdmin = () => { } })
 
                 <p style={{ fontSize: "12px", opacity: 0.7, marginTop: "6px", lineHeight: "1.4" }}>
                   • Pedidos pendentes ainda não foram analisados<br />
-                  • O total gasto e as cartinhas são contabilizados após a verificação final
+                  • O total gasto e as cartinhas são contabilizados após a verificação do pagamento
                 </p>
               </div>
 
