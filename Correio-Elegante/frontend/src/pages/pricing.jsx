@@ -1,7 +1,6 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import { getDeviceId } from "../lib/device";
 import { supabase } from "../lib/supabase";
-import ProfilePanel from "../Components/ProfilePanel";
 import "../App.css";
 
 // ========================================
@@ -318,7 +317,6 @@ export default function Pricing({ goToHome }) {
   const [classroom, setClassroom] = useState("");
   const [orderCode, setOrderCode] = useState("");
   const [fileName, setFileName] = useState("");
-  const [proofFile, setProofFile] = useState(null);
   const [serenataMusic, setSerenataMusic] = useState("");
 
   // Estados do perfil
@@ -444,7 +442,6 @@ export default function Pricing({ goToHome }) {
     setPaymentMethod("pix");
     setFileName("");
     setProofFile(null);
-    setProofUrl("");
     setSenderName("");
     setSenderCourse("");
     setSenderClassroom("");
@@ -858,7 +855,6 @@ export default function Pricing({ goToHome }) {
             ← Voltar para início
           </button>
 
-          <ProfilePanel/>
 
           <CountdownTimer timeLeft={timeLeft} />
 
