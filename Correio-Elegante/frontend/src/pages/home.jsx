@@ -33,6 +33,7 @@ export default function Home({ goToPricing = () => { }, goToAdmin = () => { } })
 
   const [userId, setUserId] = useState("");
   const [openAdmin, setOpenAdmin] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   const ADMIN_ID = "f96b415b-1140-4125-82f9-c6edaf7cac14";
 
   useEffect(() => {
@@ -44,22 +45,41 @@ export default function Home({ goToPricing = () => { }, goToAdmin = () => { } })
     getUser();
   }, []);
 
+  useEffect(() => {
+    async function checkRole() {
+      const { data: { user } } = await supabase.auth.getUser();
+
+      if (!user) return;
+
+      const { data } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", user.id)
+        .single();
+
+      if (data?.role === "admin") {
+        setIsAdmin(true);
+      } else {
+        setIsAdmin(false);
+      }
+
+      setUserId(user.id);
+    }
+
+    checkRole();
+  }, []);
+
 
   useEffect(() => {
     function handleKeyDown(e) {
-      // Ctrl + M
-      if (e.ctrlKey && e.key.toLowerCase() === "m") {
+      if (e.ctrlKey && e.key.toLowerCase() === "m" && isAdmin) {
         setOpenAdmin(true);
       }
     }
 
     window.addEventListener("keydown", handleKeyDown);
-
-    return () => {
-      window.removeEventListener("keydown", handleKeyDown);
-    };
-  }, []);
-
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isAdmin]);
 
   const checkTrashOrder = async (userId) => {
     const { data, error } = await supabase

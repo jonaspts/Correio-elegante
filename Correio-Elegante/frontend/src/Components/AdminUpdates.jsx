@@ -58,15 +58,19 @@ export default function AdminUpdates() {
     }
 
     return (
-        <div style={{ padding: 20, maxWidth: 600, color: "#fff" }}>
-            <h1>Admin - Updates</h1>
+        <div style={styles.container}>
+            <h1 style={styles.title}>Admin - Updates</h1>
+            <p style={styles.subtitle}>
+                Envio de notificações globais e individuais
+            </p>
 
-            <form onSubmit={handlePublish} style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            <form onSubmit={handlePublish} style={styles.form}>
 
                 <input
                     placeholder="Título"
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
+                    style={styles.input}
                 />
 
                 <textarea
@@ -74,21 +78,27 @@ export default function AdminUpdates() {
                     value={message}
                     onChange={(e) => setMessage(e.target.value)}
                     rows={6}
+                    style={styles.textarea}
                 />
 
-                <select value={type} onChange={(e) => setType(e.target.value)}>
-                    <option value="update">Update</option>
-                    <option value="feature">Feature</option>
-                    <option value="fix">Fix</option>
-                    <option value="warning">Warning</option>
+                <select
+                    value={type}
+                    onChange={(e) => setType(e.target.value)}
+                    style={styles.select}
+                >
+                    <option style={styles.option} value="update">Update</option>
+                    <option style={styles.option} value="feature">Feature</option>
+                    <option style={styles.option} value="fix">Fix</option>
+                    <option style={styles.option} value="warning">Warning</option>
                 </select>
 
                 <select
                     value={targetType}
                     onChange={(e) => setTargetType(e.target.value)}
+                    style={styles.select}
                 >
-                    <option value="global">Global (todos)</option>
-                    <option value="individual">Individual (1 usuário)</option>
+                    <option style={styles.option} value="global">Global (todos)</option>
+                    <option style={styles.option} value="individual">Individual (1 usuário)</option>
                 </select>
 
                 {targetType === "individual" && (
@@ -96,10 +106,18 @@ export default function AdminUpdates() {
                         placeholder="User ID"
                         value={userId}
                         onChange={(e) => setUserId(e.target.value)}
+                        style={styles.input}
                     />
                 )}
 
-                <button disabled={loading}>
+                <button
+                    type="submit"
+                    disabled={loading}
+                    style={{
+                        ...styles.button,
+                        opacity: loading ? 0.6 : 1,
+                    }}
+                >
                     {loading ? "Publicando..." : "Publicar"}
                 </button>
             </form>
@@ -108,41 +126,93 @@ export default function AdminUpdates() {
 }
 
 const styles = {
-    container: {
-        padding: "20px",
-        maxWidth: "600px",
-        margin: "0 auto",
-        color: "#fff",
-    },
-    form: {
-        display: "flex",
-        flexDirection: "column",
-        gap: "10px",
-    },
-    input: {
-        padding: "10px",
-        borderRadius: "8px",
-        border: "1px solid #333",
-        background: "#111",
-        color: "#fff",
-        outline: "none",
-    },
-    textarea: {
-        padding: "10px",
-        borderRadius: "8px",
-        border: "1px solid #333",
-        background: "#111",
-        color: "#fff",
-        resize: "none",
-        outline: "none",
-    },
-    button: {
-        padding: "10px",
-        borderRadius: "8px",
-        border: "none",
-        background: "#ff4d4d",
-        color: "#fff",
-        cursor: "pointer",
-        fontWeight: "bold",
-    },
+  container: {
+    padding: "24px",
+    maxWidth: "620px",
+    margin: "40px auto",
+    color: "#fff",
+    background: "linear-gradient(145deg, rgba(20,8,8,0.98), rgba(40,10,10,0.96))",
+    border: "1px solid rgba(255,255,255,0.10)",
+    borderRadius: "18px",
+    boxShadow: "0 24px 80px rgba(0,0,0,0.55)",
+    backdropFilter: "blur(14px)",
+  },
+
+  form: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "14px",
+    marginTop: "16px",
+  },
+
+  input: {
+    padding: "14px",
+    borderRadius: "12px",
+    border: "1px solid rgba(255,255,255,0.10)",
+    background: "rgba(255,255,255,0.05)",
+    color: "#fff",
+    outline: "none",
+    fontSize: "14px",
+    transition: "0.2s",
+  },
+
+  textarea: {
+    padding: "14px",
+    borderRadius: "12px",
+    border: "1px solid rgba(255,255,255,0.10)",
+    background: "rgba(255,255,255,0.05)",
+    color: "#fff",
+    resize: "none",
+    outline: "none",
+    fontSize: "14px",
+    minHeight: "140px",
+    transition: "0.2s",
+  },
+
+  button: {
+    padding: "14px",
+    borderRadius: "12px",
+    border: "none",
+    background: "linear-gradient(135deg, #ff2d2d, #b30000)",
+    color: "#fff",
+    cursor: "pointer",
+    fontWeight: "700",
+    fontSize: "14px",
+    boxShadow: "0 10px 30px rgba(255, 45, 45, 0.25)",
+    transition: "0.2s",
+  },
+
+  select: {
+    padding: "14px",
+    borderRadius: "12px",
+    border: "1px solid rgba(255,255,255,0.10)",
+    backgroundColor: "#140808",
+    color: "#fff",
+    outline: "none",
+    fontSize: "14px",
+    appearance: "none",
+    WebkitAppearance: "none",
+    MozAppearance: "none",
+    colorScheme: "dark",
+  },
+
+  option: {
+    backgroundColor: "#140808",
+    color: "#fff",
+  },
+
+  title: {
+    fontSize: "20px",
+    fontWeight: "800",
+    marginBottom: "6px",
+    background: "linear-gradient(90deg, #fff, #ff4d4d)",
+    WebkitBackgroundClip: "text",
+    WebkitTextFillColor: "transparent",
+  },
+
+  subtitle: {
+    fontSize: "12px",
+    opacity: 0.6,
+    marginBottom: "10px",
+  },
 };
