@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
+import Notifications from "../Components/notifications";
+import AdminUpdates from "../Components/AdminUpdates";
 
 export default function Home({ goToPricing = () => { }, goToAdmin = () => { } }) {
   const [hearts, setHearts] = useState([]);
@@ -28,6 +30,36 @@ export default function Home({ goToPricing = () => { }, goToAdmin = () => { } })
   const [showOrdersPopup, setShowOrdersPopup] = useState(false);
   const [loadingOrders, setLoadingOrders] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState(null);
+
+  const [userId, setUserId] = useState("");
+  const [openAdmin, setOpenAdmin] = useState(false);
+  const ADMIN_ID = "f96b415b-1140-4125-82f9-c6edaf7cac14";
+
+  useEffect(() => {
+    async function getUser() {
+      const { data } = await supabase.auth.getUser();
+      setUserId(data?.user?.id || "");
+    }
+
+    getUser();
+  }, []);
+
+
+  useEffect(() => {
+    function handleKeyDown(e) {
+      // Ctrl + M
+      if (e.ctrlKey && e.key.toLowerCase() === "m") {
+        setOpenAdmin(true);
+      }
+    }
+
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, []);
+
 
   const checkTrashOrder = async (userId) => {
     const { data, error } = await supabase
@@ -111,6 +143,8 @@ export default function Home({ goToPricing = () => { }, goToAdmin = () => { } })
     setShowOrdersPopup(true);
     setLoadingOrders(false);
   }
+
+
 
 
   const handleCloseTrashPopup = async () => {
@@ -318,6 +352,7 @@ export default function Home({ goToPricing = () => { }, goToAdmin = () => { } })
     <div className="pricing-page">
       <div className="binary-bg" />
 
+
       {/* PERFIL TOPO */}
       {profileId && !loadingProfile && (
         <div
@@ -442,10 +477,54 @@ export default function Home({ goToPricing = () => { }, goToAdmin = () => { } })
           </span>
         ))}
       </div>
-
+      <Notifications />
       <button className="admin-btn" onClick={goToAdmin}>
         Admin
       </button>
+      {/* BOTÃO SECRETO ADMIN (invisível) */}
+
+
+      {/* MODAL ADMIN */}
+      {openAdmin && (
+        <div style={{
+          position: "fixed",
+          inset: 0,
+          background: "rgba(0,0,0,0.75)",
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          zIndex: 9999,
+        }}>
+          <div style={{
+            position: "relative",
+            background: "#111",
+            padding: "20px",
+            borderRadius: "12px",
+            width: "95%",
+            maxWidth: "600px",
+            color: "#fff",
+          }}>
+
+            <button
+              onClick={() => setOpenAdmin(false)}
+              style={{
+                position: "absolute",
+                top: "10px",
+                right: "10px",
+                background: "transparent",
+                border: "none",
+                color: "#fff",
+                fontSize: "18px",
+                cursor: "pointer",
+              }}
+            >
+              ✖
+            </button>
+
+            <AdminUpdates />
+          </div>
+        </div>
+      )}
 
       <main className="container">
         <section className="hero">
@@ -829,6 +908,7 @@ export default function Home({ goToPricing = () => { }, goToAdmin = () => { } })
           </div>
         </div>
       )}
+
     </div>
   );
 }

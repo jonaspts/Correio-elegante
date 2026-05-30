@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "../lib/supabase";
 import { Eye, EyeOff } from "lucide-react";
+import AdminUpdates from "../Components/AdminUpdates";
 import "../Admin.css";
 
 const REJECTION_REASONS = [

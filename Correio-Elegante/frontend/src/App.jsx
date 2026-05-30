@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "./lib/supabase";
-
 import Home from "./pages/home";
 import Pricing from "./pages/pricing";
 import Admin from "./pages/admin";
