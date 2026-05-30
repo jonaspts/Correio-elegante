@@ -234,8 +234,8 @@ export default function Admin({ goToHome }) {
       delivered: activeOrders.filter((o) => o.status === "delivered").length,
       trash: orders.filter((o) => o.status === "trash").length,
       totalRevenue: activeOrders
-  .filter((o) => o.status === "paid" || o.status === "delivered")
-  .reduce((sum, order) => sum + Number(order.valor || 0), 0),
+        .filter((o) => o.status === "paid" || o.status === "delivered")
+        .reduce((sum, order) => sum + Number(order.valor || 0), 0),
     };
   }, [orders, activeOrders]);
 
@@ -832,8 +832,8 @@ export default function Admin({ goToHome }) {
 
     const messages = orders.filter(
       (o) =>
-        o.status === "paid" ||
-        o.status === "delivered"
+        o.status !== "trash" &&
+        (o.message_status || o.message || o.serenata_music)
     );
 
     const filteredMessages = messages

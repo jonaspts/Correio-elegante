@@ -253,7 +253,13 @@ export default function Home({ goToPricing = () => { }, goToAdmin = () => { } })
         setPhoneFromProfile(savedPhone);
         setNome(savedNome);
         setTurma(savedTurma);
-        setCartinhasCompradas(profileData?.cartinhas_compradas ?? 0);
+        const { count } = await supabase
+          .from("orders")
+          .select("*", { count: "exact", head: true })
+          .eq("user_id", user.id)
+          .not("status", "in", "(trash,pending)")
+
+        setCartinhasCompradas(count || 0);
         setTelefone(formatPhone(savedPhone || ""));
 
         const shouldShowPopup =
@@ -946,7 +952,7 @@ export default function Home({ goToPricing = () => { }, goToAdmin = () => { } })
           </div>
         </div>
       )}
-      
+
       {editingProfile && (
         <div
           style={{
