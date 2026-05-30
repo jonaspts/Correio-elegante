@@ -5,21 +5,37 @@ export default function AdminUpdates() {
     const [title, setTitle] = useState("");
     const [message, setMessage] = useState("");
     const [type, setType] = useState("update");
+    const [targetType, setTargetType] = useState("global"); // global | individual
+    const [userId, setUserId] = useState(""); // usado só no individual
     const [loading, setLoading] = useState(false);
 
     async function handlePublish(e) {
         e.preventDefault();
         setLoading(true);
 
-        const { error } = await supabase.from("notifications").insert([
-            {
-                title,
-                message,
-                type,
-                is_global: true,
-                read: false,
-            },
-        ]);
+        const payload = {
+            title: title.trim(),
+            message: message.trim(),
+            type,
+            is_global: targetType === "global",
+            read: false,
+        };
+
+        if (targetType === "individual") {
+            if (!userId.trim()) {
+                alert("Preencha o User ID para notificação individual.");
+                setLoading(false);
+                return;
+            }
+
+            payload.user_id = userId.trim();
+            payload.is_global = false;
+        } else {
+            payload.user_id = null;
+            payload.is_global = true;
+        }
+
+        const { error } = await supabase.from("notifications").insert([payload]);
 
         setLoading(false);
 
@@ -34,6 +50,8 @@ export default function AdminUpdates() {
         setTitle("");
         setMessage("");
         setType("update");
+        setTargetType("global");
+        setUserId("");
     }
 
     return (
@@ -69,6 +87,25 @@ export default function AdminUpdates() {
                     <option value="warning">Warning</option>
                 </select>
 
+                <select
+                    value={targetType}
+                    onChange={(e) => setTargetType(e.target.value)}
+                    style={styles.input}
+                >
+                    <option value="global">Global (todos recebem)</option>
+                    <option value="individual">Individual (um usuário)</option>
+                </select>
+
+                {targetType === "individual" && (
+                    <input
+                        placeholder="User ID do usuário"
+                        value={userId}
+                        onChange={(e) => setUserId(e.target.value)}
+                        style={styles.input}
+                        required
+                    />
+                )}
+
                 <button type="submit" disabled={loading} style={styles.button}>
                     {loading ? "Publicando..." : "Publicar Update"}
                 </button>
@@ -95,6 +132,7 @@ const styles = {
         border: "1px solid #333",
         background: "#111",
         color: "#fff",
+        outline: "none",
     },
     textarea: {
         padding: "10px",
@@ -103,6 +141,7 @@ const styles = {
         background: "#111",
         color: "#fff",
         resize: "none",
+        outline: "none",
     },
     button: {
         padding: "10px",
