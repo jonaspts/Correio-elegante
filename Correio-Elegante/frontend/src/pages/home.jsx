@@ -34,6 +34,7 @@ export default function Home({ goToPricing = () => { }, goToAdmin = () => { } })
   const [userId, setUserId] = useState("");
   const [openAdmin, setOpenAdmin] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [editingProfile, setEditingProfile] = useState(false);
 
   useEffect(() => {
     async function getUser() {
@@ -474,6 +475,21 @@ export default function Home({ goToPricing = () => { }, goToAdmin = () => { } })
                 </div>
                 <button className="orders-btn" onClick={loadOrders}>
                   📦 Meus pedidos
+                </button>
+                <button
+                  onClick={() => setEditingProfile(true)}
+                  style={{
+                    marginTop: "10px",
+                    padding: "10px 12px",
+                    borderRadius: "10px",
+                    border: "1px solid rgba(255,255,255,0.10)",
+                    background: "rgba(255,255,255,0.06)",
+                    color: "#fff",
+                    cursor: "pointer",
+                    fontWeight: "600",
+                  }}
+                >
+                  ✏️ Editar perfil
                 </button>
               </div>
             </div>
@@ -926,6 +942,169 @@ export default function Home({ goToPricing = () => { }, goToAdmin = () => { } })
 
               <p><strong>Valor:</strong> R$ {selectedOrder.valor}</p>
 
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {editingProfile && (
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 99999,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            background: "rgba(0, 0, 0, 0.35)",
+            backdropFilter: "blur(4px)",
+            padding: "20px",
+          }}
+        >
+          <div
+            style={{
+              width: "100%",
+              maxWidth: "460px",
+              borderRadius: "20px",
+              background: "linear-gradient(145deg, rgba(20, 8, 8, 0.98), rgba(40, 10, 10, 0.96))",
+              border: "1px solid rgba(255, 255, 255, 0.12)",
+              boxShadow: "0 24px 80px rgba(0, 0, 0, 0.55)",
+              padding: "28px",
+              color: "#fff",
+            }}
+          >
+            <h2 style={{ margin: 0, fontSize: "1.4rem", fontWeight: "800" }}>
+              Editar perfil
+            </h2>
+
+            <p style={{ marginTop: 10, fontSize: "14px", opacity: 0.8 }}>
+              Atualize seus dados para manter seu perfil correto no sistema.
+            </p>
+
+            <div style={{ display: "flex", flexDirection: "column", gap: "12px", marginTop: 16 }}>
+              <input
+                placeholder="Nome"
+                value={nome}
+                onChange={(e) => setNome(e.target.value)}
+                style={{
+                  padding: "14px",
+                  borderRadius: "12px",
+                  border: "1px solid rgba(255,255,255,0.12)",
+                  background: "rgba(255,255,255,0.05)",
+                  color: "#fff",
+                  outline: "none",
+                }}
+              />
+
+              <div style={{ display: "grid", gap: "8px" }}>
+                <label>Curso</label>
+                <div className="payment-options">
+                  {courseOptions.map((c) => (
+                    <label key={c.value}>
+                      <input
+                        type="radio"
+                        checked={senderCourse === c.value}
+                        onChange={() => setSenderCourse(c.value)}
+                      />
+                      <span>{c.label}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              {senderCourse && (
+                <div style={{ marginTop: "10px" }}>
+                  <label>Turma</label>
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "8px" }}>
+                    {classrooms.map((c) => {
+                      const value = `${c}-${senderCourse}`;
+
+                      return (
+                        <button
+                          key={value}
+                          type="button"
+                          onClick={() => setTurma(value)}
+                          style={{
+                            padding: "10px",
+                            borderRadius: "10px",
+                            border: turma === value ? "2px solid red" : "1px solid gray",
+                            background: "rgba(255,255,255,0.05)",
+                            color: "#fff",
+                          }}
+                        >
+                          {value}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              <input
+                placeholder="Telefone"
+                value={telefone}
+                inputMode="numeric"
+                onChange={(e) => {
+                  let v = e.target.value.replace(/\D/g, "").slice(0, 11);
+
+                  if (v.length <= 10) {
+                    v = v.replace(/(\d{2})(\d)/, "($1) $2");
+                    v = v.replace(/(\d{4})(\d)/, "$1-$2");
+                  } else {
+                    v = v.replace(/(\d{2})(\d)/, "($1) $2");
+                    v = v.replace(/(\d{5})(\d)/, "$1-$2");
+                  }
+
+                  setTelefone(v);
+                }}
+                style={{
+                  padding: "14px",
+                  borderRadius: "12px",
+                  border: "1px solid rgba(255,255,255,0.12)",
+                  background: "rgba(255,255,255,0.05)",
+                  color: "#fff",
+                  outline: "none",
+                }}
+              />
+
+              <div style={{ display: "flex", gap: "10px", marginTop: "6px" }}>
+                <button
+                  type="button"
+                  onClick={() => setEditingProfile(false)}
+                  style={{
+                    flex: 1,
+                    padding: "14px",
+                    borderRadius: "12px",
+                    border: "1px solid rgba(255,255,255,0.12)",
+                    background: "rgba(255,255,255,0.06)",
+                    color: "#fff",
+                    fontWeight: "700",
+                    cursor: "pointer",
+                  }}
+                >
+                  Cancelar
+                </button>
+
+                <button
+                  type="button"
+                  onClick={async () => {
+                    await handleSaveAdditionalInfo();
+                    setEditingProfile(false);
+                  }}
+                  style={{
+                    flex: 1,
+                    padding: "14px",
+                    borderRadius: "12px",
+                    border: "none",
+                    background: "linear-gradient(135deg, #ff2d2d, #b30000)",
+                    color: "#fff",
+                    fontWeight: "700",
+                    cursor: "pointer",
+                  }}
+                >
+                  Salvar
+                </button>
+              </div>
             </div>
           </div>
         </div>

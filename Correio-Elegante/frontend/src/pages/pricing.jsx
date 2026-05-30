@@ -439,7 +439,7 @@ export default function Pricing({ goToHome }) {
       emoji: "💌🍭🍬",
       title: "Cartinha com mini Buquê",
       price: "R$ 7,00",
-      features: ["1 Carta", "1 Pirulito", "1 Bombom"],
+      features: ["1 Carta", "1 Mini Buquê"],
     },
   ];
   const courseOptions = [
