@@ -234,8 +234,8 @@ export default function Admin({ goToHome }) {
       delivered: activeOrders.filter((o) => o.status === "delivered").length,
       trash: orders.filter((o) => o.status === "trash").length,
       totalRevenue: activeOrders
-        .filter((o) => o.message_status === "verified")
-        .reduce((sum, o) => sum + Number(o.valor || 0), 0),
+  .filter((o) => o.status === "paid" || o.status === "delivered")
+  .reduce((sum, order) => sum + Number(order.valor || 0), 0),
     };
   }, [orders, activeOrders]);
 
@@ -476,8 +476,8 @@ export default function Admin({ goToHome }) {
 
 
     const totalRevenue = activeOrders
-      .filter((o) => o.message_status === "verified")
-      .reduce((sum, order) => sum + Number(order.valor || 0), 0);
+      .filter((o) => o.status === "paid" || o.status === "delivered")
+      .reduce((sum, o) => sum + Number(o.valor || 0), 0);
 
     return {
       total: activeOrders.length,
