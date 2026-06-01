@@ -833,13 +833,14 @@ export default function Admin({ goToHome }) {
 
     const messages = orders.filter(
       (o) =>
-        o.status !== "trash" &&
-        (o.message_status || o.message || o.serenata_music)
+        (o.status === "paid" || o.status === "delivered") &&
+        o.message_status &&
+        o.message_status !== "trash"
     );
 
     const filteredMessages = messages
       .filter((order) => {
-        if (filter === "all") return order.message_status !== "trash";
+        if (filter === "all") return order.message_status && order.message_status !== "trash";
 
         return order.message_status === filter;
       })
