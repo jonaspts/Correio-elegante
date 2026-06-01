@@ -176,6 +176,7 @@ export default function Admin({ goToHome }) {
         sender_type,
         plan,
         valor,
+        sender_classroom,
         classroom,
         course,
         payment_method,
@@ -1081,9 +1082,15 @@ export default function Admin({ goToHome }) {
 
                   <div className="order-quick-info">
                     <div className="info-item">
-                      <span className="info-label">Turma</span>
+                      <span className="info-label">Sala do destinatário</span>
                       <span className="info-value">{order.classroom || "—"}</span>
                     </div>
+                    {order.sender_classroom && (
+                      <div className="info-item">
+                        <span className="info-label">Sala do remetente</span>
+                        <span className="info-value">{order.sender_classroom}</span>
+                      </div>
+                    )}
                     <div className="info-item">
                       <span className="info-label">Curso</span>
                       <span className="info-value">{order.course || "—"}</span>
