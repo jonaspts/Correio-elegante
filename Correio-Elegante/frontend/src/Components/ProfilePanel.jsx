@@ -33,6 +33,16 @@ export default function ProfilePanel({
 
   if (!profileId || loadingProfile) return null;
 
+  useEffect(() => {
+  fetchOrders();
+
+  const interval = setInterval(() => {
+    fetchOrders();
+  }, 5000);
+
+  return () => clearInterval(interval);
+}, []);
+
   return (
     <>
       <div

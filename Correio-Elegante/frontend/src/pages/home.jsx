@@ -3,6 +3,9 @@ import { supabase } from "../lib/supabase";
 import Notifications from "../Components/notifications";
 import AdminUpdates from "../Components/AdminUpdates";
 
+
+
+
 export default function Home({ goToPricing = () => { }, goToAdmin = () => { } }) {
   const [hearts, setHearts] = useState([]);
 
@@ -45,6 +48,8 @@ export default function Home({ goToPricing = () => { }, goToAdmin = () => { } })
     getUser();
   }, []);
 
+
+
   useEffect(() => {
     async function checkRole() {
       const { data: { user } } = await supabase.auth.getUser();
@@ -68,6 +73,30 @@ export default function Home({ goToPricing = () => { }, goToAdmin = () => { } })
 
     checkRole();
   }, []);
+
+  useEffect(() => {
+    if (!userId) return;
+
+    const channel = supabase
+      .channel("orders-realtime")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "orders",
+          filter: `user_id=eq.${userId}`,
+        },
+        () => {
+          refreshStats(userId);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [userId]);
 
 
   useEffect(() => {
@@ -122,6 +151,31 @@ export default function Home({ goToPricing = () => { }, goToAdmin = () => { } })
     }
 
     return v;
+  }
+
+
+  async function refreshStats(userId) {
+    if (!userId) return;
+
+    const { count } = await supabase
+      .from("orders")
+      .select("*", { count: "exact", head: true })
+      .eq("user_id", userId)
+      .not("status", "in", "(trash,pending)");
+
+    setCartinhasCompradas(count || 0);
+
+    const { data } = await supabase
+      .from("orders")
+      .select("valor")
+      .eq("user_id", userId)
+      .eq("status", "paid");
+
+    const total = (data || []).reduce((acc, item) => {
+      return acc + (Number(item.valor) || 0);
+    }, 0);
+
+    setTotalGasto(total);
   }
 
   async function loadOrders() {
