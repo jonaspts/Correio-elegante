@@ -317,6 +317,7 @@ export default function Pricing({ goToHome }) {
   const [classroom, setClassroom] = useState("");
   const [orderCode, setOrderCode] = useState("");
   const [fileName, setFileName] = useState("");
+  const [proofFile, setProofFile] = useState(null);
   const [serenataMusic, setSerenataMusic] = useState("");
 
   // Estados do perfil
