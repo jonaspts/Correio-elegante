@@ -47,7 +47,10 @@ export default function Home({ goToPricing = () => { }, goToAdmin = () => { } })
 
     getUser();
   }, []);
-
+  useEffect(() => {
+    if (!userId) return;
+    refreshStats(userId);
+  }, [userId]);
 
 
   useEffect(() => {
