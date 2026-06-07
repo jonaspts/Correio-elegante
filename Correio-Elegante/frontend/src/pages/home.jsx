@@ -72,7 +72,6 @@ export default function Home({ goToPricing = () => { }, goToAdmin = () => { } })
         setIsAdmin(false);
       }
 
-      setUserId(user.id);
     }
 
     checkRole();
@@ -318,12 +317,6 @@ export default function Home({ goToPricing = () => { }, goToAdmin = () => { } })
           (googleUser && !savedPhone);
 
         setShowInfoPopup(shouldShowPopup);
-        await checkTrashOrder(user.id);
-
-        trashIntervalId = setInterval(() => {
-          checkTrashOrder(user.id);
-        }, 10000);
-
 
       } catch (err) {
         console.error("Erro inesperado ao carregar perfil:", err);
