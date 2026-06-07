@@ -155,8 +155,8 @@ export default function Home({ goToPricing = () => { }, goToAdmin = () => { } })
       .from("orders")
       .select("valor")
       .eq("user_id", userId)
-      .eq("status", "paid");
-
+      .in("status", ["paid", "verified", "delivered"]);
+      
     if (error) {
       console.log("Erro ao carregar total gasto:", error.message);
       return;
