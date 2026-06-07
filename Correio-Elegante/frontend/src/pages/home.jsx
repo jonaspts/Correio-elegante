@@ -33,6 +33,7 @@ export default function Home({ goToPricing = () => { }, goToAdmin = () => { } })
   const [showOrdersPopup, setShowOrdersPopup] = useState(false);
   const [loadingOrders, setLoadingOrders] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState(null);
+  const [editCourse, setEditCourse] = useState("");
 
   const [userId, setUserId] = useState("");
   const [openAdmin, setOpenAdmin] = useState(false);
@@ -82,18 +83,9 @@ export default function Home({ goToPricing = () => { }, goToAdmin = () => { } })
 
     const channel = supabase
       .channel("orders-realtime")
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "orders",
-          filter: `user_id=eq.${userId}`,
-        },
-        () => {
-          refreshStats(userId);
-        }
-      )
+      .on("postgres_changes", { event: "*", schema: "public", table: "orders" }, () => {
+        refreshStats(userId);
+      })
       .subscribe();
 
     return () => {
@@ -160,23 +152,21 @@ export default function Home({ goToPricing = () => { }, goToAdmin = () => { } })
   async function refreshStats(userId) {
     if (!userId) return;
 
-    const { count } = await supabase
-      .from("orders")
-      .select("*", { count: "exact", head: true })
-      .eq("user_id", userId)
-      .not("status", "in", "(trash,pending)");
-
-    setCartinhasCompradas(count || 0);
-
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("orders")
       .select("valor")
       .eq("user_id", userId)
       .eq("status", "paid");
 
-    const total = (data || []).reduce((acc, item) => {
-      return acc + (Number(item.valor) || 0);
-    }, 0);
+    if (error) {
+      console.log("Erro ao carregar total gasto:", error.message);
+      return;
+    }
+
+    const total = (data || []).reduce(
+      (acc, item) => acc + (Number(item.valor) || 0),
+      0
+    );
 
     setTotalGasto(total);
   }
@@ -314,7 +304,8 @@ export default function Home({ goToPricing = () => { }, goToAdmin = () => { } })
           .from("orders")
           .select("*", { count: "exact", head: true })
           .eq("user_id", user.id)
-          .not("status", "in", "(trash,pending)")
+          .neq("status", "trash")
+          .neq("status", "pending")
 
         setCartinhasCompradas(count || 0);
         setTelefone(formatPhone(savedPhone || ""));
@@ -331,7 +322,7 @@ export default function Home({ goToPricing = () => { }, goToAdmin = () => { } })
 
         trashIntervalId = setInterval(() => {
           checkTrashOrder(user.id);
-        }, 3000);
+        }, 10000);
 
 
       } catch (err) {
@@ -349,43 +340,6 @@ export default function Home({ goToPricing = () => { }, goToAdmin = () => { } })
     };
   }, []);
 
-  useEffect(() => {
-
-    let active = true;
-
-    async function loadTotalGasto() {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-
-      if (!active || !user) return;
-
-      const { data, error } = await supabase
-        .from("orders")
-        .select("valor")
-        .eq("user_id", user.id)
-        .eq("status", "paid");
-      if (!active) return;
-
-      if (error) {
-        console.log("Erro ao carregar total gasto:", error.message);
-        return;
-      }
-
-      const total = (data || []).reduce((acc, item) => {
-        const value = Number(item.valor) || 0;
-        return acc + value;
-      }, 0);
-
-      setTotalGasto(total);
-    }
-
-    loadTotalGasto();
-
-    return () => {
-      active = false;
-    };
-  }, []);
 
   async function handleSaveAdditionalInfo() {
     if (!profileId) return;
