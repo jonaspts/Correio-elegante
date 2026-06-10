@@ -48,11 +48,11 @@ export default function Manutencao({ goToHome }) {
         }}
       >
         <div className="maintenance-card">
-          <div className="maintenance-icon">🔧</div>
+          <div className="maintenance-icon">💘</div>
           <h1>Encerrado</h1>
           <p>
             O prazo de envio das cartas acabou<br />
-            Em breve as mensagens serão entregues. 💘
+            Em breve as mensagens serão entregues.
           </p>
           <button className="back-btn" onClick={goToHome} type="button">
             ← Sair
