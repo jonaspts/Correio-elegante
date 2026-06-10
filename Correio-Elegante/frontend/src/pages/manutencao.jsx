@@ -49,13 +49,17 @@ export default function Manutencao({ goToHome }) {
       >
         <div className="maintenance-card">
           <div className="maintenance-icon">🔧</div>
-          <h1>Em manutenção</h1>
+          <h1>Encerrado</h1>
           <p>
-            Estamos preparando o Correio Elegante com ainda mais carinho.<br />
-            Em breve você poderá enviar suas mensagens. 💘
+            O prazo de envio das cartas acabou<br />
+            Em breve as mensagens serão entregues. 💘
           </p>
-          <button className="back-btn" onClick={goToHome} type="button">
-            ← Voltar para início
+          <button
+            className="back-btn"
+            onClick={() => window.location.href = "https://www.google.com"}
+            type="button"
+          >
+            ← Sair
           </button>
         </div>
       </main>
